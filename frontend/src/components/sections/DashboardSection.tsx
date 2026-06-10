@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, RefreshCw, User, MapPin, Eye, X } from 'lucide-react';
+import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, RefreshCw, User, MapPin, Eye } from 'lucide-react';
 import { ModalShell } from '../shared/ModalShell';
 
 interface Props {

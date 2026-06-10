@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, RefreshCw } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 import { ActiveBadge } from '../shared/StatusBadge';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ModalShell } from '../shared/ModalShell';

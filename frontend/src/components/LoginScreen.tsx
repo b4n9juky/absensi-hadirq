@@ -139,9 +139,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </div>
 
         <div className="text-center mt-6 text-xs text-slate-500">
-          Kredensial Default:<br />
-          Admin: <span className="text-slate-400">admin@school.com / adminPassword123</span><br />
-          Guru: <span className="text-slate-400">guru@school.com / guruPassword123</span>
+          Sistem Absensi Sekolah &mdash; ShakeAbsen
         </div>
       </div>
     </div>

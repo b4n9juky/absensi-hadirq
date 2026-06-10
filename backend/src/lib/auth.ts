@@ -13,7 +13,8 @@ export const auth = betterAuth({
     enabled: true
   },
   trustedOrigins: [
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://absensi.manbontang.sch.id'
   ],
   user: {
     additionalFields: {

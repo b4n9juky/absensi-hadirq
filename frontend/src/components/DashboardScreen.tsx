@@ -1,9 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Vibrate, RefreshCw } from 'lucide-react';
 
 import { Sidebar } from './layout/Sidebar';
 import { TopBar } from './layout/TopBar';
-import { Toast } from './layout/Toast';
 import { ErrorBanner } from './shared/ErrorBanner';
 import { DashboardSection } from './sections/DashboardSection';
 import { UsersSection } from './sections/UsersSection';

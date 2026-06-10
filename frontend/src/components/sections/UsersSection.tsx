@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Upload, Pencil, Trash2, RefreshCw, FileSpreadsheet, X, Check } from 'lucide-react';
+import { Plus, Upload, Pencil, Trash2, RefreshCw, FileSpreadsheet, Check } from 'lucide-react';
 import { RoleBadge } from '../shared/StatusBadge';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ModalShell } from '../shared/ModalShell';
@@ -113,7 +113,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
         if (!XLSX) { setImportPreview([{ name: '(muat ulang untuk preview)', email: '', role: '' }]); return; }
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json<any>(sheet, { defval: '' });
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
         const preview = json.slice(0, 5).map((r: any) => ({
           name: String(r.name || r.nama || ''),
           email: String(r.email || ''),

@@ -38,6 +38,8 @@ app.all('/api/auth/*', (req, res) => {
 });
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+// Serve built frontend static files in production
+app.use(express_1.default.static(path_1.default.join(__dirname, '../../frontend/dist')));
 // Multer config for Excel file import
 const uploadExcel = (0, multer_1.default)({
     storage: multer_1.default.diskStorage({
@@ -554,6 +556,15 @@ app.post('/api/attendance/qr', authMiddleware_js_1.authMiddleware, (0, authMiddl
             success: false,
             message: 'Gagal memproses absen QR di server.'
         });
+    }
+});
+// SPA fallback — kirim index.html untuk semua request non-API
+app.get('*', (req, res, next) => {
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path_1.default.join(__dirname, '../../frontend/dist/index.html'));
+    }
+    else {
+        next();
     }
 });
 // Start Express server

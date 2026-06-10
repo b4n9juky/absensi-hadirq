@@ -48,7 +48,8 @@ exports.auth = (0, better_auth_1.betterAuth)({
         enabled: true
     },
     trustedOrigins: [
-        'http://localhost:5173'
+        'http://localhost:5173',
+        'https://absensi.manbontang.sch.id'
     ],
     user: {
         additionalFields: {

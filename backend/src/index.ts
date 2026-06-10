@@ -456,11 +456,15 @@ app.post('/api/attendance', authMiddleware, requireRole(['siswa']), upload.singl
 
       // Verify server time meets checkout_time
       if (currentTimeStr < schedule.checkoutTime) {
+        const checkinTime = record.checkinTime;
+        const checkinStr = checkinTime
+          ? `${String(checkinTime.getHours()).padStart(2, '0')}:${String(checkinTime.getMinutes()).padStart(2, '0')}`
+          : '--:--';
         console.log(`[API] [Rejected] Early checkout check. Current: ${currentTimeStr}, Limit: ${schedule.checkoutTime}`);
         fs.unlinkSync(file.path);
         return res.status(200).json({
           success: false,
-          message: `Belum waktunya pulang! Jam pulang adalah ${schedule.checkoutTime}. Jam server saat ini ${currentTimeStr}.`
+          message: `Absen datang sudah Anda lakukan hari ini pukul ${checkinStr}. Silakan absen pulang setelah jam ${schedule.checkoutTime}.`
         });
       }
 

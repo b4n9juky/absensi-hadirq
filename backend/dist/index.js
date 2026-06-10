@@ -21,6 +21,7 @@ const reportRoutes_js_1 = require("./routes/reportRoutes.js");
 const userRoutes_js_1 = require("./routes/userRoutes.js");
 const classRoutes_js_1 = require("./routes/classRoutes.js");
 const studentRoutes_js_1 = require("./routes/studentRoutes.js");
+const userService_js_1 = require("./services/userService.js");
 const node_1 = require("better-auth/node");
 const auth_js_1 = require("./lib/auth.js");
 const authMiddleware_js_1 = require("./middlewares/authMiddleware.js");
@@ -37,6 +38,47 @@ app.all('/api/auth/*', (req, res) => {
 });
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+// Multer config for Excel file import
+const uploadExcel = (0, multer_1.default)({
+    storage: multer_1.default.diskStorage({
+        destination: (req, file, cb) => {
+            const importDir = path_1.default.join(__dirname, '../uploads/imports');
+            if (!fs_1.default.existsSync(importDir))
+                fs_1.default.mkdirSync(importDir, { recursive: true });
+            cb(null, importDir);
+        },
+        filename: (req, file, cb) => {
+            cb(null, `import-${Date.now()}-${Math.round(Math.random() * 1e9)}.xlsx`);
+        }
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedMimes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+        ];
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        }
+        else {
+            cb(new Error('Format file harus .xlsx atau .xls'));
+        }
+    }
+});
+// Import users from Excel — placed BEFORE /api/users router to avoid 404
+app.post('/api/users/import', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), uploadExcel.single('file'), async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file) {
+            return res.status(400).json({ success: false, error: 'File Excel tidak terkirim.' });
+        }
+        const result = await userService_js_1.userService.importUsers(file.path);
+        res.json({ success: true, data: result });
+    }
+    catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
 // Register CRUD management routers with auth checking
 app.use('/api/academic-years', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), academicYearRoutes_js_1.academicYearsRouter);
 app.use('/api/semesters', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), semesterRoutes_js_1.semestersRouter);

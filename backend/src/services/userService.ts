@@ -3,6 +3,8 @@ import { auth } from '../lib/auth.js';
 import { db } from '../db/index.js';
 import { user } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
+import { parseExcelUserFile } from '../lib/excelParser.js';
+import fs from 'fs';
 
 export interface CreateUserDto {
   name: string;
@@ -90,6 +92,60 @@ export class UserService {
       throw new Error('User tidak ditemukan.');
     }
     await userRepo.delete(id);
+  }
+
+  async importUsers(filePath: string) {
+    const { rows, errors: parseErrors } = parseExcelUserFile(filePath);
+
+    const results: { row: number; email: string; status: string; error?: string }[] = [];
+    let imported = 0;
+    let failed = 0;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNum = i + 2;
+
+      try {
+        const existing = await userRepo.findByEmail(row.email);
+        if (existing) {
+          results.push({ row: rowNum, email: row.email, status: 'skipped', error: 'Email sudah terdaftar.' });
+          failed++;
+          continue;
+        }
+
+        await auth.api.signUpEmail({
+          body: {
+            email: row.email,
+            password: 'Absen123!',
+            name: row.name,
+          },
+        });
+
+        if (row.role !== 'siswa') {
+          const created = await userRepo.findByEmail(row.email);
+          if (created) {
+            await db.update(user).set({ role: row.role }).where(eq(user.id, created.id));
+          }
+        }
+
+        results.push({ row: rowNum, email: row.email, status: 'imported' });
+        imported++;
+      } catch (err: any) {
+        results.push({ row: rowNum, email: row.email, status: 'failed', error: err.message || 'Gagal membuat user.' });
+        failed++;
+      }
+    }
+
+    // Also include parse-level errors
+    for (const pe of parseErrors) {
+      results.push({ row: pe.row, email: pe.email, status: 'failed', error: pe.error });
+      failed++;
+    }
+
+    // Clean up uploaded file
+    try { fs.unlinkSync(filePath); } catch { /* ignore */ }
+
+    return { imported, failed, results };
   }
 }
 export const userService = new UserService();

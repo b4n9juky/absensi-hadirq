@@ -1736,3 +1736,283 @@
 [requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
 [2026-06-10T01:18:51.200Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
 [requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:30:07.303Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:30:07.310Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:30:07.354Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:30:07.373Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:30:12.731Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:15.853Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:17.235Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:19.076Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:19.690Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:19.736Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:19.775Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:21.559Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:21.584Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:21.608Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:52.886Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:52.927Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:30:52.960Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:00.773Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:09.937Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:28.683Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:28.820Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:34.801Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:34.903Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:40.586Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:40.641Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:46.092Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:46.166Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:51.540Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:31:51.587Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:02.390Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:02.502Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:08.123Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:08.168Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:13.684Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:13.739Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:26.466Z] URL: /1, Method: PUT, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /1, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:26.553Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:33.784Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:34.225Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:34.294Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:40.838Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:32:40.852Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:32:46.833Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:50.454Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:32:52.193Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:33:06.157Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:33:10.128Z] URL: /, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:33:10.173Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:33:23.122Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:33:24.353Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:33:24.358Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:33:26.236Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:33:26.240Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:34:20.327Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:34:20.353Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:34:20.390Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:34:20.393Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:34:21.810Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:34:36.655Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:34:37.967Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:34:37.981Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:34:37.993Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:12.400Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:12.425Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:12.443Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:12.942Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:12.957Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:12.974Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:13.646Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:15.015Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:17.856Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:35:17.858Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:35:36.856Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:36.871Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:35:36.886Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:38:36.434Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:38:36.442Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:38:36.502Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:38:36.521Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:38:40.734Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:39:15.937Z] URL: /import, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /import, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:40:07.235Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:40:07.239Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:40:07.267Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:40:07.277Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:40:09.449Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:41:06.044Z] URL: /import, Method: POST, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /import, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:42:28.026Z] URL: /, Method: GET, Auth: Bearer MDqDV718qo7T0..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:43:56.787Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:43:56.794Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:43:56.816Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:43:56.822Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:44:43.740Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:44:43.756Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:44:43.775Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:44:45.551Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:44:45.569Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:44:45.597Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:46:31.074Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:46:31.085Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:46:31.122Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:46:31.131Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:46:33.323Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:46:48.750Z] URL: /import, Method: POST, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /import, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:47:36.404Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:47:36.409Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:47:36.488Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:47:36.506Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:47:38.221Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:48:01.464Z] URL: /api/users/import, Method: POST, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /api/users/import, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:48:01.987Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:48:11.884Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:48:11.925Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:48:11.957Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:48:11.970Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: admin, allowed: ["admin","guru"]
+[2026-06-10T01:48:13.561Z] URL: /, Method: GET, Auth: Bearer olKOQIMsKKba7..., Session: User: admin@school.com, Role: admin
+[requireRole] URL: /, context: true, user: true, role: admin, allowed: ["admin"]
+[2026-06-10T01:58:43.805Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: guru, allowed: ["admin","guru"]
+[2026-06-10T01:58:43.824Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: guru, allowed: ["admin","guru"]
+[2026-06-10T01:58:43.872Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: guru, allowed: ["admin","guru"]
+[2026-06-10T01:58:43.889Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: guru, allowed: ["admin","guru"]
+[2026-06-10T01:58:49.449Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:50.028Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:51.210Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:53.654Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:55.851Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:55.868Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:55.884Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:56.971Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:56.989Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:58:57.006Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:06.448Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:08.192Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:08.775Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:08.792Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:08.810Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:09.356Z] URL: /stats?date=2026-06-10, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /stats?date=2026-06-10, context: true, user: true, role: guru, allowed: ["admin","guru"]
+[2026-06-10T01:59:09.359Z] URL: /attendance?date=2026-06-10, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /attendance?date=2026-06-10, context: true, user: true, role: guru, allowed: ["admin","guru"]
+[2026-06-10T01:59:12.709Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:12.725Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]
+[2026-06-10T01:59:12.743Z] URL: /, Method: GET, Auth: Bearer SS14KYIlBdRrg..., Session: User: najwa@gmail.com, Role: guru
+[requireRole] URL: /, context: true, user: true, role: guru, allowed: ["admin"]

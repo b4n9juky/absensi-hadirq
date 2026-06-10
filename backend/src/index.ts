@@ -18,6 +18,7 @@ import { reportsRouter } from './routes/reportRoutes.js';
 import { usersRouter } from './routes/userRoutes.js';
 import { classesRouter } from './routes/classRoutes.js';
 import { studentsRouter } from './routes/studentRoutes.js';
+import { userService } from './services/userService.js';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import { authMiddleware, requireRole } from './middlewares/authMiddleware.js';
@@ -39,6 +40,46 @@ app.all('/api/auth/*', (req, res) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Multer config for Excel file import
+const uploadExcel = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const importDir = path.join(__dirname, '../uploads/imports');
+      if (!fs.existsSync(importDir)) fs.mkdirSync(importDir, { recursive: true });
+      cb(null, importDir);
+    },
+    filename: (req, file, cb) => {
+      cb(null, `import-${Date.now()}-${Math.round(Math.random() * 1e9)}.xlsx`);
+    }
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Format file harus .xlsx atau .xls'));
+    }
+  }
+});
+
+// Import users from Excel — placed BEFORE /api/users router to avoid 404
+app.post('/api/users/import', authMiddleware, requireRole(['admin']), uploadExcel.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'File Excel tidak terkirim.' });
+    }
+    const result = await userService.importUsers(file.path);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
 
 // Register CRUD management routers with auth checking
 app.use('/api/academic-years', authMiddleware, requireRole(['admin']), academicYearsRouter);

@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  LogOut, 
-  Users, 
-  CheckCircle, 
-  Clock, 
-  UserMinus, 
-  RefreshCw, 
-  Eye, 
-  MapPin, 
-  FileSpreadsheet, 
-  User, 
+import {
+  LogOut,
+  Users,
+  CheckCircle,
+  Clock,
+  UserMinus,
+  RefreshCw,
+  Eye,
+  MapPin,
+  FileSpreadsheet,
+  User,
   SlidersHorizontal,
   Vibrate,
   LayoutDashboard,
@@ -21,7 +21,8 @@ import {
   Trash2,
   X,
   Check,
-  ShieldAlert
+  ShieldAlert,
+  Upload
 } from 'lucide-react';
 
 interface DashboardScreenProps {
@@ -120,6 +121,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ token, user, o
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [userRole, setUserRole] = useState('siswa');
+
+  // Import Excel state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<{ name: string; email: string; role: string }[]>([]);
+  const [importResult, setImportResult] = useState<{ imported: number; failed: number; results: any[] } | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
 
   const [showAddClass, setShowAddClass] = useState(false);
   const [showEditClass, setShowEditClass] = useState<ClassRecord | null>(null);
@@ -370,6 +378,70 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ token, user, o
       }
     } catch (err: any) {
       setErrorMsg(err.message);
+    }
+  };
+
+  // 🔨 IMPORT EXCEL
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setImportFile(null);
+      setImportPreview([]);
+      return;
+    }
+    setImportFile(file);
+    setImportResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+        const XLSX = (window as any).XLSX;
+        if (!XLSX) {
+          setImportPreview([{ name: '(muat ulang untuk preview)', email: '', role: '' }]);
+          return;
+        }
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json<any>(sheet, { defval: '' });
+        const preview = json.slice(0, 5).map((r: any) => ({
+          name: String(r.name || r.nama || ''),
+          email: String(r.email || ''),
+          role: String(r.role || r.peran || '').toLowerCase(),
+        }));
+        setImportPreview(preview);
+      } catch {
+        setImportPreview([{ name: '(gagal baca preview)', email: '', role: '' }]);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleImportSubmit = async () => {
+    if (!importFile) return;
+    setImportLoading(true);
+    setErrorMsg('');
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+      const response = await fetch('/api/users/import', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setImportResult(data.data);
+        triggerToast(`Import selesai: ${data.data.imported} sukses, ${data.data.failed} gagal`);
+        fetchSectionData();
+      } else {
+        throw new Error(data.error || 'Gagal import data.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setImportLoading(false);
     }
   };
 
@@ -1071,19 +1143,33 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ token, user, o
                   <h2 className="text-md font-bold text-white">Kelola Akun Pengguna</h2>
                   <p className="text-[10px] text-slate-500 mt-1">Daftar hak akses Admin, Guru, dan Siswa.</p>
                 </div>
-                <button
-                  onClick={() => {
-                    setUserName('');
-                    setUserEmail('');
-                    setUserPassword('');
-                    setUserRole('siswa');
-                    setShowAddUser(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Tambah User</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setUserName('');
+                      setUserEmail('');
+                      setUserPassword('');
+                      setUserRole('siswa');
+                      setShowAddUser(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Tambah User</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setImportFile(null);
+                      setImportPreview([]);
+                      setImportResult(null);
+                      setShowImportModal(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 text-xs font-bold transition-all"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Import Excel</span>
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto w-full">
@@ -1570,6 +1656,139 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ token, user, o
               <button type="submit" className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs">Simpan Perubahan</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* BI. Import Excel Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden relative">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+              <h3 className="font-bold text-white text-sm">Import User dari Excel</h3>
+              <button type="button" onClick={() => setShowImportModal(false)} className="text-slate-500 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs">
+              {importResult ? (
+                // Show results
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-center">
+                      <div className="text-2xl font-bold text-emerald-400">{importResult.imported}</div>
+                      <div className="text-slate-400 mt-1">Berhasil</div>
+                    </div>
+                    <div className="flex-1 bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
+                      <div className="text-2xl font-bold text-red-400">{importResult.failed}</div>
+                      <div className="text-slate-400 mt-1">Gagal</div>
+                    </div>
+                  </div>
+                  {importResult.results.filter((r: any) => r.status === 'failed' || r.status === 'skipped').length > 0 && (
+                    <div>
+                      <h4 className="text-slate-300 font-semibold mb-2">Detail Error:</h4>
+                      <div className="max-h-40 overflow-y-auto space-y-1">
+                        {importResult.results.filter((r: any) => r.status === 'failed' || r.status === 'skipped').map((r: any, i: number) => (
+                          <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 text-slate-300">
+                            <span className="text-slate-500">Baris {r.row}:</span> {r.email} — <span className="text-red-400">{r.error}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => { setShowImportModal(false); setImportResult(null); setImportFile(null); setImportPreview([]); }}
+                    className="w-full px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              ) : (
+                // Upload form
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-slate-400 mb-1.5 uppercase font-semibold">File Excel</label>
+                    <div className="border-2 border-dashed border-slate-700 rounded-xl p-6 text-center hover:border-blue-500/50 transition-colors cursor-pointer" onClick={() => document.getElementById('excel-file-input')?.click()}>
+                      {importFile ? (
+                        <div className="text-slate-200">
+                          <FileSpreadsheet className="w-8 h-8 mx-auto text-blue-400 mb-2" />
+                          <p className="font-semibold">{importFile.name}</p>
+                          <p className="text-slate-500 text-[10px] mt-1">{(importFile.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      ) : (
+                        <div className="text-slate-400">
+                          <Upload className="w-8 h-8 mx-auto mb-2" />
+                          <p className="font-semibold">Klik untuk pilih file Excel</p>
+                          <p className="text-slate-500 text-[10px] mt-1">Format .xlsx atau .xls</p>
+                        </div>
+                      )}
+                      <input
+                        id="excel-file-input"
+                        type="file"
+                        accept=".xlsx,.xls"
+                        className="hidden"
+                        onChange={handleImportFileChange}
+                      />
+                    </div>
+                  </div>
+
+                  {importPreview.length > 0 && (
+                    <div>
+                      <h4 className="text-slate-300 font-semibold mb-2">Preview (5 baris pertama):</h4>
+                      <div className="bg-slate-950 rounded-xl overflow-hidden">
+                        <table className="w-full text-left text-[11px]">
+                          <thead>
+                            <tr className="bg-slate-900 text-slate-400 uppercase font-semibold">
+                              <th className="px-3 py-2">Nama</th>
+                              <th className="px-3 py-2">Email</th>
+                              <th className="px-3 py-2">Role</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {importPreview.map((row, i) => (
+                              <tr key={i} className="text-slate-200">
+                                <td className="px-3 py-2">{row.name || '-'}</td>
+                                <td className="px-3 py-2">{row.email || '-'}</td>
+                                <td className="px-3 py-2">
+                                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                                    row.role === 'admin' ? 'bg-red-500/10 text-red-400' :
+                                    row.role === 'guru' ? 'bg-blue-500/10 text-blue-400' :
+                                    'bg-teal-500/10 text-teal-400'
+                                  }`}>{row.role || '-'}</span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="text-slate-500 text-[10px] mt-1">Kolom wajib: Name/Nama, Email, Role/Peran</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {!importResult && (
+              <div className="p-4 border-t border-slate-800 flex justify-end gap-2 bg-slate-950/20">
+                <button type="button" onClick={() => setShowImportModal(false)} className="px-4 py-2 rounded-xl border border-slate-800 text-slate-400 font-bold hover:text-white text-xs">Batal</button>
+                <button
+                  onClick={handleImportSubmit}
+                  disabled={!importFile || importLoading}
+                  className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 ${
+                    !importFile || importLoading
+                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                      : 'bg-blue-500 hover:bg-blue-400 text-slate-950'
+                  }`}
+                >
+                  {importLoading ? (
+                    <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Mengimport...</>
+                  ) : (
+                    <><Upload className="w-3.5 h-3.5" /> Import</>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

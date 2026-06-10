@@ -1,0 +1,117 @@
+import { studentRepo } from '../repositories/studentRepository.js';
+import { userRepo } from '../repositories/userRepository.js';
+import { classRepo } from '../repositories/classRepository.js';
+
+export interface CreateStudentDto {
+  userId: string;
+  nis: string;
+  classId: number;
+}
+
+export class StudentService {
+  async getStudents() {
+    return studentRepo.findAll();
+  }
+
+  async createStudent(dto: CreateStudentDto) {
+    if (!dto.userId || dto.userId.trim() === '') {
+      throw new Error('User ID wajib diisi.');
+    }
+    if (!dto.nis || dto.nis.trim() === '') {
+      throw new Error('NIS wajib diisi.');
+    }
+    if (!dto.classId) {
+      throw new Error('Kelas wajib dipilih.');
+    }
+
+    // Verify User Exists
+    const userRecord = await userRepo.findById(dto.userId);
+    if (!userRecord) {
+      throw new Error('Akun user tidak ditemukan.');
+    }
+
+    // Verify Class Exists
+    const classRecord = await classRepo.findById(dto.classId);
+    if (!classRecord) {
+      throw new Error('Kelas tidak ditemukan.');
+    }
+
+    // Verify User ID is not already linked to another student
+    const existingUserLink = await studentRepo.findByUserId(dto.userId);
+    if (existingUserLink) {
+      throw new Error('Akun user ini sudah terikat dengan profil siswa lain.');
+    }
+
+    // Verify NIS uniqueness
+    const existingNis = await studentRepo.findByNis(dto.nis);
+    if (existingNis) {
+      throw new Error('NIS siswa sudah terdaftar.');
+    }
+
+    return studentRepo.create(dto.userId, dto.nis, dto.classId);
+  }
+
+  async updateStudent(id: number, dto: CreateStudentDto) {
+    const existing = await studentRepo.findById(id);
+    if (!existing) {
+      throw new Error('Siswa tidak ditemukan.');
+    }
+
+    if (!dto.userId || dto.userId.trim() === '') {
+      throw new Error('User ID wajib diisi.');
+    }
+    if (!dto.nis || dto.nis.trim() === '') {
+      throw new Error('NIS wajib diisi.');
+    }
+    if (!dto.classId) {
+      throw new Error('Kelas wajib dipilih.');
+    }
+
+    // Verify User Exists
+    const userRecord = await userRepo.findById(dto.userId);
+    if (!userRecord) {
+      throw new Error('Akun user tidak ditemukan.');
+    }
+
+    // Verify Class Exists
+    const classRecord = await classRepo.findById(dto.classId);
+    if (!classRecord) {
+      throw new Error('Kelas tidak ditemukan.');
+    }
+
+    // Verify User ID is not linked to another student
+    if (dto.userId !== existing.userId) {
+      const userLinkConflict = await studentRepo.findByUserId(dto.userId);
+      if (userLinkConflict) {
+        throw new Error('Akun user ini sudah terikat dengan profil siswa lain.');
+      }
+    }
+
+    // Verify NIS uniqueness if NIS changed
+    if (dto.nis !== existing.nis) {
+      const nisConflict = await studentRepo.findByNis(dto.nis);
+      if (nisConflict) {
+        throw new Error('NIS siswa sudah digunakan.');
+      }
+    }
+
+    await studentRepo.update(id, dto.userId, dto.nis, dto.classId);
+  }
+
+  async resetDevice(id: number) {
+    const existing = await studentRepo.findById(id);
+    if (!existing) {
+      throw new Error('Siswa tidak ditemukan.');
+    }
+    await studentRepo.updateDeviceUuid(id, null);
+  }
+
+  async deleteStudent(id: number) {
+    const existing = await studentRepo.findById(id);
+    if (!existing) {
+      throw new Error('Siswa tidak ditemukan.');
+    }
+    await studentRepo.delete(id);
+  }
+}
+export const studentService = new StudentService();

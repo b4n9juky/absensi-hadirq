@@ -1,0 +1,50 @@
+import { semesterRepo } from '../repositories/semesterRepository.js';
+import { academicYearRepo } from '../repositories/academicYearRepository.js';
+import { db } from '../db/index.js';
+
+export interface CreateSemesterDto {
+  academicYearId: number;
+  name: string;
+  isActive?: boolean;
+}
+
+export class SemesterService {
+  async getSemesters() {
+    return semesterRepo.findAll();
+  }
+
+  async createSemester(dto: CreateSemesterDto) {
+    if (!dto.name || dto.name.trim() === '') {
+      throw new Error('Nama semester tidak boleh kosong.');
+    }
+
+    const year = await academicYearRepo.findById(dto.academicYearId);
+    if (!year) {
+      throw new Error(`Tahun ajaran dengan ID ${dto.academicYearId} tidak ditemukan.`);
+    }
+
+    const isActive = dto.isActive ?? false;
+
+    if (isActive) {
+      return db.transaction(async (tx) => {
+        await semesterRepo.deactivateAllInYear(dto.academicYearId);
+        return semesterRepo.create(dto.academicYearId, dto.name, true);
+      });
+    }
+
+    return semesterRepo.create(dto.academicYearId, dto.name, false);
+  }
+
+  async activateSemester(id: number) {
+    const semester = await semesterRepo.findById(id);
+    if (!semester) {
+      throw new Error(`Semester dengan ID ${id} tidak ditemukan.`);
+    }
+
+    return db.transaction(async (tx) => {
+      await semesterRepo.deactivateAllInYear(semester.academicYearId);
+      await semesterRepo.setActive(id);
+    });
+  }
+}
+export const semesterService = new SemesterService();

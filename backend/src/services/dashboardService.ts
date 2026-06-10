@@ -1,0 +1,76 @@
+import { dashboardRepo } from '../repositories/dashboardRepository.js';
+
+export interface DashboardStatsDto {
+  totalStudents: number;
+  presentCount: number;
+  lateCount: number;
+  absentCount: number;
+  daysCount: number;
+}
+
+export class DashboardService {
+  async getStats(filters: {
+    date?: string;
+    month?: number;
+    year?: number;
+    classId?: number;
+  }): Promise<DashboardStatsDto> {
+    let startDate: string;
+    let endDate: string;
+    let daysCount = 1;
+
+    const currentServerTime = new Date();
+
+    if (filters.date) {
+      // Validate date format YYYY-MM-DD
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(filters.date)) {
+        throw new Error('Format tanggal harus YYYY-MM-DD (contoh: 2026-06-08).');
+      }
+      startDate = filters.date;
+      endDate = filters.date;
+      daysCount = 1;
+    } else if (filters.month || filters.year) {
+      const year = filters.year ?? currentServerTime.getFullYear();
+      const month = filters.month ?? (currentServerTime.getMonth() + 1);
+
+      if (month < 1 || month > 12) {
+        throw new Error('Bulan harus berada di antara 1 dan 12.');
+      }
+
+      const daysInMonth = new Date(year, month, 0).getDate();
+      startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
+      daysCount = daysInMonth;
+    } else {
+      // Default to today in local server time
+      const localYear = currentServerTime.getFullYear();
+      const localMonth = String(currentServerTime.getMonth() + 1).padStart(2, '0');
+      const localDay = String(currentServerTime.getDate()).padStart(2, '0');
+      startDate = `${localYear}-${localMonth}-${localDay}`;
+      endDate = startDate;
+      daysCount = 1;
+    }
+
+    const [totalStudents, presentCount, lateCount] = await Promise.all([
+      dashboardRepo.getTotalStudents(filters.classId),
+      dashboardRepo.getAttendanceCount('PRESENT', startDate, endDate, filters.classId),
+      dashboardRepo.getAttendanceCount('LATE', startDate, endDate, filters.classId)
+    ]);
+
+    // Calculate absentCount: (totalStudents * daysCount) - (presentCount + lateCount)
+    // Ensures that it doesn't go below 0
+    const rawAbsent = (totalStudents * daysCount) - (presentCount + lateCount);
+    const absentCount = rawAbsent < 0 ? 0 : rawAbsent;
+
+    return {
+      totalStudents,
+      presentCount,
+      lateCount,
+      absentCount,
+      daysCount
+    };
+  }
+}
+
+export const dashboardService = new DashboardService();

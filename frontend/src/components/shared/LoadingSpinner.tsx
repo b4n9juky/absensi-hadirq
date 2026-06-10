@@ -1,0 +1,12 @@
+import { RefreshCw } from 'lucide-react';
+
+interface Props {
+  text?: string;
+}
+
+export const LoadingSpinner: React.FC<Props> = ({ text = 'Memuat data...' }) => (
+  <div className="py-20 text-center text-slate-500 text-sm">
+    <RefreshCw className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-3" />
+    <span>{text}</span>
+  </div>
+);

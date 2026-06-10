@@ -367,6 +367,15 @@ app.post('/api/attendance', authMiddleware_js_1.authMiddleware, (0, authMiddlewa
                     message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.`
                 });
             }
+            // Strict policy: reject check-in if already past checkout time
+            if (currentTimeStr >= schedule.checkoutTime) {
+                console.log(`[API] [Rejected] Check-in past checkout time. Current: ${currentTimeStr}, Checkout: ${schedule.checkoutTime}`);
+                fs_1.default.unlinkSync(file.path);
+                return res.status(200).json({
+                    success: false,
+                    message: `Anda belum absen datang hari ini. Silakan hubungi Guru/Admin.`
+                });
+            }
             // Check delay
             const isLate = currentTimeStr > schedule.lateAfter;
             const status = isLate ? 'LATE' : 'PRESENT';

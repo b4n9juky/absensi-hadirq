@@ -406,6 +406,16 @@ app.post('/api/attendance', authMiddleware, requireRole(['siswa']), upload.singl
         });
       }
 
+      // Strict policy: reject check-in if already past checkout time
+      if (currentTimeStr >= schedule.checkoutTime) {
+        console.log(`[API] [Rejected] Check-in past checkout time. Current: ${currentTimeStr}, Checkout: ${schedule.checkoutTime}`);
+        fs.unlinkSync(file.path);
+        return res.status(200).json({
+          success: false,
+          message: `Anda belum absen datang hari ini. Silakan hubungi Guru/Admin.`
+        });
+      }
+
       // Check delay
       const isLate = currentTimeStr > schedule.lateAfter;
       const status = isLate ? 'LATE' : 'PRESENT';

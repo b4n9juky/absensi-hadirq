@@ -96,7 +96,7 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
     e.preventDefault();
     if (!showEditSchedule) return;
     try {
-      const res = await fetch(`/api/schedules/${showEditSchedule.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ checkinStart: schedStart + ':00', lateAfter: schedLate + ':00', checkoutTime: schedCheckout + ':00' }) });
+      const res = await fetch(`/api/schedules/${showEditSchedule.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ checkinStart: schedStart, lateAfter: schedLate, checkoutTime: schedCheckout }) });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Jadwal diperbarui!'); setShowEditSchedule(null); fetchData(); }
       else throw new Error(data.error || 'Gagal.');

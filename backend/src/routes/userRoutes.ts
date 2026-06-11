@@ -3,10 +3,11 @@ import { userService } from '../services/userService.js';
 import { students } from '../db/schema.js';
 import { db } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+import { validate } from '../middlewares/validate.js';
+import { createUserSchema, updateUserSchema } from '../lib/validation.js';
 
 export const usersRouter = Router();
 
-// GET all users
 usersRouter.get('/', async (req, res) => {
   try {
     const data = await userService.getUsers();
@@ -16,8 +17,7 @@ usersRouter.get('/', async (req, res) => {
   }
 });
 
-// POST create user
-usersRouter.post('/', async (req, res) => {
+usersRouter.post('/', validate(createUserSchema), async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
     const userId = await userService.createUser({ name, email, password, role });
@@ -27,8 +27,7 @@ usersRouter.post('/', async (req, res) => {
   }
 });
 
-// PUT update user
-usersRouter.put('/:id', async (req, res) => {
+usersRouter.put('/:id', validate(updateUserSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, role } = req.body;

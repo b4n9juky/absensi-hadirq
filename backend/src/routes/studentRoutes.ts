@@ -6,10 +6,11 @@ import { db } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';
+import { validate } from '../middlewares/validate.js';
+import { createStudentSchema, updateStudentSchema } from '../lib/validation.js';
 
 export const studentsRouter = Router();
 
-// GET all students
 studentsRouter.get('/', async (req, res) => {
   try {
     const data = await studentService.getStudents();
@@ -19,34 +20,24 @@ studentsRouter.get('/', async (req, res) => {
   }
 });
 
-// POST create student
-studentsRouter.post('/', async (req, res) => {
+studentsRouter.post('/', validate(createStudentSchema), async (req, res) => {
   try {
     const { userId, nis, classId } = req.body;
-    const studentId = await studentService.createStudent({ 
-      userId, 
-      nis, 
-      classId: parseInt(classId) 
-    });
+    const studentId = await studentService.createStudent({ userId, nis, classId });
     res.status(201).json({ success: true, message: 'Siswa berhasil dibuat.', data: { id: studentId } });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
   }
 });
 
-// PUT update student
-studentsRouter.put('/:id', async (req, res) => {
+studentsRouter.put('/:id', validate(updateStudentSchema), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ success: false, error: 'ID tidak valid.' });
     }
     const { userId, nis, classId } = req.body;
-    await studentService.updateStudent(id, { 
-      userId, 
-      nis, 
-      classId: parseInt(classId) 
-    });
+    await studentService.updateStudent(id, { userId, nis, classId });
     res.json({ success: true, message: 'Siswa berhasil diperbarui.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });

@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginScreen } from './components/LoginScreen';
-import { DashboardScreen } from './components/DashboardScreen';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import { DashboardSection } from './components/sections/DashboardSection';
+import { UsersSection } from './components/sections/UsersSection';
+import { ClassesSection } from './components/sections/ClassesSection';
+import { StudentsSection } from './components/sections/StudentsSection';
+import { AcademicSection } from './components/sections/AcademicSection';
+import { SettingsSection } from './components/sections/SettingsSection';
 
 function App() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check active session on startup
   useEffect(() => {
     const savedToken = localStorage.getItem('absen_admin_token');
     const savedUser = localStorage.getItem('absen_admin_user');
@@ -42,13 +48,39 @@ function App() {
   }
 
   return (
-    <>
-      {!token || !user ? (
-        <LoginScreen onLoginSuccess={handleLoginSuccess} />
-      ) : (
-        <DashboardScreen token={token} user={user} onLogout={handleLogout} />
-      )}
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            !token || !user ? (
+              <LoginScreen onLoginSuccess={handleLoginSuccess} />
+            ) : (
+              <Navigate to="/dashboard/ringkasan" replace />
+            )
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            token && user ? (
+              <DashboardLayout user={user} onLogout={handleLogout} token={token} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Navigate to="ringkasan" replace />} />
+          <Route path="ringkasan" element={<DashboardSection token={token!} />} />
+          <Route path="pengguna" element={<UsersSection token={token!} />} />
+          <Route path="kelas" element={<ClassesSection token={token!} />} />
+          <Route path="siswa" element={<StudentsSection token={token!} />} />
+          <Route path="akademik" element={<AcademicSection token={token!} />} />
+          <Route path="pengaturan" element={<SettingsSection token={token!} />} />
+        </Route>
+        <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

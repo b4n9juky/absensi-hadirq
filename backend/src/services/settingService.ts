@@ -16,6 +16,7 @@ export class SettingService {
       'school_longitude',
       'school_radius_meters',
       'max_accuracy_meters',
+      'api_base_url',
     ];
 
     for (const key of Object.keys(entries)) {
@@ -36,6 +37,22 @@ export class SettingService {
   async getValue(key: string): Promise<string | null> {
     const row = await settingRepo.get(key);
     return row ? row.value : null;
+  }
+
+  async getGeofenceConfig() {
+    const get = async (key: string, envKey: string, fallback: string) => {
+      const val = await this.getValue(key);
+      if (val !== null && val.trim() !== '') return val;
+      return process.env[envKey] || fallback;
+    };
+
+    return {
+      school_latitude: parseFloat(await get('school_latitude', 'SCHOOL_LATITUDE', '0.1340')),
+      school_longitude: parseFloat(await get('school_longitude', 'SCHOOL_LONGITUDE', '117.5000')),
+      school_radius_meters: parseFloat(await get('school_radius_meters', 'SCHOOL_RADIUS_METERS', '50')),
+      max_accuracy_meters: parseFloat(await get('max_accuracy_meters', 'MAX_ACCURACY_METERS', '30')),
+      api_base_url: await get('api_base_url', 'API_BASE_URL', ''),
+    };
   }
 }
 

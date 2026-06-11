@@ -1,29 +1,16 @@
 import { Router } from 'express';
 import { dashboardService } from '../services/dashboardService.js';
+import { validate } from '../middlewares/validate.js';
+import { dashboardStatsSchema } from '../lib/validation.js';
 
 export const dashboardRouter = Router();
 
-// GET dashboard statistics
-dashboardRouter.get('/stats', async (req, res) => {
+dashboardRouter.get('/stats', validate(dashboardStatsSchema, 'query'), async (req, res) => {
   try {
     const date = req.query.date as string | undefined;
-    const monthStr = req.query.month as string | undefined;
-    const yearStr = req.query.year as string | undefined;
-    const classIdStr = req.query.classId as string | undefined;
-
-    const month = monthStr ? parseInt(monthStr) : undefined;
-    const year = yearStr ? parseInt(yearStr) : undefined;
-    const classId = classIdStr ? parseInt(classIdStr) : undefined;
-
-    if (monthStr && isNaN(month!)) {
-      return res.status(400).json({ success: false, error: 'Bulan tidak valid.' });
-    }
-    if (yearStr && isNaN(year!)) {
-      return res.status(400).json({ success: false, error: 'Tahun tidak valid.' });
-    }
-    if (classIdStr && isNaN(classId!)) {
-      return res.status(400).json({ success: false, error: 'ID Kelas tidak valid.' });
-    }
+    const month = req.query.month ? parseInt(req.query.month as string) : undefined;
+    const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+    const classId = req.query.classId ? parseInt(req.query.classId as string) : undefined;
 
     const stats = await dashboardService.getStats({ date, month, year, classId });
     res.json({ success: true, data: stats });

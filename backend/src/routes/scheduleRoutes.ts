@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { scheduleService } from '../services/scheduleService.js';
+import { validate } from '../middlewares/validate.js';
+import { updateScheduleSchema } from '../lib/validation.js';
 
 export const scheduleRouter = Router();
 
@@ -13,8 +15,7 @@ scheduleRouter.get('/', async (req, res) => {
   }
 });
 
-// PUT to update a specific day's schedule
-scheduleRouter.put('/:id', async (req, res) => {
+scheduleRouter.put('/:id', validate(updateScheduleSchema), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

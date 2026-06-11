@@ -4,6 +4,8 @@ import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { bearer } from 'better-auth/plugins';
 
+const trustedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(s => s.trim());
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'mysql',
@@ -12,10 +14,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true
   },
-  trustedOrigins: [
-    'http://localhost:5173',
-    'https://absensi.manbontang.sch.id'
-  ],
+  trustedOrigins,
   user: {
     additionalFields: {
       role: {

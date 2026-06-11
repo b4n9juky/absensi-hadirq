@@ -25,10 +25,9 @@ const pathToSection: Record<string, string> = {
 interface Props {
   user: { name: string; role: string };
   onLogout: () => void;
-  token: string;
 }
 
-export const DashboardLayout: React.FC<Props> = ({ user, onLogout, token }) => {
+export const DashboardLayout: React.FC<Props> = ({ user, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [errorMsg, setErrorMsg] = useState('');

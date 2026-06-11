@@ -64,7 +64,7 @@ function App() {
           path="/dashboard"
           element={
             token && user ? (
-              <DashboardLayout user={user} onLogout={handleLogout} token={token} />
+              <DashboardLayout user={user} onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )

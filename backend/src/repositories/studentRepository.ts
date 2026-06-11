@@ -10,6 +10,7 @@ export class StudentRepository {
       nis: students.nis,
       classId: students.classId,
       deviceUuid: students.deviceUuid,
+      qrcode: students.qrcode,
       createdAt: students.createdAt,
       updatedAt: students.updatedAt,
       studentName: user.name,
@@ -36,18 +37,27 @@ export class StudentRepository {
     return results[0] || null;
   }
 
-  async create(userId: string, nis: string, classId: number) {
+  async create(userId: string, nis: string, classId: number, qrcode?: string) {
     const [result] = await db.insert(students).values({
       userId,
       nis,
-      classId
+      classId,
+      qrcode
     });
     return result.insertId;
   }
 
-  async update(id: number, userId: string, nis: string, classId: number) {
+  async update(id: number, userId: string, nis: string, classId: number, qrcode?: string) {
+    const values: Record<string, any> = { userId, nis, classId, updatedAt: new Date() };
+    if (qrcode !== undefined) values.qrcode = qrcode;
     await db.update(students)
-      .set({ userId, nis, classId, updatedAt: new Date() })
+      .set(values)
+      .where(eq(students.id, id));
+  }
+
+  async updateQrCode(id: number, qrcode: string) {
+    await db.update(students)
+      .set({ qrcode, updatedAt: new Date() })
       .where(eq(students.id, id));
   }
 

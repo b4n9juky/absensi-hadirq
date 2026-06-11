@@ -18,15 +18,15 @@ const options: { value: Section; label: string }[] = [
 ];
 
 export const TopBar: React.FC<Props> = ({ activeSection, onSectionChange, onRefresh, isLoading }) => (
-  <header className="border-b border-slate-900 bg-slate-900/30 backdrop-blur-md px-6 py-4 flex items-center justify-between md:justify-end">
+  <header className="border-b border-border bg-card/50 backdrop-blur-md px-6 py-4 flex items-center justify-between md:justify-end">
     <div className="flex items-center gap-2 md:hidden">
       <Vibrate className="w-5 h-5 text-teal-400 animate-pulse" />
-      <span className="font-black text-white text-sm">ShakeAbsen Panel</span>
+      <span className="font-black text-foreground text-sm">ShakeAbsen Panel</span>
     </div>
     <div className="flex items-center gap-2.5">
       <button
         onClick={onRefresh}
-        className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
+        className="p-2.5 rounded-xl bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border transition-colors"
         title="Refresh Data"
       >
         <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -35,7 +35,7 @@ export const TopBar: React.FC<Props> = ({ activeSection, onSectionChange, onRefr
         <select
           value={activeSection}
           onChange={(e: any) => onSectionChange(e.target.value)}
-          className="bg-slate-900 border border-slate-800 rounded-xl px-2 py-2 text-xs font-bold text-white focus:outline-none"
+          className="bg-secondary border border-border rounded-xl px-2 py-2 text-xs font-bold text-foreground focus:outline-none"
         >
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>

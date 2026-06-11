@@ -4,9 +4,9 @@ interface RoleBadgeProps {
 
 export const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
   const styles: Record<string, string> = {
-    admin: 'bg-red-500/10 border-red-500/20 text-red-400',
-    guru: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
-    siswa: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
+    admin: 'bg-red-500/10 border-red-500/20 text-red-500',
+    guru: 'bg-blue-500/10 border-blue-500/20 text-blue-500',
+    siswa: 'bg-teal-500/10 border-teal-500/20 text-teal-500',
   };
   return (
     <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase border ${styles[role] || styles.siswa}`}>
@@ -30,7 +30,7 @@ interface DeviceBadgeProps {
 }
 
 export const DeviceBadge: React.FC<DeviceBadgeProps> = ({ bound }) => (
-  <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase ${bound ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'}`}>
+  <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase ${bound ? 'bg-teal-500/10 text-teal-500 border border-teal-500/20' : 'bg-muted text-muted-foreground border border-border'}`}>
     {bound ? 'Terikat' : 'Belum Terikat'}
   </span>
 );
@@ -42,7 +42,7 @@ interface ActiveBadgeProps {
 export const ActiveBadge: React.FC<ActiveBadgeProps> = ({ isActive }) => {
   if (!isActive) return null;
   return (
-    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-[9px]">
+    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-bold text-[9px]">
       AKTIF
     </span>
   );

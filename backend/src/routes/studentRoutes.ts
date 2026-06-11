@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import { studentService } from '../services/studentService.js';
+import { studentRepo } from '../repositories/studentRepository.js';
 import { attendances } from '../db/schema.js';
 import { db } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+import path from 'path';
+import fs from 'fs';
 
 export const studentsRouter = Router();
 
@@ -85,6 +88,27 @@ studentsRouter.put('/:id/reset-device', async (req, res) => {
     res.json({ success: true, message: 'Kunci perangkat HP siswa berhasil di-reset.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// GET student QR code image
+studentsRouter.get('/:id/qrcode', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    }
+    const student = await studentRepo.findById(id);
+    if (!student || !student.qrcode) {
+      return res.status(404).json({ success: false, error: 'QR code tidak ditemukan.' });
+    }
+    const filePath = path.join(__dirname, '../../', student.qrcode.replace(/^\//, ''));
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: 'File QR code tidak ditemukan.' });
+    }
+    res.sendFile(filePath);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

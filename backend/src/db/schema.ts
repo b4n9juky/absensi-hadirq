@@ -41,6 +41,7 @@ export const students = mysqlTable('students', {
   nis: varchar('nis', { length: 50 }).notNull().unique(),
   classId: int('class_id').references(() => classes.id).notNull(),
   deviceUuid: varchar('device_uuid', { length: 255 }),
+  qrcode: varchar('qrcode', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
@@ -102,6 +103,12 @@ export const account = mysqlTable('account', {
   password: varchar('password', { length: 255 }),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull()
+});
+
+export const settings = mysqlTable('settings', {
+  key: varchar('key', { length: 100 }).primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
 export const verification = mysqlTable('verification', {

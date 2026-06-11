@@ -1,6 +1,7 @@
 import { studentRepo } from '../repositories/studentRepository.js';
 import { userRepo } from '../repositories/userRepository.js';
 import { classRepo } from '../repositories/classRepository.js';
+import { generateQrCode, deleteQrCodeFile } from '../lib/qrGenerator.js';
 
 export interface CreateStudentDto {
   userId: string;
@@ -48,7 +49,14 @@ export class StudentService {
       throw new Error('NIS siswa sudah terdaftar.');
     }
 
-    return studentRepo.create(dto.userId, dto.nis, dto.classId);
+    const studentId = await studentRepo.create(dto.userId, dto.nis, dto.classId);
+    try {
+      const qrPath = await generateQrCode(dto.nis, studentId);
+      await studentRepo.updateQrCode(studentId, qrPath);
+    } catch (err) {
+      console.error(`[QR] Gagal generate QR untuk NIS ${dto.nis}:`, err);
+    }
+    return studentId;
   }
 
   async updateStudent(id: number, dto: CreateStudentDto) {
@@ -95,7 +103,16 @@ export class StudentService {
       }
     }
 
-    await studentRepo.update(id, dto.userId, dto.nis, dto.classId);
+    let qrcode = existing.qrcode;
+    if (dto.nis !== existing.nis || !existing.qrcode) {
+      await deleteQrCodeFile(existing.qrcode);
+      try {
+        qrcode = await generateQrCode(dto.nis, id);
+      } catch (err) {
+        console.error(`[QR] Gagal generate QR untuk NIS ${dto.nis}:`, err);
+      }
+    }
+    await studentRepo.update(id, dto.userId, dto.nis, dto.classId, qrcode || undefined);
   }
 
   async resetDevice(id: number) {
@@ -111,6 +128,7 @@ export class StudentService {
     if (!existing) {
       throw new Error('Siswa tidak ditemukan.');
     }
+    await deleteQrCodeFile(existing.qrcode);
     await studentRepo.delete(id);
   }
 }

@@ -61,7 +61,7 @@ export const DashboardScreen: React.FC<Props> = ({ token, user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
+    <div className="min-h-screen bg-background text-foreground flex font-sans">
       <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} user={user} onLogout={onLogout} />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar activeSection={activeSection} onSectionChange={setActiveSection} onRefresh={handleRefresh} isLoading={false} />

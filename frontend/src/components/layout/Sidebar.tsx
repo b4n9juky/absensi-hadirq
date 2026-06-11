@@ -1,4 +1,5 @@
 import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Vibrate } from 'lucide-react';
+import { ThemeToggle } from '../shared/ThemeToggle';
 
 type Section = 'dashboard' | 'users' | 'classes' | 'students' | 'academic';
 
@@ -18,17 +19,17 @@ const navItems: { key: Section; icon: React.ReactNode; label: string }[] = [
 ];
 
 export const Sidebar: React.FC<Props> = ({ activeSection, onSectionChange, user, onLogout }) => (
-  <aside className="w-64 bg-slate-900/60 border-r border-slate-900/80 backdrop-blur-md hidden md:flex flex-col justify-between shrink-0">
+  <aside className="w-64 bg-card border-r border-border backdrop-blur-md hidden md:flex flex-col justify-between shrink-0">
     <div>
-      <div className="px-6 py-6 border-b border-slate-900 flex items-center gap-3">
+      <div className="px-6 py-6 border-b border-border flex items-center gap-3">
         <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400">
           <Vibrate className="w-5 h-5 animate-pulse" />
         </div>
         <div>
-          <h1 className="text-md font-black tracking-wider text-white">
+          <h1 className="text-md font-black tracking-wider text-foreground">
             Shake<span className="text-teal-400">Absen</span>
           </h1>
-          <p className="text-[10px] text-slate-500 tracking-widest font-semibold uppercase">Control Panel</p>
+          <p className="text-[10px] text-muted-foreground tracking-widest font-semibold uppercase">Control Panel</p>
         </div>
       </div>
       <nav className="p-4 space-y-1.5">
@@ -39,7 +40,7 @@ export const Sidebar: React.FC<Props> = ({ activeSection, onSectionChange, user,
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
               activeSection === key
                 ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20 shadow-md shadow-teal-500/5'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/40 border border-transparent'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent border border-transparent'
             }`}
           >
             {icon}
@@ -48,10 +49,11 @@ export const Sidebar: React.FC<Props> = ({ activeSection, onSectionChange, user,
         ))}
       </nav>
     </div>
-    <div className="p-4 border-t border-slate-900">
-      <div className="p-3 bg-slate-950/50 rounded-xl border border-slate-900/60 mb-3 text-xs">
-        <div className="font-bold text-white max-w-full truncate">{user.name}</div>
-        <div className="text-[10px] text-slate-500 uppercase mt-0.5 tracking-wider">{user.role}</div>
+    <div className="p-4 border-t border-border space-y-2">
+      <ThemeToggle />
+      <div className="p-3 bg-background/50 rounded-xl border border-border text-xs">
+        <div className="font-bold text-foreground max-w-full truncate">{user.name}</div>
+        <div className="text-[10px] text-muted-foreground uppercase mt-0.5 tracking-wider">{user.role}</div>
       </div>
       <button
         onClick={onLogout}

@@ -2,6 +2,7 @@ import { db } from './index.js';
 import { academicYears, semesters, classes, students, schedules, user } from './schema.js';
 import { eq } from 'drizzle-orm';
 import { auth } from '../lib/auth.js';
+import { generateQrCode } from '../lib/qrGenerator.js';
 
 async function seed() {
   console.log('--- START DATABASE SEEDING ---');
@@ -116,14 +117,32 @@ async function seed() {
     const existingStudents = await db.select().from(students).where(eq(students.nis, 'SISWA-BTG-025'));
     
     if (existingStudents.length === 0) {
-      await db.insert(students).values({
+      const [insertResult] = await db.insert(students).values({
         userId: siswaUserId,
         nis: 'SISWA-BTG-025',
         classId: classId,
       });
+      const studentId = insertResult.insertId;
+      try {
+        const qrPath = await generateQrCode('SISWA-BTG-025', studentId);
+        await db.update(students).set({ qrcode: qrPath }).where(eq(students.id, studentId));
+        console.log(`QR Code generated for SISWA-BTG-025`);
+      } catch (err) {
+        console.error('Failed to generate QR for seed student:', err);
+      }
       console.log('Inserted Student with NIS: SISWA-BTG-025');
     } else {
+      const existing = existingStudents[0];
       await db.update(students).set({ userId: siswaUserId }).where(eq(students.nis, 'SISWA-BTG-025'));
+      if (!existing.qrcode) {
+        try {
+          const qrPath = await generateQrCode('SISWA-BTG-025', existing.id);
+          await db.update(students).set({ qrcode: qrPath }).where(eq(students.id, existing.id));
+          console.log(`QR Code generated for existing SISWA-BTG-025`);
+        } catch (err) {
+          console.error('Failed to generate QR for existing seed student:', err);
+        }
+      }
       console.log('Student with NIS SISWA-BTG-025 already exists, updated userId reference');
     }
 

@@ -12,13 +12,13 @@ interface InputProps {
 
 export const FormInput: React.FC<InputProps> = ({ label, type = 'text', value, onChange, placeholder, required, className }) => (
   <div className={className}>
-    <label className="block text-slate-400 mb-1.5 uppercase font-semibold">{label}</label>
+    <label className="block text-muted-foreground mb-1.5 uppercase font-semibold">{label}</label>
     <input
       type={type}
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-teal-500 text-xs"
+      className="w-full bg-background border border-input rounded-xl px-3 py-2.5 text-foreground focus:outline-none focus:border-primary text-xs"
       required={required}
     />
   </div>
@@ -35,11 +35,11 @@ interface SelectProps {
 
 export const FormSelect: React.FC<SelectProps> = ({ label, value, onChange, options, placeholder, className }) => (
   <div className={className}>
-    <label className="block text-slate-400 mb-1.5 uppercase font-semibold">{label}</label>
+    <label className="block text-muted-foreground mb-1.5 uppercase font-semibold">{label}</label>
     <select
       value={value}
       onChange={onChange}
-      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-teal-500 text-xs"
+      className="w-full bg-background border border-input rounded-xl px-3 py-2.5 text-foreground focus:outline-none focus:border-primary text-xs"
     >
       {placeholder && <option value="">{placeholder}</option>}
       {options.map((opt) => (
@@ -57,7 +57,7 @@ interface LabelProps {
 
 export const FormGroup: React.FC<LabelProps> = ({ label, children, className }) => (
   <div className={className}>
-    <label className="block text-slate-400 mb-1.5 uppercase font-semibold">{label}</label>
+    <label className="block text-muted-foreground mb-1.5 uppercase font-semibold">{label}</label>
     {children}
   </div>
 );

@@ -18,10 +18,20 @@ import { reportsRouter } from './routes/reportRoutes.js';
 import { usersRouter } from './routes/userRoutes.js';
 import { classesRouter } from './routes/classRoutes.js';
 import { studentsRouter } from './routes/studentRoutes.js';
+import { settingsRouter } from './routes/settingRoutes.js';
 import { userService } from './services/userService.js';
+import { settingService } from './services/settingService.js';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import { authMiddleware, requireRole } from './middlewares/authMiddleware.js';
+
+async function getSetting(key: string, envVar: string, fallback: string): Promise<string> {
+  try {
+    const val = await settingService.getValue(key);
+    if (val !== null) return val;
+  } catch {}
+  return process.env[envVar] || fallback;
+}
 
 // In CommonJS, __dirname is already defined globally.
 // const __filename = fileURLToPath(import.meta.url);
@@ -93,6 +103,7 @@ app.use('/api/reports', authMiddleware, requireRole(['admin', 'guru']), reportsR
 app.use('/api/users', authMiddleware, requireRole(['admin']), usersRouter);
 app.use('/api/classes', authMiddleware, requireRole(['admin']), classesRouter);
 app.use('/api/students', authMiddleware, requireRole(['admin']), studentsRouter);
+app.use('/api/settings', authMiddleware, requireRole(['admin']), settingsRouter);
 
 // Sync Configuration Endpoint for Android Client
 app.get('/api/config', authMiddleware, async (req, res) => {

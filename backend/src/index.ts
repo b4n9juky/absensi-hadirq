@@ -27,6 +27,9 @@ import { configRouter } from './routes/configRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy — OpenLiteSpeed reverse proxy mengirim X-Forwarded-For
+app.set('trust proxy', true);
+
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },

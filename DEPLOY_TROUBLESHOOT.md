@@ -112,6 +112,7 @@ pm2 save
 | **Absen Terbaca Ganda (Datang + Pulang Sekaligus)** | 1. Request API dikirim ganda oleh frame kamera asinkron yang berdekatan.<br>2. Ketiadaan jeda waktu minimum di server sehingga request kedua (selisih milidetik) langsung memicu check-out pulang di hari itu. | 1. Frontend: Menambahkan pengunci sinkron (`isScanningRef.current`) sebelum menembak API.<br>2. Backend: Membatasi check-out jika jeda sejak check-in kurang dari 5 menit menggunakan perhitungan zona waktu independen (`getLocalEpoch`). |
 | **Gagal Update Database (`db:push` di VPS)** | Drizzle-kit mencoba mengosongkan/menghapus (*truncate*) tabel `academic_years` untuk memproses ulang foreign key, tetapi ditolak MySQL karena relasi kunci aktif. | Mengabaikan `db:push` di VPS, dan beralih menggunakan skrip migrasi raw SQL aman: `npx tsx src/db/add-column.ts` untuk memproses `ALTER TABLE ADD COLUMN` tanpa menghapus data. |
 | **Error `Unexpected token '<'` (Bukan valid JSON)** | 1. Endpoint `/embeddings` terblokir `authMiddleware` sesi admin.<br>2. Berkas model AI `ssd_mobilenetv1` tidak ada di VPS karena dikecualikan dari Git. Server web mengembalikan HTML fallback (`index.html`) yang memicu error parsing JSON. | 1. Memindahkan endpoint ke `/api/kiosk/embeddings` dengan proteksi Kiosk Secret Key.<br>2. Memperbarui skrip `download-models.mjs` di VPS untuk mengunduh 8 berkas `.bin` model AI secara lengkap, lalu melakukan build ulang. |
+| **Gagal Query / Bentrok Env PM2 (`Failed query: select ...`)** | 1. PM2 berjalan dari root folder (CWD `.`) sehingga `dotenv` gagal memuat `backend/.env`. <br>2. Nilai `DATABASE_URL` di `ecosystem.config.js` tertimpa ke default development saat `git reset --hard`. | 1. Membuat loader kustom `backend/src/lib/env.ts` untuk mencari `.env` secara dinamis di berbagai folder relatif.<br>2. Mengaktifkan `override: true` pada `dotenv` agar berkas `/backend/.env` di VPS selalu mengesampingkan environment variable default bawaan PM2/Git. |
 
 ---
 
@@ -132,3 +133,8 @@ Jika ada pembaruan skema database di masa mendatang, **hindari penggunaan `npm r
 ### 3. Pengamanan Link Kiosk Absensi
 * Selalu pastikan variabel `KIOSK_SECRET_KEY` terkonfigurasi dengan aman di file `.env` server backend (atau PM2 config).
 * Laptop kiosk sekolah harus diotentikasi sekali saat setup awal agar token tersimpan di browser (`localStorage`). Tanpa token ini, siapa pun (termasuk siswa dari ponsel pribadinya) tidak akan bisa menembak API absensi wajah.
+
+### 4. Pengelolaan Environment Variables yang Aman & Konsisten
+* **Jangan menulis/menyimpan kredensial rahasia (seperti password DB atau Better Auth Secret)** di file `ecosystem.config.js` karena file tersebut dilacak oleh Git dan akan ter-overwrite saat deploy/reset.
+* **Selalu simpan kredensial rahasia di berkas `/backend/.env` di VPS.** Loader backend otomatis mendeteksi berkas ini dan menggunakannya untuk menimpa konfigurasi default (`override: true`).
+

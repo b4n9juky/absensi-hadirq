@@ -42,6 +42,7 @@ export const students = mysqlTable('students', {
   classId: int('class_id').references(() => classes.id).notNull(),
   deviceUuid: varchar('device_uuid', { length: 255 }),
   qrcode: varchar('qrcode', { length: 255 }),
+  faceEmbedding: text('face_embedding'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
@@ -56,13 +57,27 @@ export const schedules = mysqlTable('schedules', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
+export const teachingSchedules = mysqlTable('teaching_schedules', {
+  id: int('id').autoincrement().primaryKey(),
+  teacherId: varchar('teacher_id', { length: 36 }).references(() => user.id).notNull(),
+  classId: int('class_id').references(() => classes.id).notNull(),
+  dayName: varchar('day_name', { length: 20 }).notNull(),
+  startTime: time('start_time').notNull(),
+  endTime: time('end_time').notNull(),
+  subject: varchar('subject', { length: 100 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+});
+
 export const attendances = mysqlTable('attendances', {
   id: int('id').autoincrement().primaryKey(),
   studentId: int('student_id').references(() => students.id).notNull(),
+  classId: int('class_id').references(() => classes.id),
   academicYearId: int('academic_year_id').references(() => academicYears.id).notNull(),
   semesterId: int('semester_id').references(() => semesters.id).notNull(),
   attendanceDate: date('attendance_date', { mode: 'string' }).notNull(), // YYYY-MM-DD
-  status: mysqlEnum('status', ['PRESENT', 'LATE']).notNull(), // PRESENT, LATE
+  status: mysqlEnum('status', ['PRESENT', 'LATE', 'SICK', 'EXCUSED', 'ABSENT']).notNull(), // PRESENT, LATE, SICK, EXCUSED, ABSENT
+  isVerified: boolean('is_verified').default(false).notNull(),
   
   // Check-in details
   checkinTime: timestamp('checkin_time'),

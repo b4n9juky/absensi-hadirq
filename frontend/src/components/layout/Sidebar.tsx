@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Vibrate } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Vibrate, Clock } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { path: '/dashboard/kelas', key: 'classes', icon: <BookOpen className="w-4.5 h-4.5" />, label: 'Kelola Kelas' },
   { path: '/dashboard/siswa', key: 'students', icon: <GraduationCap className="w-4.5 h-4.5" />, label: 'Kelola Siswa' },
   { path: '/dashboard/akademik', key: 'academic', icon: <Calendar className="w-4.5 h-4.5" />, label: 'Akademik & Jadwal' },
+  { path: '/dashboard/jadwal-mengajar', key: 'teaching-schedule', icon: <Clock className="w-4.5 h-4.5" />, label: 'Jadwal Mengajar' },
   { path: '/dashboard/pengaturan', key: 'settings', icon: <Settings className="w-4.5 h-4.5" />, label: 'Pengaturan' },
 ];
 

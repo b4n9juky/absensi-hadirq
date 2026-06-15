@@ -2,11 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reportService = exports.ReportService = void 0;
 const reportRepository_js_1 = require("../repositories/reportRepository.js");
+const timezone_js_1 = require("../lib/timezone.js");
 class ReportService {
     async getReport(filters) {
         let resolvedStartDate = filters.startDate;
         let resolvedEndDate = filters.endDate;
-        const currentServerTime = new Date();
+        const currentServerTime = (0, timezone_js_1.getJakartaDate)();
         if (filters.date) {
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
             if (!dateRegex.test(filters.date)) {
@@ -86,7 +87,8 @@ class ReportService {
                 checkoutLongitude: row.checkoutLongitude,
                 student: {
                     id: row.studentId,
-                    nis: row.studentNis
+                    nis: row.studentNis,
+                    name: row.studentName
                 },
                 class: {
                     id: row.classId,

@@ -10,6 +10,7 @@
     "start:prod": "node dist/index.js",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed-demo": "tsx src/db/seed-demo.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

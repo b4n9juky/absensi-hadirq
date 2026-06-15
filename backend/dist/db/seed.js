@@ -4,6 +4,7 @@ const index_js_1 = require("./index.js");
 const schema_js_1 = require("./schema.js");
 const drizzle_orm_1 = require("drizzle-orm");
 const auth_js_1 = require("../lib/auth.js");
+const qrGenerator_js_1 = require("../lib/qrGenerator.js");
 async function seed() {
     console.log('--- START DATABASE SEEDING ---');
     try {
@@ -112,15 +113,35 @@ async function seed() {
         // 4. Demo Student mapped to Android Client default NIS and seeded user
         const existingStudents = await index_js_1.db.select().from(schema_js_1.students).where((0, drizzle_orm_1.eq)(schema_js_1.students.nis, 'SISWA-BTG-025'));
         if (existingStudents.length === 0) {
-            await index_js_1.db.insert(schema_js_1.students).values({
+            const [insertResult] = await index_js_1.db.insert(schema_js_1.students).values({
                 userId: siswaUserId,
                 nis: 'SISWA-BTG-025',
                 classId: classId,
             });
+            const studentId = insertResult.insertId;
+            try {
+                const qrPath = await (0, qrGenerator_js_1.generateQrCode)('SISWA-BTG-025', studentId);
+                await index_js_1.db.update(schema_js_1.students).set({ qrcode: qrPath }).where((0, drizzle_orm_1.eq)(schema_js_1.students.id, studentId));
+                console.log(`QR Code generated for SISWA-BTG-025`);
+            }
+            catch (err) {
+                console.error('Failed to generate QR for seed student:', err);
+            }
             console.log('Inserted Student with NIS: SISWA-BTG-025');
         }
         else {
+            const existing = existingStudents[0];
             await index_js_1.db.update(schema_js_1.students).set({ userId: siswaUserId }).where((0, drizzle_orm_1.eq)(schema_js_1.students.nis, 'SISWA-BTG-025'));
+            if (!existing.qrcode) {
+                try {
+                    const qrPath = await (0, qrGenerator_js_1.generateQrCode)('SISWA-BTG-025', existing.id);
+                    await index_js_1.db.update(schema_js_1.students).set({ qrcode: qrPath }).where((0, drizzle_orm_1.eq)(schema_js_1.students.id, existing.id));
+                    console.log(`QR Code generated for existing SISWA-BTG-025`);
+                }
+                catch (err) {
+                    console.error('Failed to generate QR for existing seed student:', err);
+                }
+            }
             console.log('Student with NIS SISWA-BTG-025 already exists, updated userId reference');
         }
         // 5. Default Schedules (Monday to Sunday)
@@ -139,6 +160,55 @@ async function seed() {
             else {
                 console.log(`Schedule for ${day} already exists`);
             }
+        }
+        // 6. Teaching Schedule for demo Guru
+        const existingTeaching = await index_js_1.db.select().from(schema_js_1.teachingSchedules).where((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, guruUserId)).limit(1);
+        if (existingTeaching.length === 0) {
+            const teachingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            for (const day of teachingDays) {
+                await index_js_1.db.insert(schema_js_1.teachingSchedules).values({
+                    teacherId: guruUserId,
+                    classId: classId,
+                    dayName: day,
+                    startTime: '08:00:00',
+                    endTime: '09:30:00',
+                    subject: 'Matematika',
+                });
+                console.log(`Inserted Teaching Schedule: Guru -> XII IPA 1, ${day} 08:00-09:30`);
+            }
+        }
+        else {
+            console.log('Teaching Schedule already exists for Guru');
+        }
+        // 7. Additional demo students for XII IPA 1
+        const existingExtraStudents = await index_js_1.db.select().from(schema_js_1.students).where((0, drizzle_orm_1.eq)(schema_js_1.students.nis, 'SISWA-BTG-026')).limit(1);
+        if (existingExtraStudents.length === 0) {
+            const extraStudents = [
+                { email: 'siswa2@school.com', name: 'Siti Rahmawati', nis: 'SISWA-BTG-026' },
+                { email: 'siswa3@school.com', name: 'Budi Santoso', nis: 'SISWA-BTG-027' },
+                { email: 'siswa4@school.com', name: 'Dewi Lestari', nis: 'SISWA-BTG-028' },
+                { email: 'siswa5@school.com', name: 'Ahmad Hidayat', nis: 'SISWA-BTG-029' },
+            ];
+            for (const s of extraStudents) {
+                try {
+                    const res = await auth_js_1.auth.api.signUpEmail({
+                        body: { email: s.email, password: 'siswaPassword123', name: s.name }
+                    });
+                    await index_js_1.db.update(schema_js_1.user).set({ role: 'siswa' }).where((0, drizzle_orm_1.eq)(schema_js_1.user.id, res.user.id));
+                    await index_js_1.db.insert(schema_js_1.students).values({
+                        userId: res.user.id,
+                        nis: s.nis,
+                        classId: classId,
+                    });
+                    console.log(`Inserted Student: ${s.name} (${s.nis})`);
+                }
+                catch (err) {
+                    console.log(`Student ${s.email} already exists or error:`, err);
+                }
+            }
+        }
+        else {
+            console.log('Extra students already exist');
         }
         console.log('--- DATABASE SEEDING COMPLETED SUCCESSFULLY ---');
     }

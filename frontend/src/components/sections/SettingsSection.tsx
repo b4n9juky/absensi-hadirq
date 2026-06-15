@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, MapPin, Crosshair, Ruler, Wifi, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, MapPin, Crosshair, Ruler, Wifi, AlertCircle, CheckCircle, School } from 'lucide-react';
 import { FormInput } from '../shared/FormField';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
@@ -15,6 +15,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
   const [radius, setRadius] = useState('');
   const [accuracy, setAccuracy] = useState('');
   const [apiBaseUrl, setApiBaseUrl] = useState('');
+  const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -36,6 +37,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
         setRadius(data.data.school_radius_meters || '');
         setAccuracy(data.data.max_accuracy_meters || '');
         setApiBaseUrl(data.data.api_base_url || '');
+        setSchoolName(data.data.school_name || '');
       }
     } catch (err: any) {
       setError('Gagal memuat pengaturan.');
@@ -56,6 +58,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
     if (radius.trim()) payload.school_radius_meters = radius.trim();
     if (accuracy.trim()) payload.max_accuracy_meters = accuracy.trim();
     if (apiBaseUrl.trim()) payload.api_base_url = apiBaseUrl.trim();
+    if (schoolName.trim()) payload.school_name = schoolName.trim();
 
     try {
       const res = await fetch('/api/settings', {
@@ -182,6 +185,20 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
             Biarkan kosong untuk menggunakan URL server otomatis. Isi jika aplikasi Android
             membutuhkan URL tetap (misalnya untuk akses dari luar jaringan).
           </p>
+        </div>
+
+        <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <School className="w-4 h-4 text-teal-400" />
+            Identitas Sekolah
+          </h3>
+          <FormInput
+            label="Nama Sekolah"
+            type="text"
+            value={schoolName}
+            onChange={(e) => setSchoolName(e.target.value)}
+            placeholder="SMA Negeri 1 Bontang"
+          />
         </div>
 
         <div className="flex justify-end">

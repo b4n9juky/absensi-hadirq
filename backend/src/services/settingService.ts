@@ -17,6 +17,7 @@ export class SettingService {
       'school_radius_meters',
       'max_accuracy_meters',
       'api_base_url',
+      'school_name',
     ];
 
     for (const key of Object.keys(entries)) {

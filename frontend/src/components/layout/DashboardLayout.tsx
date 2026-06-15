@@ -10,6 +10,7 @@ const sectionMap: Record<string, string> = {
   kelas: 'classes',
   siswa: 'students',
   akademik: 'academic',
+  'jadwal-mengajar': 'teaching-schedule',
   pengaturan: 'settings',
 };
 
@@ -19,6 +20,7 @@ const pathToSection: Record<string, string> = {
   classes: 'kelas',
   students: 'siswa',
   academic: 'akademik',
+  'teaching-schedule': 'jadwal-mengajar',
   settings: 'pengaturan',
 };
 

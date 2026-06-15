@@ -1,4 +1,5 @@
 import { dashboardRepo } from '../repositories/dashboardRepository.js';
+import { getJakartaDate } from '../lib/timezone.js';
 
 export interface DashboardStatsDto {
   totalStudents: number;
@@ -19,7 +20,7 @@ export class DashboardService {
     let endDate: string;
     let daysCount = 1;
 
-    const currentServerTime = new Date();
+    const currentServerTime = getJakartaDate();
 
     if (filters.date) {
       // Validate date format YYYY-MM-DD

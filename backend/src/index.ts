@@ -23,12 +23,15 @@ import { studentsRouter } from './routes/studentRoutes.js';
 import { settingsRouter } from './routes/settingRoutes.js';
 import { attendanceRouter } from './routes/attendanceRoutes.js';
 import { configRouter } from './routes/configRoutes.js';
+import { teacherRouter } from './routes/teacherRoutes.js';
+import { teachingSchedulesRouter } from './routes/teachingScheduleRoutes.js';
+import { kioskRouter } from './routes/kioskRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Trust proxy — OpenLiteSpeed reverse proxy mengirim X-Forwarded-For
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // Security headers
 app.use(helmet({
@@ -113,7 +116,10 @@ app.use('/api/classes', authMiddleware, requireRole(['admin']), classesRouter);
 app.use('/api/students', authMiddleware, requireRole(['admin']), studentsRouter);
 app.use('/api/settings', authMiddleware, requireRole(['admin']), settingsRouter);
 app.use('/api/attendance', attendanceRouter);
+app.use('/api/kiosk', kioskRouter);
 app.use('/api/config', configRouter);
+app.use('/api/teaching-schedules', authMiddleware, requireRole(['admin']), teachingSchedulesRouter);
+app.use('/api/teacher', teacherRouter);
 
 // Serve uploaded images statically
 const uploadDir = path.join(__dirname, '../uploads');

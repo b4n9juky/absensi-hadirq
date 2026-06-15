@@ -103,4 +103,49 @@ studentsRouter.get('/:id/qrcode', async (req, res) => {
   }
 });
 
+studentsRouter.post('/promote', async (req, res) => {
+  try {
+    const { fromClassId, toClassId, studentIds } = req.body;
+    const result = await studentService.promoteStudents(
+      parseInt(fromClassId),
+      parseInt(toClassId),
+      studentIds ? studentIds.map((id: any) => parseInt(id)) : undefined
+    );
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+studentsRouter.get('/embeddings', async (req, res) => {
+  try {
+    const kioskToken = req.headers['x-kiosk-token'];
+    const expectedToken = process.env.KIOSK_SECRET_KEY || 'absensi-kiosk-secret-key-12345';
+    if (!kioskToken || kioskToken !== expectedToken) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
+    }
+    const data = await studentService.getStudentEmbeddings();
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+studentsRouter.put('/:id/register-face', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    }
+    const { faceEmbedding } = req.body;
+    if (!faceEmbedding || !Array.isArray(faceEmbedding)) {
+      return res.status(400).json({ success: false, error: 'Face embedding tidak valid.' });
+    }
+    await studentService.registerFace(id, faceEmbedding);
+    res.json({ success: true, message: 'Wajah siswa berhasil didaftarkan.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 export default studentsRouter;

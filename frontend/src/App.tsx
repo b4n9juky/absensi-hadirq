@@ -8,6 +8,8 @@ import { ClassesSection } from './components/sections/ClassesSection';
 import { StudentsSection } from './components/sections/StudentsSection';
 import { AcademicSection } from './components/sections/AcademicSection';
 import { SettingsSection } from './components/sections/SettingsSection';
+import { TeachingScheduleSection } from './components/sections/TeachingScheduleSection';
+import { KioskAttendance } from './components/sections/KioskAttendance';
 
 function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -50,6 +52,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/kiosk-absensi" element={<KioskAttendance />} />
         <Route
           path="/login"
           element={
@@ -77,6 +80,7 @@ function App() {
           <Route path="siswa" element={<StudentsSection token={token!} />} />
           <Route path="akademik" element={<AcademicSection token={token!} />} />
           <Route path="pengaturan" element={<SettingsSection token={token!} />} />
+          <Route path="jadwal-mengajar" element={<TeachingScheduleSection token={token!} />} />
         </Route>
         <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
       </Routes>

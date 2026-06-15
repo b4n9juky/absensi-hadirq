@@ -2,6 +2,9 @@ import { studentRepo } from '../repositories/studentRepository.js';
 import { userRepo } from '../repositories/userRepository.js';
 import { classRepo } from '../repositories/classRepository.js';
 import { generateQrCode, deleteQrCodeFile } from '../lib/qrGenerator.js';
+import { db } from '../db/index.js';
+import { students, user } from '../db/schema.js';
+import { eq, and, inArray } from 'drizzle-orm';
 
 export interface CreateStudentDto {
   userId: string;
@@ -130,6 +133,56 @@ export class StudentService {
     }
     await deleteQrCodeFile(existing.qrcode);
     await studentRepo.delete(id);
+  }
+  async promoteStudents(fromClassId: number, toClassId: number, studentIds?: number[]) {
+    if (!fromClassId || !toClassId) {
+      throw new Error('Kelas asal dan kelas tujuan wajib ditentukan.');
+    }
+
+    const classRecord = await classRepo.findById(toClassId);
+    if (!classRecord) {
+      throw new Error('Kelas tujuan tidak ditemukan.');
+    }
+
+    if (studentIds && studentIds.length > 0) {
+      await db.update(students)
+        .set({ classId: toClassId, updatedAt: new Date() })
+        .where(and(
+          eq(students.classId, fromClassId),
+          inArray(students.id, studentIds)
+        ));
+    } else {
+      await db.update(students)
+        .set({ classId: toClassId, updatedAt: new Date() })
+        .where(eq(students.classId, fromClassId));
+    }
+    return { success: true };
+  }
+
+  async registerFace(id: number, faceEmbedding: number[]) {
+    const existing = await studentRepo.findById(id);
+    if (!existing) {
+      throw new Error('Siswa tidak ditemukan.');
+    }
+    const embeddingString = JSON.stringify(faceEmbedding);
+    await db.update(students).set({ faceEmbedding: embeddingString, updatedAt: new Date() }).where(eq(students.id, id));
+  }
+
+  async getStudentEmbeddings() {
+    const allStudents = await db.select({
+      id: students.id,
+      nis: students.nis,
+      studentName: user.name,
+      faceEmbedding: students.faceEmbedding,
+    }).from(students)
+      .leftJoin(user, eq(students.userId, user.id));
+
+    return allStudents.filter(s => s.faceEmbedding).map(s => ({
+      id: s.id,
+      nis: s.nis,
+      studentName: s.studentName,
+      faceEmbedding: JSON.parse(s.faceEmbedding!) as number[]
+    }));
   }
 }
 export const studentService = new StudentService();

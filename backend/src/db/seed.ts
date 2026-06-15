@@ -1,5 +1,5 @@
 import { db } from './index.js';
-import { academicYears, semesters, classes, students, schedules, user } from './schema.js';
+import { academicYears, semesters, classes, students, schedules, user, teachingSchedules } from './schema.js';
 import { eq } from 'drizzle-orm';
 import { auth } from '../lib/auth.js';
 import { generateQrCode } from '../lib/qrGenerator.js';
@@ -161,6 +161,54 @@ async function seed() {
       } else {
         console.log(`Schedule for ${day} already exists`);
       }
+    }
+
+    // 6. Teaching Schedule for demo Guru
+    const existingTeaching = await db.select().from(teachingSchedules).where(eq(teachingSchedules.teacherId, guruUserId)).limit(1);
+    if (existingTeaching.length === 0) {
+      const teachingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+      for (const day of teachingDays) {
+        await db.insert(teachingSchedules).values({
+          teacherId: guruUserId,
+          classId: classId,
+          dayName: day,
+          startTime: '08:00:00',
+          endTime: '09:30:00',
+          subject: 'Matematika',
+        });
+        console.log(`Inserted Teaching Schedule: Guru -> XII IPA 1, ${day} 08:00-09:30`);
+      }
+    } else {
+      console.log('Teaching Schedule already exists for Guru');
+    }
+
+    // 7. Additional demo students for XII IPA 1
+    const existingExtraStudents = await db.select().from(students).where(eq(students.nis, 'SISWA-BTG-026')).limit(1);
+    if (existingExtraStudents.length === 0) {
+      const extraStudents = [
+        { email: 'siswa2@school.com', name: 'Siti Rahmawati', nis: 'SISWA-BTG-026' },
+        { email: 'siswa3@school.com', name: 'Budi Santoso', nis: 'SISWA-BTG-027' },
+        { email: 'siswa4@school.com', name: 'Dewi Lestari', nis: 'SISWA-BTG-028' },
+        { email: 'siswa5@school.com', name: 'Ahmad Hidayat', nis: 'SISWA-BTG-029' },
+      ];
+      for (const s of extraStudents) {
+        try {
+          const res = await auth.api.signUpEmail({
+            body: { email: s.email, password: 'siswaPassword123', name: s.name }
+          });
+          await db.update(user).set({ role: 'siswa' }).where(eq(user.id, res.user.id));
+          await db.insert(students).values({
+            userId: res.user.id,
+            nis: s.nis,
+            classId: classId,
+          });
+          console.log(`Inserted Student: ${s.name} (${s.nis})`);
+        } catch (err) {
+          console.log(`Student ${s.email} already exists or error:`, err);
+        }
+      }
+    } else {
+      console.log('Extra students already exist');
     }
 
     console.log('--- DATABASE SEEDING COMPLETED SUCCESSFULLY ---');

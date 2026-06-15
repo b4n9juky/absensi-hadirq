@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { DataTable } from '../shared/DataTable';
 import { ModalShell } from '../shared/ModalShell';
 import { FormInput } from '../shared/FormField';
 
@@ -64,6 +64,36 @@ export const ClassesSection: React.FC<Props> = ({ token }) => {
     } catch (err: any) { setErrorMsg(err.message); }
   };
 
+  const columns = [
+    {
+      key: 'id',
+      header: 'ID Kelas',
+      render: (row: ClassRecord) => <span className="text-muted-foreground font-mono">#{row.id}</span>
+    },
+    {
+      key: 'name',
+      header: 'Nama Kelas',
+      render: (row: ClassRecord) => <span className="font-bold text-foreground text-sm">{row.name}</span>
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      align: 'right' as const,
+      render: (row: ClassRecord) => (
+        <div className="space-x-2 inline-flex">
+          <button onClick={() => { setClassName(row.name); setShowEditClass(row); }}
+            className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex">
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => handleDelete(row.id)}
+            className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive/80 transition-colors inline-flex border border-destructive/10">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
   return (
     <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl animate-fadeIn">
       <div className="px-6 py-5 border-b border-border flex justify-between items-center gap-4">
@@ -76,30 +106,14 @@ export const ClassesSection: React.FC<Props> = ({ token }) => {
           <Plus className="w-4 h-4" /><span>Tambah Kelas</span>
         </button>
       </div>
-      <div className="overflow-x-auto w-full">
-        {listLoading ? <LoadingSpinner /> : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-muted/20 border-b border-border text-muted-foreground text-xs uppercase font-semibold tracking-wider">
-                <th className="px-6 py-4">ID Kelas</th><th className="px-6 py-4">Nama Kelas</th><th className="px-6 py-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50 text-xs">
-              {classesList.map((row) => (
-                <tr key={row.id} className="hover:bg-muted/25 transition-colors">
-                  <td className="px-6 py-4 text-muted-foreground font-mono">#{row.id}</td>
-                  <td className="px-6 py-4 font-bold text-foreground text-sm">{row.name}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => { setClassName(row.name); setShowEditClass(row); }}
-                      className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => handleDelete(row.id)}
-                      className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive/80 transition-colors inline-flex border border-destructive/10"><Trash2 className="w-3.5 h-3.5" /></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="w-full">
+        <DataTable
+          columns={columns}
+          data={classesList}
+          loading={listLoading}
+          searchPlaceholder="Cari nama kelas..."
+          emptyText="Tidak ada kelas."
+        />
       </div>
       {errorMsg && <div className="px-6 py-3 text-destructive text-xs">{errorMsg}</div>}
       {toastMsg && <div className="fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-2xl flex items-center gap-2 animate-bounce"><span>{toastMsg}</span></div>}

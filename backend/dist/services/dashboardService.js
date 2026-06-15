@@ -2,12 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.dashboardService = exports.DashboardService = void 0;
 const dashboardRepository_js_1 = require("../repositories/dashboardRepository.js");
+const timezone_js_1 = require("../lib/timezone.js");
 class DashboardService {
     async getStats(filters) {
         let startDate;
         let endDate;
         let daysCount = 1;
-        const currentServerTime = new Date();
+        const currentServerTime = (0, timezone_js_1.getJakartaDate)();
         if (filters.date) {
             // Validate date format YYYY-MM-DD
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;

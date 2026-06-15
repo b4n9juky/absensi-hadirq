@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verification = exports.account = exports.session = exports.attendances = exports.schedules = exports.students = exports.user = exports.classes = exports.semesters = exports.academicYears = void 0;
+exports.verification = exports.settings = exports.account = exports.session = exports.attendances = exports.teachingSchedules = exports.schedules = exports.students = exports.user = exports.classes = exports.semesters = exports.academicYears = void 0;
 const mysql_core_1 = require("drizzle-orm/mysql-core");
 exports.academicYears = (0, mysql_core_1.mysqlTable)('academic_years', {
     id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
@@ -39,6 +39,8 @@ exports.students = (0, mysql_core_1.mysqlTable)('students', {
     nis: (0, mysql_core_1.varchar)('nis', { length: 50 }).notNull().unique(),
     classId: (0, mysql_core_1.int)('class_id').references(() => exports.classes.id).notNull(),
     deviceUuid: (0, mysql_core_1.varchar)('device_uuid', { length: 255 }),
+    qrcode: (0, mysql_core_1.varchar)('qrcode', { length: 255 }),
+    faceEmbedding: (0, mysql_core_1.text)('face_embedding'),
     createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
     updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
 });
@@ -51,13 +53,26 @@ exports.schedules = (0, mysql_core_1.mysqlTable)('schedules', {
     createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
     updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
 });
+exports.teachingSchedules = (0, mysql_core_1.mysqlTable)('teaching_schedules', {
+    id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
+    teacherId: (0, mysql_core_1.varchar)('teacher_id', { length: 36 }).references(() => exports.user.id).notNull(),
+    classId: (0, mysql_core_1.int)('class_id').references(() => exports.classes.id).notNull(),
+    dayName: (0, mysql_core_1.varchar)('day_name', { length: 20 }).notNull(),
+    startTime: (0, mysql_core_1.time)('start_time').notNull(),
+    endTime: (0, mysql_core_1.time)('end_time').notNull(),
+    subject: (0, mysql_core_1.varchar)('subject', { length: 100 }),
+    createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
+    updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
+});
 exports.attendances = (0, mysql_core_1.mysqlTable)('attendances', {
     id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
     studentId: (0, mysql_core_1.int)('student_id').references(() => exports.students.id).notNull(),
+    classId: (0, mysql_core_1.int)('class_id').references(() => exports.classes.id),
     academicYearId: (0, mysql_core_1.int)('academic_year_id').references(() => exports.academicYears.id).notNull(),
     semesterId: (0, mysql_core_1.int)('semester_id').references(() => exports.semesters.id).notNull(),
     attendanceDate: (0, mysql_core_1.date)('attendance_date', { mode: 'string' }).notNull(), // YYYY-MM-DD
-    status: (0, mysql_core_1.mysqlEnum)('status', ['PRESENT', 'LATE']).notNull(), // PRESENT, LATE
+    status: (0, mysql_core_1.mysqlEnum)('status', ['PRESENT', 'LATE', 'SICK', 'EXCUSED', 'ABSENT']).notNull(), // PRESENT, LATE, SICK, EXCUSED, ABSENT
+    isVerified: (0, mysql_core_1.boolean)('is_verified').default(false).notNull(),
     // Check-in details
     checkinTime: (0, mysql_core_1.timestamp)('checkin_time'),
     checkinPhoto: (0, mysql_core_1.varchar)('checkin_photo', { length: 255 }),
@@ -93,6 +108,11 @@ exports.account = (0, mysql_core_1.mysqlTable)('account', {
     password: (0, mysql_core_1.varchar)('password', { length: 255 }),
     createdAt: (0, mysql_core_1.timestamp)('created_at').notNull(),
     updatedAt: (0, mysql_core_1.timestamp)('updated_at').notNull()
+});
+exports.settings = (0, mysql_core_1.mysqlTable)('settings', {
+    key: (0, mysql_core_1.varchar)('key', { length: 100 }).primaryKey(),
+    value: (0, mysql_core_1.text)('value').notNull(),
+    updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
 });
 exports.verification = (0, mysql_core_1.mysqlTable)('verification', {
     id: (0, mysql_core_1.varchar)('id', { length: 36 }).primaryKey(),

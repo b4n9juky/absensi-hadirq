@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, RefreshCw, User, MapPin, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, User, MapPin, Eye } from 'lucide-react';
 import { ModalShell } from '../shared/ModalShell';
+import { DataTable } from '../shared/DataTable';
 
 interface Props {
   token: string;
@@ -14,24 +16,144 @@ const months = [
 ];
 
 export const DashboardSection: React.FC<Props> = ({ token }) => {
-  const [stats, setStats] = useState<any>({ totalStudents: 0, presentCount: 0, lateCount: 0, absentCount: 0, daysCount: 1 });
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [reports, setReports] = useState<any[]>([]);
-  const [reportsLoading, setReportsLoading] = useState(false);
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterClass, setFilterClass] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
   const [filterYear, setFilterYear] = useState('');
-  const [classesList, setClassesList] = useState<any[]>([]);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [previewDetails, setPreviewDetails] = useState<any | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
 
   const authHeader = { 'Authorization': `Bearer ${token}` };
 
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
-    try {
+  const columns = [
+    {
+      key: 'student',
+      header: 'Siswa & Kelas',
+      render: (row: any) => (
+        <div className="flex items-center gap-3">
+          {row.checkinPhoto ? (
+            <img src={row.checkinPhoto} alt="Selfie" onClick={() => { setPreviewPhoto(row.checkinPhoto); setPreviewDetails(row); }}
+              className="w-10 h-10 rounded-lg object-cover cursor-pointer border border-border hover:border-primary transition-colors bg-background" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground/60">
+              <User className="w-5 h-5" />
+            </div>
+          )}
+          <div>
+            <div className="font-bold text-foreground text-xs">{row.student?.name || 'Siswa'}</div>
+            <div className="text-[10px] text-muted-foreground">{row.student?.nis || '-'} | {row.class?.name || 'Umum'}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'center' as const,
+      render: (row: any) => {
+        const status = row.status;
+        const isVerified = !!row.isVerified;
+        switch (status) {
+          case 'PRESENT':
+            return (
+              <div className="flex flex-col gap-1 items-center justify-center">
+                <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-emerald-500/10 border-emerald-500/20 text-emerald-500">
+                  TEPAT WAKTU
+                </span>
+                <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold border ${isVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-amber-500/10 border-amber-500/20 text-amber-600'}`}>
+                  {isVerified ? 'Terverifikasi' : 'Belum Diverifikasi'}
+                </span>
+              </div>
+            );
+          case 'LATE':
+            return (
+              <div className="flex flex-col gap-1 items-center justify-center">
+                <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-amber-500/10 border-amber-500/20 text-amber-500">
+                  TERLAMBAT
+                </span>
+                <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold border ${isVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-amber-500/10 border-amber-500/20 text-amber-600'}`}>
+                  {isVerified ? 'Terverifikasi' : 'Belum Diverifikasi'}
+                </span>
+              </div>
+            );
+          case 'SICK':
+            return (
+              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-blue-500/10 border-blue-500/20 text-blue-500">
+                SAKIT
+              </span>
+            );
+          case 'EXCUSED':
+            return (
+              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-purple-500/10 border-purple-500/20 text-purple-500">
+                IZIN
+              </span>
+            );
+          case 'ABSENT':
+            return (
+              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-rose-500/10 border-rose-500/20 text-rose-500">
+                ALFA
+              </span>
+            );
+          default:
+            return (
+              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-muted border-muted-foreground/20 text-muted-foreground">
+                {status}
+              </span>
+            );
+        }
+      }
+    },
+    {
+      key: 'checkinTime',
+      header: 'Absen Masuk (Datang)',
+      render: (row: any) => (
+        <>
+          <div className="text-foreground">{formatTimeString(row.checkinTime)}</div>
+          <div className="text-[9px] text-muted-foreground mt-0.5">{formatDateString(row.attendanceDate)}</div>
+        </>
+      )
+    },
+    {
+      key: 'checkoutTime',
+      header: 'Absen Pulang (Checkout)',
+      render: (row: any) => (
+        row.checkoutTime ? (
+          <div>
+            <div className="text-foreground">{formatTimeString(row.checkoutTime)}</div>
+            <div className="text-[9px] text-muted-foreground mt-0.5">Checkout Selesai</div>
+          </div>
+        ) : <span className="text-[11px] text-muted-foreground/60 italic">Belum Pulang</span>
+      )
+    },
+    {
+      key: 'distance',
+      header: 'Akurasi & Jarak',
+      render: (row: any) => (
+        <>
+          <div className="flex items-center gap-1 text-foreground/80">
+            <MapPin className="w-3 h-3 text-muted-foreground" />
+            <span>Jarak: <span className="font-semibold text-foreground">{row.distance?.toFixed(1) || '-'}m</span></span>
+          </div>
+          <div className="text-[9px] text-muted-foreground mt-0.5">Akurasi GPS: {row.accuracy?.toFixed(1) || '-'}m</div>
+        </>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      align: 'right' as const,
+      render: (row: any) => (
+        <button onClick={() => { setPreviewPhoto(row.checkinPhoto || row.checkoutPhoto); setPreviewDetails(row); }}
+          className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex">
+          <Eye className="w-3.5 h-3.5" />
+        </button>
+      )
+    }
+  ];
+
+  const { data: statsData, isPending: statsLoading, error: statsError } = useQuery({
+    queryKey: ['dashboardStats', filterDate, filterClass, filterMonth, filterYear],
+    queryFn: async () => {
       const params: string[] = [];
       if (filterDate) params.push(`date=${filterDate}`);
       if (filterClass) params.push(`classId=${filterClass}`);
@@ -40,18 +162,15 @@ export const DashboardSection: React.FC<Props> = ({ token }) => {
       const qs = params.length > 0 ? `?${params.join('&')}` : '';
       const res = await fetch(`/api/dashboard/stats${qs}`, { headers: authHeader });
       const data = await res.json();
-      if (res.ok && data.success) setStats(data.data);
-      else throw new Error(data.error || 'Gagal mengambil statistik.');
-    } catch (err: any) {
-      setErrorMsg(err.message);
-    } finally {
-      setStatsLoading(false);
-    }
-  }, [token, filterDate, filterClass, filterMonth, filterYear]);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Gagal mengambil statistik.');
+      return data.data;
+    },
+  });
+  const stats = statsData || { totalStudents: 0, presentCount: 0, lateCount: 0, absentCount: 0, daysCount: 1 };
 
-  const fetchReports = useCallback(async () => {
-    setReportsLoading(true);
-    try {
+  const { data: reportsData, isPending: reportsLoading } = useQuery({
+    queryKey: ['attendanceReports', filterDate, filterClass, filterMonth, filterYear],
+    queryFn: async () => {
       const params: string[] = [];
       if (filterDate) params.push(`date=${filterDate}`);
       if (filterClass) params.push(`classId=${filterClass}`);
@@ -59,25 +178,25 @@ export const DashboardSection: React.FC<Props> = ({ token }) => {
       if (filterYear) params.push(`year=${filterYear}`);
       const qs = params.length > 0 ? `?${params.join('&')}` : '';
       const res = await fetch(`/api/reports/attendance${qs}`, { headers: authHeader });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Gagal mengambil data laporan.');
+      return Array.isArray(result.data) ? result.data : [];
+    },
+  });
+  const reports = reportsData || [];
+
+  const { data: classesData } = useQuery({
+    queryKey: ['classesList'],
+    queryFn: async () => {
+      const res = await fetch('/api/classes', { headers: authHeader });
       const data = await res.json();
-      if (res.ok) setReports(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setReportsLoading(false);
-    }
-  }, [token, filterDate, filterClass, filterMonth, filterYear]);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Gagal mengambil kelas.');
+      return data.data;
+    },
+  });
+  const classesList = classesData || [];
 
-  useEffect(() => {
-    fetchStats();
-    fetchReports();
-    fetch('/api/classes', { headers: authHeader }).then(r => r.json()).then(d => { if (d.success) setClassesList(d.data); }).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetchStats();
-    fetchReports();
-  }, [fetchStats, fetchReports]);
+  const errorMsg = statsError ? (statsError as Error).message : '';
 
   const handleResetFilters = () => {
     setFilterDate(new Date().toISOString().split('T')[0]);
@@ -178,95 +297,24 @@ export const DashboardSection: React.FC<Props> = ({ token }) => {
             <span>Ekspor CSV</span>
           </button>
         </div>
-        <div className="overflow-x-auto w-full">
-          {reportsLoading ? (
-            <div className="py-20 text-center text-muted-foreground text-sm">
-              <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
-              <span>Memuat data absensi...</span>
-            </div>
-          ) : reports.length === 0 ? (
-            <div className="py-20 text-center text-muted-foreground text-sm">
-              <User className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
-              <span>Tidak ada data absensi yang ditemukan.</span>
-            </div>
-          ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-muted/20 border-b border-border text-muted-foreground text-xs uppercase font-semibold tracking-wider">
-                  <th className="px-6 py-4">Siswa & Kelas</th>
-                  <th className="px-6 py-4 text-center">Status</th>
-                  <th className="px-6 py-4">Absen Masuk (Datang)</th>
-                  <th className="px-6 py-4">Absen Pulang (Checkout)</th>
-                  <th className="px-6 py-4">Akurasi & Jarak</th>
-                  <th className="px-6 py-4 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50 text-xs">
-                {reports.map((row: any) => {
-                  const isLate = row.status === 'LATE';
-                  return (
-                    <tr key={row.id} className="hover:bg-muted/25 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {row.checkinPhoto ? (
-                            <img src={row.checkinPhoto} alt="Selfie" onClick={() => { setPreviewPhoto(row.checkinPhoto); setPreviewDetails(row); }}
-                              className="w-10 h-10 rounded-lg object-cover cursor-pointer border border-border hover:border-primary transition-colors bg-background" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground/60">
-                              <User className="w-5 h-5" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-bold text-foreground text-xs">{row.student?.nis || 'Siswa'}</div>
-                            <div className="text-[10px] text-muted-foreground">{row.class?.name || 'Umum'}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border ${isLate ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'}`}>
-                          {isLate ? 'TERLAMBAT' : 'TEPAT WAKTU'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-foreground">{formatTimeString(row.checkinTime)}</div>
-                        <div className="text-[9px] text-muted-foreground mt-0.5">{formatDateString(row.attendanceDate)}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {row.checkoutTime ? (
-                          <div>
-                            <div className="text-foreground">{formatTimeString(row.checkoutTime)}</div>
-                            <div className="text-[9px] text-muted-foreground mt-0.5">Checkout Selesai</div>
-                          </div>
-                        ) : <span className="text-[11px] text-muted-foreground/60 italic">Belum Pulang</span>}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1 text-foreground/80">
-                          <MapPin className="w-3 h-3 text-muted-foreground" />
-                          <span>Jarak: <span className="font-semibold text-foreground">{row.distance?.toFixed(1) || '-'}m</span></span>
-                        </div>
-                        <div className="text-[9px] text-muted-foreground mt-0.5">Akurasi GPS: {row.accuracy?.toFixed(1) || '-'}m</div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button onClick={() => { setPreviewPhoto(row.checkinPhoto || row.checkoutPhoto); setPreviewDetails(row); }}
-                          className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+        <div className="w-full">
+          <DataTable
+            columns={columns}
+            data={reports}
+            loading={reportsLoading}
+            searchPlaceholder="Cari siswa atau kelas..."
+            emptyText="Tidak ada data absensi yang ditemukan."
+            initialRowsPerPage={10}
+          />
         </div>
       </section>
-
+ 
       {errorMsg && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs">
           {errorMsg}
         </div>
       )}
-
+ 
       {previewPhoto && (
         <ModalShell title="Foto Bukti Selfie" onClose={() => { setPreviewPhoto(null); setPreviewDetails(null); }} maxWidth="md"
           footer={<button onClick={() => { setPreviewPhoto(null); setPreviewDetails(null); }} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Tutup</button>}>
@@ -274,7 +322,26 @@ export const DashboardSection: React.FC<Props> = ({ token }) => {
           {previewDetails && (
             <div className="bg-background rounded-xl p-4 space-y-2 text-xs border border-border">
               <div className="flex justify-between"><span className="text-muted-foreground">Siswa</span><span className="text-foreground font-semibold">{previewDetails.student?.nis || '-'}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className={`font-bold ${previewDetails.status === 'LATE' ? 'text-amber-500' : 'text-emerald-500'}`}>{previewDetails.status}</span></div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <span className={`font-bold ${
+                  previewDetails.status === 'LATE' ? 'text-amber-500' :
+                  previewDetails.status === 'PRESENT' ? 'text-emerald-500' :
+                  previewDetails.status === 'SICK' ? 'text-blue-500' :
+                  previewDetails.status === 'EXCUSED' ? 'text-purple-500' :
+                  'text-rose-500'
+                }`}>
+                  {previewDetails.status === 'PRESENT' ? 'TEPAT WAKTU' :
+                   previewDetails.status === 'LATE' ? 'TERLAMBAT' :
+                   previewDetails.status === 'SICK' ? 'SAKIT' :
+                   previewDetails.status === 'EXCUSED' ? 'IZIN' :
+                   previewDetails.status === 'ABSENT' ? 'ALFA' :
+                   previewDetails.status}
+                  {(previewDetails.status === 'PRESENT' || previewDetails.status === 'LATE') && 
+                    ` (${previewDetails.isVerified ? 'Terverifikasi' : 'Belum Diverifikasi'})`
+                  }
+                </span>
+              </div>
               <div className="flex justify-between"><span className="text-muted-foreground">Jam Masuk</span><span className="text-foreground">{formatTimeString(previewDetails.checkinTime)}</span></div>
               {previewDetails.checkoutTime && (
                 <div className="flex justify-between"><span className="text-muted-foreground">Jam Pulang</span><span className="text-foreground">{formatTimeString(previewDetails.checkoutTime)}</span></div>

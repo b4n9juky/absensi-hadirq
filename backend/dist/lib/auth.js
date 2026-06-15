@@ -39,6 +39,7 @@ const drizzle_adapter_1 = require("@better-auth/drizzle-adapter");
 const index_js_1 = require("../db/index.js");
 const schema = __importStar(require("../db/schema.js"));
 const plugins_1 = require("better-auth/plugins");
+const trustedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(s => s.trim());
 exports.auth = (0, better_auth_1.betterAuth)({
     database: (0, drizzle_adapter_1.drizzleAdapter)(index_js_1.db, {
         provider: 'mysql',
@@ -47,10 +48,7 @@ exports.auth = (0, better_auth_1.betterAuth)({
     emailAndPassword: {
         enabled: true
     },
-    trustedOrigins: [
-        'http://localhost:5173',
-        'https://absensi.manbontang.sch.id'
-    ],
+    trustedOrigins,
     user: {
         additionalFields: {
             role: {

@@ -20,6 +20,7 @@ class ReportRepository {
             checkoutLongitude: schema_js_1.attendances.checkoutLongitude,
             studentId: schema_js_1.students.id,
             studentNis: schema_js_1.students.nis,
+            studentName: schema_js_1.user.name,
             classId: schema_js_1.classes.id,
             className: schema_js_1.classes.name,
             academicYearId: schema_js_1.academicYears.id,
@@ -29,7 +30,8 @@ class ReportRepository {
         })
             .from(schema_js_1.attendances)
             .innerJoin(schema_js_1.students, (0, drizzle_orm_1.eq)(schema_js_1.attendances.studentId, schema_js_1.students.id))
-            .innerJoin(schema_js_1.classes, (0, drizzle_orm_1.eq)(schema_js_1.students.classId, schema_js_1.classes.id))
+            .innerJoin(schema_js_1.classes, (0, drizzle_orm_1.eq)(schema_js_1.attendances.classId, schema_js_1.classes.id))
+            .innerJoin(schema_js_1.user, (0, drizzle_orm_1.eq)(schema_js_1.students.userId, schema_js_1.user.id))
             .innerJoin(schema_js_1.academicYears, (0, drizzle_orm_1.eq)(schema_js_1.attendances.academicYearId, schema_js_1.academicYears.id))
             .innerJoin(schema_js_1.semesters, (0, drizzle_orm_1.eq)(schema_js_1.attendances.semesterId, schema_js_1.semesters.id));
         const conditions = [];
@@ -40,7 +42,7 @@ class ReportRepository {
             conditions.push((0, drizzle_orm_1.eq)(schema_js_1.students.nis, filters.nis));
         }
         if (filters.classId !== undefined) {
-            conditions.push((0, drizzle_orm_1.eq)(schema_js_1.students.classId, filters.classId));
+            conditions.push((0, drizzle_orm_1.eq)(schema_js_1.attendances.classId, filters.classId));
         }
         if (filters.semesterId !== undefined) {
             conditions.push((0, drizzle_orm_1.eq)(schema_js_1.attendances.semesterId, filters.semesterId));

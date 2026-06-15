@@ -6,8 +6,9 @@ const userService_js_1 = require("../services/userService.js");
 const schema_js_1 = require("../db/schema.js");
 const index_js_1 = require("../db/index.js");
 const drizzle_orm_1 = require("drizzle-orm");
+const validate_js_1 = require("../middlewares/validate.js");
+const validation_js_1 = require("../lib/validation.js");
 exports.usersRouter = (0, express_1.Router)();
-// GET all users
 exports.usersRouter.get('/', async (req, res) => {
     try {
         const data = await userService_js_1.userService.getUsers();
@@ -17,8 +18,7 @@ exports.usersRouter.get('/', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
-// POST create user
-exports.usersRouter.post('/', async (req, res) => {
+exports.usersRouter.post('/', (0, validate_js_1.validate)(validation_js_1.createUserSchema), async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
         const userId = await userService_js_1.userService.createUser({ name, email, password, role });
@@ -28,8 +28,7 @@ exports.usersRouter.post('/', async (req, res) => {
         res.status(400).json({ success: false, error: err.message });
     }
 });
-// PUT update user
-exports.usersRouter.put('/:id', async (req, res) => {
+exports.usersRouter.put('/:id', (0, validate_js_1.validate)(validation_js_1.updateUserSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const { name, email, role } = req.body;

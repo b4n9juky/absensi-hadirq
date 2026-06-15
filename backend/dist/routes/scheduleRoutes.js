@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.schedulesRouter = exports.scheduleRouter = void 0;
 const express_1 = require("express");
 const scheduleService_js_1 = require("../services/scheduleService.js");
+const validate_js_1 = require("../middlewares/validate.js");
+const validation_js_1 = require("../lib/validation.js");
 exports.scheduleRouter = (0, express_1.Router)();
 // GET all schedules
 exports.scheduleRouter.get('/', async (req, res) => {
@@ -14,8 +16,7 @@ exports.scheduleRouter.get('/', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
-// PUT to update a specific day's schedule
-exports.scheduleRouter.put('/:id', async (req, res) => {
+exports.scheduleRouter.put('/:id', (0, validate_js_1.validate)(validation_js_1.updateScheduleSchema), async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         if (isNaN(id)) {

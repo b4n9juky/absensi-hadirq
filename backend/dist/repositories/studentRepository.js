@@ -12,6 +12,7 @@ class StudentRepository {
             nis: schema_js_1.students.nis,
             classId: schema_js_1.students.classId,
             deviceUuid: schema_js_1.students.deviceUuid,
+            qrcode: schema_js_1.students.qrcode,
             createdAt: schema_js_1.students.createdAt,
             updatedAt: schema_js_1.students.updatedAt,
             studentName: schema_js_1.user.name,
@@ -34,17 +35,26 @@ class StudentRepository {
         const results = await index_js_1.db.select().from(schema_js_1.students).where((0, drizzle_orm_1.eq)(schema_js_1.students.userId, userId)).limit(1);
         return results[0] || null;
     }
-    async create(userId, nis, classId) {
+    async create(userId, nis, classId, qrcode) {
         const [result] = await index_js_1.db.insert(schema_js_1.students).values({
             userId,
             nis,
-            classId
+            classId,
+            qrcode
         });
         return result.insertId;
     }
-    async update(id, userId, nis, classId) {
+    async update(id, userId, nis, classId, qrcode) {
+        const values = { userId, nis, classId, updatedAt: new Date() };
+        if (qrcode !== undefined)
+            values.qrcode = qrcode;
         await index_js_1.db.update(schema_js_1.students)
-            .set({ userId, nis, classId, updatedAt: new Date() })
+            .set(values)
+            .where((0, drizzle_orm_1.eq)(schema_js_1.students.id, id));
+    }
+    async updateQrCode(id, qrcode) {
+        await index_js_1.db.update(schema_js_1.students)
+            .set({ qrcode, updatedAt: new Date() })
             .where((0, drizzle_orm_1.eq)(schema_js_1.students.id, id));
     }
     async updateDeviceUuid(id, deviceUuid) {

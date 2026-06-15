@@ -22,6 +22,7 @@ configRouter.get('/', authMiddleware, async (req, res) => {
     }
 
     const geofence = await settingService.getGeofenceConfig();
+    const schoolName = await settingService.getValue('school_name');
 
     res.json({
       success: true,
@@ -34,6 +35,7 @@ configRouter.get('/', authMiddleware, async (req, res) => {
         school_longitude: geofence.school_longitude,
         school_radius_meters: geofence.school_radius_meters,
         max_accuracy_meters: geofence.max_accuracy_meters,
+        school_name: schoolName || '',
       },
     });
   } catch (error) {

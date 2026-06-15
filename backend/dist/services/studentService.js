@@ -4,6 +4,10 @@ exports.studentService = exports.StudentService = void 0;
 const studentRepository_js_1 = require("../repositories/studentRepository.js");
 const userRepository_js_1 = require("../repositories/userRepository.js");
 const classRepository_js_1 = require("../repositories/classRepository.js");
+const qrGenerator_js_1 = require("../lib/qrGenerator.js");
+const index_js_1 = require("../db/index.js");
+const schema_js_1 = require("../db/schema.js");
+const drizzle_orm_1 = require("drizzle-orm");
 class StudentService {
     async getStudents() {
         return studentRepository_js_1.studentRepo.findAll();
@@ -38,7 +42,15 @@ class StudentService {
         if (existingNis) {
             throw new Error('NIS siswa sudah terdaftar.');
         }
-        return studentRepository_js_1.studentRepo.create(dto.userId, dto.nis, dto.classId);
+        const studentId = await studentRepository_js_1.studentRepo.create(dto.userId, dto.nis, dto.classId);
+        try {
+            const qrPath = await (0, qrGenerator_js_1.generateQrCode)(dto.nis, studentId);
+            await studentRepository_js_1.studentRepo.updateQrCode(studentId, qrPath);
+        }
+        catch (err) {
+            console.error(`[QR] Gagal generate QR untuk NIS ${dto.nis}:`, err);
+        }
+        return studentId;
     }
     async updateStudent(id, dto) {
         const existing = await studentRepository_js_1.studentRepo.findById(id);
@@ -78,7 +90,17 @@ class StudentService {
                 throw new Error('NIS siswa sudah digunakan.');
             }
         }
-        await studentRepository_js_1.studentRepo.update(id, dto.userId, dto.nis, dto.classId);
+        let qrcode = existing.qrcode;
+        if (dto.nis !== existing.nis || !existing.qrcode) {
+            await (0, qrGenerator_js_1.deleteQrCodeFile)(existing.qrcode);
+            try {
+                qrcode = await (0, qrGenerator_js_1.generateQrCode)(dto.nis, id);
+            }
+            catch (err) {
+                console.error(`[QR] Gagal generate QR untuk NIS ${dto.nis}:`, err);
+            }
+        }
+        await studentRepository_js_1.studentRepo.update(id, dto.userId, dto.nis, dto.classId, qrcode || undefined);
     }
     async resetDevice(id) {
         const existing = await studentRepository_js_1.studentRepo.findById(id);
@@ -92,7 +114,51 @@ class StudentService {
         if (!existing) {
             throw new Error('Siswa tidak ditemukan.');
         }
+        await (0, qrGenerator_js_1.deleteQrCodeFile)(existing.qrcode);
         await studentRepository_js_1.studentRepo.delete(id);
+    }
+    async promoteStudents(fromClassId, toClassId, studentIds) {
+        if (!fromClassId || !toClassId) {
+            throw new Error('Kelas asal dan kelas tujuan wajib ditentukan.');
+        }
+        const classRecord = await classRepository_js_1.classRepo.findById(toClassId);
+        if (!classRecord) {
+            throw new Error('Kelas tujuan tidak ditemukan.');
+        }
+        if (studentIds && studentIds.length > 0) {
+            await index_js_1.db.update(schema_js_1.students)
+                .set({ classId: toClassId, updatedAt: new Date() })
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_js_1.students.classId, fromClassId), (0, drizzle_orm_1.inArray)(schema_js_1.students.id, studentIds)));
+        }
+        else {
+            await index_js_1.db.update(schema_js_1.students)
+                .set({ classId: toClassId, updatedAt: new Date() })
+                .where((0, drizzle_orm_1.eq)(schema_js_1.students.classId, fromClassId));
+        }
+        return { success: true };
+    }
+    async registerFace(id, faceEmbedding) {
+        const existing = await studentRepository_js_1.studentRepo.findById(id);
+        if (!existing) {
+            throw new Error('Siswa tidak ditemukan.');
+        }
+        const embeddingString = JSON.stringify(faceEmbedding);
+        await index_js_1.db.update(schema_js_1.students).set({ faceEmbedding: embeddingString, updatedAt: new Date() }).where((0, drizzle_orm_1.eq)(schema_js_1.students.id, id));
+    }
+    async getStudentEmbeddings() {
+        const allStudents = await index_js_1.db.select({
+            id: schema_js_1.students.id,
+            nis: schema_js_1.students.nis,
+            studentName: schema_js_1.user.name,
+            faceEmbedding: schema_js_1.students.faceEmbedding,
+        }).from(schema_js_1.students)
+            .leftJoin(schema_js_1.user, (0, drizzle_orm_1.eq)(schema_js_1.students.userId, schema_js_1.user.id));
+        return allStudents.filter(s => s.faceEmbedding).map(s => ({
+            id: s.id,
+            nis: s.nis,
+            studentName: s.studentName,
+            faceEmbedding: JSON.parse(s.faceEmbedding)
+        }));
     }
 }
 exports.StudentService = StudentService;

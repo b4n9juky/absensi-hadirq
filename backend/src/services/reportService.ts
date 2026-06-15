@@ -1,4 +1,5 @@
 import { reportRepo } from '../repositories/reportRepository.js';
+import { getJakartaDate } from '../lib/timezone.js';
 
 export class ReportService {
   async getReport(filters: {
@@ -16,7 +17,7 @@ export class ReportService {
     let resolvedStartDate: string | undefined = filters.startDate;
     let resolvedEndDate: string | undefined = filters.endDate;
 
-    const currentServerTime = new Date();
+    const currentServerTime = getJakartaDate();
 
     if (filters.date) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -101,7 +102,8 @@ export class ReportService {
         checkoutLongitude: row.checkoutLongitude,
         student: {
           id: row.studentId,
-          nis: row.studentNis
+          nis: row.studentNis,
+          name: row.studentName
         },
         class: {
           id: row.classId,

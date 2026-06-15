@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { attendances, students, classes, academicYears, semesters } from '../db/schema.js';
+import { attendances, students, classes, academicYears, semesters, user } from '../db/schema.js';
 import { eq, and, gte, lte } from 'drizzle-orm';
 
 export interface ReportFilters {
@@ -29,6 +29,7 @@ export class ReportRepository {
       checkoutLongitude: attendances.checkoutLongitude,
       studentId: students.id,
       studentNis: students.nis,
+      studentName: user.name,
       classId: classes.id,
       className: classes.name,
       academicYearId: academicYears.id,
@@ -38,7 +39,8 @@ export class ReportRepository {
     })
     .from(attendances)
     .innerJoin(students, eq(attendances.studentId, students.id))
-    .innerJoin(classes, eq(students.classId, classes.id))
+    .innerJoin(classes, eq(attendances.classId, classes.id))
+    .innerJoin(user, eq(students.userId, user.id))
     .innerJoin(academicYears, eq(attendances.academicYearId, academicYears.id))
     .innerJoin(semesters, eq(attendances.semesterId, semesters.id));
 
@@ -51,7 +53,7 @@ export class ReportRepository {
       conditions.push(eq(students.nis, filters.nis));
     }
     if (filters.classId !== undefined) {
-      conditions.push(eq(students.classId, filters.classId));
+      conditions.push(eq(attendances.classId, filters.classId));
     }
     if (filters.semesterId !== undefined) {
       conditions.push(eq(attendances.semesterId, filters.semesterId));

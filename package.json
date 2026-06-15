@@ -11,6 +11,9 @@
     "start": "cd backend && node dist/index.js",
     "deploy": "bash deploy.sh",
     "db:push": "cd backend && npm run db:push",
-    "db:seed": "cd backend && npm run db:seed"
+    "db:seed": "cd backend && npm run db:seed",
+    "android:build": "gradlew.bat assembleDebug",
+    "android:install": "gradlew.bat installDebug",
+    "android:run": "gradlew.bat assembleDebug && gradlew.bat installDebug"
   }
 }

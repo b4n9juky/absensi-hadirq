@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { getDistance } from 'geolib';
 import fs from 'fs';
 import { settingService } from './settingService.js';
+import { getJakartaDate } from '../lib/timezone.js';
 
 export interface AttendancePayload {
   student_id: string;
@@ -126,7 +127,7 @@ export class AttendanceService {
     }
 
     // Day schedule
-    const serverTime = new Date();
+    const serverTime = getJakartaDate();
     const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long' });
     const scheduleRecord = await db.select().from(schedules).where(eq(schedules.dayName, dayName)).limit(1);
 
@@ -167,6 +168,7 @@ export class AttendanceService {
 
       await db.insert(attendances).values({
         studentId: student.id,
+        classId: student.classId,
         academicYearId: activeYear[0].id,
         semesterId: activeSemester[0].id,
         attendanceDate,
@@ -206,8 +208,8 @@ export class AttendanceService {
     return { success: true, message: `Absen Pulang Berhasil! Hati-hati di jalan. Jarak: ${distance.toFixed(1)}m.` };
   }
 
-  async processQrAttendance(payload: QrAttendancePayload) {
-    const { student_nis } = payload;
+  async processQrAttendance(payload: QrAttendancePayload & { status?: 'PRESENT' | 'LATE' | 'SICK' | 'EXCUSED' | 'ABSENT', isVerified?: boolean }) {
+    const { student_nis, status: requestedStatus, isVerified: requestedIsVerified } = payload;
 
     const studentRecord = await db.select().from(students).where(eq(students.nis, student_nis)).limit(1);
     if (studentRecord.length === 0) {
@@ -222,7 +224,7 @@ export class AttendanceService {
       return { success: false, message: 'Tahun ajaran atau semester aktif belum diatur di server.' };
     }
 
-    const serverTime = new Date();
+    const serverTime = getJakartaDate();
     const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long' });
     const scheduleRecord = await db.select().from(schedules).where(eq(schedules.dayName, dayName)).limit(1);
 
@@ -242,13 +244,43 @@ export class AttendanceService {
       ))
       .limit(1);
 
+    const targetStatus = requestedStatus || (currentTimeStr > schedule.lateAfter ? 'LATE' : 'PRESENT');
+    const targetIsVerified = requestedIsVerified !== undefined ? requestedIsVerified : true;
+
     if (existingAttendance.length > 0) {
-      if (existingAttendance[0].checkoutTime !== null) {
+      const record = existingAttendance[0];
+
+      // If custom status or explicit verification is requested
+      if (requestedStatus || requestedIsVerified !== undefined) {
+        await db.update(attendances)
+          .set({
+            status: targetStatus,
+            isVerified: targetIsVerified,
+            updatedAt: toDatabaseLocalTime(serverTime),
+          })
+          .where(eq(attendances.id, record.id));
+
+        let statusText = 'Hadir';
+        if (targetStatus === 'SICK') statusText = 'Sakit';
+        else if (targetStatus === 'EXCUSED') statusText = 'Izin';
+        else if (targetStatus === 'ABSENT') statusText = 'Alfa';
+        else if (targetStatus === 'LATE') statusText = 'Terlambat';
+        return { success: true, message: `Status siswa ${student_nis} diubah menjadi ${statusText}.` };
+      }
+
+      if (record.checkoutTime !== null) {
         return { success: false, message: `Siswa ${student_nis} sudah melakukan absen lengkap (datang + pulang) hari ini.` };
       }
 
       if (currentTimeStr < schedule.checkoutTime) {
-        return { success: false, message: `Belum waktunya pulang! Jam pulang ${schedule.checkoutTime}.` };
+        // Class check-in verification
+        await db.update(attendances)
+          .set({
+            isVerified: true,
+            updatedAt: toDatabaseLocalTime(serverTime),
+          })
+          .where(eq(attendances.id, record.id));
+        return { success: true, message: `Absen datang siswa ${student_nis} berhasil diverifikasi di kelas.` };
       }
 
       await db.update(attendances)
@@ -256,30 +288,29 @@ export class AttendanceService {
           checkoutTime: toDatabaseLocalTime(serverTime),
           updatedAt: toDatabaseLocalTime(serverTime),
         })
-        .where(eq(attendances.id, existingAttendance[0].id));
+        .where(eq(attendances.id, record.id));
 
       return { success: true, message: `Absen Pulang berhasil untuk ${student_nis} via QR.` };
     }
 
-    // Check-in via QR
-    if (currentTimeStr < schedule.checkinStart) {
-      return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
-    }
-
-    const isLate = currentTimeStr > schedule.lateAfter;
-    const status = isLate ? 'LATE' : 'PRESENT';
-
+    // Check-in via QR (does not exist yet)
     await db.insert(attendances).values({
       studentId: student.id,
+      classId: student.classId,
       academicYearId: activeYear[0].id,
       semesterId: activeSemester[0].id,
       attendanceDate,
-      status,
+      status: targetStatus,
+      isVerified: targetIsVerified,
       checkinTime: toDatabaseLocalTime(serverTime),
     });
 
-    const statusMsg = isLate ? 'Terlambat' : 'Tepat Waktu';
-    return { success: true, message: `Absen ${statusMsg} untuk ${student_nis} via QR.` };
+    let statusMsg = 'Hadir';
+    if (targetStatus === 'SICK') statusMsg = 'Sakit';
+    else if (targetStatus === 'EXCUSED') statusMsg = 'Izin';
+    else if (targetStatus === 'ABSENT') statusMsg = 'Alfa';
+    else if (targetStatus === 'LATE') statusMsg = 'Terlambat';
+    return { success: true, message: `Absen ${statusMsg} berhasil untuk ${student_nis} via QR.` };
   }
 
   private formatDate(date: Date): string {

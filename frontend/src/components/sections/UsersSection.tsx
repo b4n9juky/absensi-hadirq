@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Upload, Pencil, Trash2, RefreshCw, FileSpreadsheet, Check } from 'lucide-react';
 import { RoleBadge } from '../shared/StatusBadge';
-import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { DataTable } from '../shared/DataTable';
 import { ModalShell } from '../shared/ModalShell';
 import { FormInput, FormSelect } from '../shared/FormField';
 
@@ -15,6 +15,42 @@ interface Props {
 
 export const UsersSection: React.FC<Props> = ({ token }) => {
   const authHeader = { 'Authorization': `Bearer ${token}` };
+
+  const columns = [
+    {
+      key: 'name',
+      header: 'Nama Lengkap',
+      render: (row: UserRecord) => <span className="font-bold text-foreground">{row.name}</span>
+    },
+    {
+      key: 'email',
+      header: 'Alamat Email',
+      render: (row: UserRecord) => <span className="text-muted-foreground">{row.email}</span>
+    },
+    {
+      key: 'role',
+      header: 'Peran (Role)',
+      align: 'center' as const,
+      render: (row: UserRecord) => <RoleBadge role={row.role} />
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      align: 'right' as const,
+      render: (row: UserRecord) => (
+        <div className="space-x-2 inline-flex">
+          <button onClick={() => { setUserName(row.name); setUserEmail(row.email); setUserRole(row.role); setShowEditUser(row); }}
+            className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex">
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => handleDeleteUser(row.id)}
+            className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive/80 transition-colors inline-flex border border-destructive/10">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )
+    }
+  ];
   const [usersList, setUsersList] = useState<UserRecord[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -163,38 +199,14 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto w-full">
-        {listLoading ? <LoadingSpinner text="Sinkronisasi database..." /> : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-muted/20 border-b border-border text-muted-foreground text-xs uppercase font-semibold tracking-wider">
-                <th className="px-6 py-4">Nama Lengkap</th>
-                <th className="px-6 py-4">Alamat Email</th>
-                <th className="px-6 py-4 text-center">Peran (Role)</th>
-                <th className="px-6 py-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50 text-xs">
-              {usersList.map((row) => (
-                <tr key={row.id} className="hover:bg-muted/25 transition-colors">
-                  <td className="px-6 py-4 font-bold text-foreground">{row.name}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{row.email}</td>
-                  <td className="px-6 py-4 text-center"><RoleBadge role={row.role} /></td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => { setUserName(row.name); setUserEmail(row.email); setUserRole(row.role); setShowEditUser(row); }}
-                      className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => handleDeleteUser(row.id)}
-                      className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive/80 transition-colors inline-flex border border-destructive/10">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="w-full">
+        <DataTable
+          columns={columns}
+          data={usersList}
+          loading={listLoading}
+          searchPlaceholder="Cari nama atau email..."
+          emptyText="Tidak ada akun pengguna."
+        />
       </div>
 
       {errorMsg && <div className="px-6 py-3 text-destructive text-xs">{errorMsg}</div>}

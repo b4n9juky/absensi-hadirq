@@ -10,6 +10,7 @@ async function run() {
   const connection = await mysql.createConnection(process.env.DATABASE_URL!);
   
   try {
+    // 1. Check & Add class_id to attendances
     console.log('Checking if column class_id already exists in attendances...');
     const [columns] = await connection.query('SHOW COLUMNS FROM attendances LIKE "class_id"');
     
@@ -29,6 +30,28 @@ async function run() {
       console.log('Column class_id already exists.');
     }
 
+    // 2. Check & Add is_verified to attendances
+    console.log('Checking if column is_verified already exists in attendances...');
+    const [isVerifiedCols] = await connection.query('SHOW COLUMNS FROM attendances LIKE "is_verified"');
+    
+    if ((isVerifiedCols as any[]).length === 0) {
+      console.log('Adding is_verified column to attendances table...');
+      await connection.query('ALTER TABLE attendances ADD COLUMN is_verified tinyint(1) NOT NULL DEFAULT 0');
+      console.log('Column is_verified added successfully.');
+    } else {
+      console.log('Column is_verified already exists.');
+    }
+
+    // 3. Update status enum definition in attendances
+    console.log('Updating status enum values in attendances table...');
+    try {
+      await connection.query("ALTER TABLE attendances MODIFY COLUMN status enum('PRESENT', 'LATE', 'SICK', 'EXCUSED', 'ABSENT') NOT NULL");
+      console.log('Status enum updated successfully.');
+    } catch (err: any) {
+      console.error('Error updating status enum:', err.message);
+    }
+
+    // 4. Check & Add face_embedding to students
     console.log('Checking if column face_embedding already exists in students...');
     const [faceColumns] = await connection.query('SHOW COLUMNS FROM students LIKE "face_embedding"');
     
@@ -40,6 +63,7 @@ async function run() {
       console.log('Column face_embedding already exists.');
     }
     
+    // 5. Backfill class_id for old records
     console.log('Backfilling class_id for existing attendance records...');
     const [result] = await connection.query(`
       UPDATE attendances

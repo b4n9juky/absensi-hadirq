@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const promise_1 = __importDefault(require("mysql2/promise"));
-require("dotenv/config");
+require("../lib/env.js");
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is missing!');
 }

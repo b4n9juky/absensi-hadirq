@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import 'dotenv/config';
+import '../lib/env.js';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is missing!');

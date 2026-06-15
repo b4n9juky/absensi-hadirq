@@ -10,7 +10,7 @@ const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-require("dotenv/config");
+require("./lib/env.js");
 const node_1 = require("better-auth/node");
 const auth_js_1 = require("./lib/auth.js");
 const authMiddleware_js_1 = require("./middlewares/authMiddleware.js");

@@ -40,7 +40,7 @@ exports.db = void 0;
 const mysql2_1 = require("drizzle-orm/mysql2");
 const promise_1 = __importDefault(require("mysql2/promise"));
 const schema = __importStar(require("./schema.js"));
-require("dotenv/config");
+require("../lib/env.js");
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is missing!');
 }

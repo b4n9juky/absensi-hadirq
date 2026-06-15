@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import 'dotenv/config';
+import './lib/env.js';
 
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';

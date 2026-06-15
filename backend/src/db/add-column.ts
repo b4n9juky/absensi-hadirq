@@ -28,6 +28,17 @@ async function run() {
     } else {
       console.log('Column class_id already exists.');
     }
+
+    console.log('Checking if column face_embedding already exists in students...');
+    const [faceColumns] = await connection.query('SHOW COLUMNS FROM students LIKE "face_embedding"');
+    
+    if ((faceColumns as any[]).length === 0) {
+      console.log('Adding face_embedding column to students table...');
+      await connection.query('ALTER TABLE students ADD COLUMN face_embedding text NULL');
+      console.log('Column face_embedding added successfully.');
+    } else {
+      console.log('Column face_embedding already exists.');
+    }
     
     console.log('Backfilling class_id for existing attendance records...');
     const [result] = await connection.query(`

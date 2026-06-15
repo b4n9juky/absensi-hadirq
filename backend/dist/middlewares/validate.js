@@ -5,7 +5,7 @@ const zod_1 = require("zod");
 function validate(schema, target = 'body') {
     return (req, res, next) => {
         try {
-            schema.parse(req[target]);
+            req[target] = schema.parse(req[target]);
             next();
         }
         catch (err) {

@@ -52,12 +52,46 @@ app.use('/api', rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { success: false, error: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
 }));
+
+// Stricter rate limiting on authentication routes (15 attempts per 15 minutes)
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false },
+  message: { success: false, error: 'Terlalu banyak percobaan masuk. Silakan coba lagi setelah 15 menit.' },
+});
+app.use('/api/auth/', authRateLimiter);
 
 // Better Auth
 app.all('/api/auth/*', (req, res) => {
   return toNodeHandler(auth)(req, res);
+});
+
+// Interceptor to sanitize internal server/database errors in production to prevent information disclosure (OWASP A09 / CWE-209)
+app.use((req, res, next) => {
+  const originalJson = res.json;
+  res.json = function (body) {
+    if (body && body.success === false && typeof body.error === 'string') {
+      const lowerMessage = body.error.toLowerCase();
+      const dbKeywords = [
+        'select ', 'insert ', 'update ', 'delete ', 'table', 'column',
+        'sql', 'database', 'mysql', 'drizzle', 'query', 'syntax error',
+        'foreign key', 'constraint', 'unknown column', 'field list', 'sqlstate'
+      ];
+      const isDbError = dbKeywords.some(keyword => lowerMessage.includes(keyword));
+      
+      if (isDbError && process.env.NODE_ENV === 'production') {
+        body.error = 'Terjadi kesalahan internal pada server database. Silakan hubungi administrator.';
+      }
+    }
+    return originalJson.call(this, body);
+  };
+  next();
 });
 
 app.use(express.json({ limit: '10mb' }));

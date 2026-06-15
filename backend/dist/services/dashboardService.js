@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.dashboardService = exports.DashboardService = void 0;
 const dashboardRepository_js_1 = require("../repositories/dashboardRepository.js");
 const timezone_js_1 = require("../lib/timezone.js");
+const settingService_js_1 = require("./settingService.js");
 class DashboardService {
     async getStats(filters) {
         let startDate;
@@ -39,10 +40,11 @@ class DashboardService {
             endDate = startDate;
             daysCount = 1;
         }
-        const [totalStudents, presentCount, lateCount] = await Promise.all([
+        const [totalStudents, presentCount, lateCount, schoolName] = await Promise.all([
             dashboardRepository_js_1.dashboardRepo.getTotalStudents(filters.classId),
             dashboardRepository_js_1.dashboardRepo.getAttendanceCount('PRESENT', startDate, endDate, filters.classId),
-            dashboardRepository_js_1.dashboardRepo.getAttendanceCount('LATE', startDate, endDate, filters.classId)
+            dashboardRepository_js_1.dashboardRepo.getAttendanceCount('LATE', startDate, endDate, filters.classId),
+            settingService_js_1.settingService.getValue('school_name')
         ]);
         // Calculate absentCount: (totalStudents * daysCount) - (presentCount + lateCount)
         // Ensures that it doesn't go below 0
@@ -53,7 +55,9 @@ class DashboardService {
             presentCount,
             lateCount,
             absentCount,
-            daysCount
+            daysCount,
+            serverTime: currentServerTime.toISOString(),
+            schoolName: schoolName || 'Sekolah'
         };
     }
 }

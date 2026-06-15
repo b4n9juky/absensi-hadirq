@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, User, MapPin, Eye } from 'lucide-react';
+import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, User, MapPin, Eye, Calendar } from 'lucide-react';
 import { ModalShell } from '../shared/ModalShell';
 import { DataTable } from '../shared/DataTable';
 
 interface Props {
   token: string;
+  user: { name: string; role: string };
 }
 
 const months = [
@@ -15,13 +16,14 @@ const months = [
   { value: '10', label: 'Oktober' }, { value: '11', label: 'November' }, { value: '12', label: 'Desember' },
 ];
 
-export const DashboardSection: React.FC<Props> = ({ token }) => {
+export const DashboardSection: React.FC<Props> = ({ token, user }) => {
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterClass, setFilterClass] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
   const [filterYear, setFilterYear] = useState('');
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [previewDetails, setPreviewDetails] = useState<any | null>(null);
+  const [serverClock, setServerClock] = useState<Date | null>(null);
 
   const authHeader = { 'Authorization': `Bearer ${token}` };
 
@@ -198,6 +200,41 @@ export const DashboardSection: React.FC<Props> = ({ token }) => {
 
   const errorMsg = statsError ? (statsError as Error).message : '';
 
+  // Sync server clock when stats data is loaded
+  useEffect(() => {
+    if (statsData?.serverTime) {
+      setServerClock(new Date(statsData.serverTime));
+    }
+  }, [statsData?.serverTime]);
+
+  // Tick the clock every second
+  useEffect(() => {
+    if (!serverClock) return;
+    const timer = setInterval(() => {
+      setServerClock(prev => prev ? new Date(prev.getTime() + 1000) : null);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [!!serverClock]);
+
+  // Formatter for clock
+  const getClockString = () => {
+    if (!serverClock) return '--:--:--';
+    const h = String(serverClock.getHours()).padStart(2, '0');
+    const m = String(serverClock.getMinutes()).padStart(2, '0');
+    const s = String(serverClock.getSeconds()).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
+  const getClockDateString = () => {
+    if (!serverClock) return 'Memuat tanggal...';
+    return serverClock.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   const handleResetFilters = () => {
     setFilterDate(new Date().toISOString().split('T')[0]);
     setFilterClass('');
@@ -219,6 +256,36 @@ export const DashboardSection: React.FC<Props> = ({ token }) => {
 
   return (
     <>
+      {/* Welcome & Live Server Clock Banner */}
+      <section className="bg-gradient-to-r from-teal-950 via-slate-900 to-slate-950 border border-teal-500/20 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl relative overflow-hidden animate-fadeIn mb-2">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.08),transparent_50%)]" />
+        <div className="space-y-2 relative z-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-teal-500/10 border border-teal-500/20 text-teal-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+            Sistem Aktif
+          </div>
+          <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+            Selamat datang kembali, <span className="text-teal-400">{user?.name || 'Admin'}</span>!
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            {statsData?.schoolName || 'Sistem Absensi Kehadiran Siswa'}
+          </p>
+        </div>
+        
+        {/* Digital Clock Section */}
+        <div className="bg-background/40 backdrop-blur-md border border-border/80 rounded-2xl px-6 py-4 flex flex-col md:items-end justify-center gap-1.5 relative z-10 min-w-[200px] shadow-inner">
+          <div className="flex items-center gap-2 text-teal-400 font-mono text-3xl font-extrabold tracking-wider drop-shadow-[0_0_8px_rgba(20,184,166,0.3)]">
+            <Clock className="w-5 h-5 text-teal-400/80" />
+            <span>{getClockString()}</span>
+            <span className="text-[10px] font-sans font-bold px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30 uppercase tracking-widest ml-1">WIB</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Calendar className="w-3.5 h-3.5 text-muted-foreground/80" />
+            <span>{getClockDateString()}</span>
+          </div>
+        </div>
+      </section>
+
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fadeIn">
         {[
           { label: 'Total Siswa', value: stats.totalStudents, icon: <Users className="w-5 h-5" />, color: 'from-blue-500 to-teal-500', iconBg: 'bg-blue-500/10 text-blue-500', textColor: 'text-foreground' },

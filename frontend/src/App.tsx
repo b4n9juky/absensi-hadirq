@@ -74,7 +74,7 @@ function App() {
           }
         >
           <Route index element={<Navigate to="ringkasan" replace />} />
-          <Route path="ringkasan" element={<DashboardSection token={token!} />} />
+          <Route path="ringkasan" element={<DashboardSection token={token!} user={user!} />} />
           <Route path="pengguna" element={<UsersSection token={token!} />} />
           <Route path="kelas" element={<ClassesSection token={token!} />} />
           <Route path="siswa" element={<StudentsSection token={token!} />} />

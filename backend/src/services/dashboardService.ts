@@ -1,5 +1,6 @@
 import { dashboardRepo } from '../repositories/dashboardRepository.js';
 import { getJakartaDate } from '../lib/timezone.js';
+import { settingService } from './settingService.js';
 
 export interface DashboardStatsDto {
   totalStudents: number;
@@ -7,6 +8,8 @@ export interface DashboardStatsDto {
   lateCount: number;
   absentCount: number;
   daysCount: number;
+  serverTime: string;
+  schoolName: string;
 }
 
 export class DashboardService {
@@ -53,10 +56,11 @@ export class DashboardService {
       daysCount = 1;
     }
 
-    const [totalStudents, presentCount, lateCount] = await Promise.all([
+    const [totalStudents, presentCount, lateCount, schoolName] = await Promise.all([
       dashboardRepo.getTotalStudents(filters.classId),
       dashboardRepo.getAttendanceCount('PRESENT', startDate, endDate, filters.classId),
-      dashboardRepo.getAttendanceCount('LATE', startDate, endDate, filters.classId)
+      dashboardRepo.getAttendanceCount('LATE', startDate, endDate, filters.classId),
+      settingService.getValue('school_name')
     ]);
 
     // Calculate absentCount: (totalStudents * daysCount) - (presentCount + lateCount)
@@ -69,7 +73,9 @@ export class DashboardService {
       presentCount,
       lateCount,
       absentCount,
-      daysCount
+      daysCount,
+      serverTime: currentServerTime.toISOString(),
+      schoolName: schoolName || 'Sekolah'
     };
   }
 }

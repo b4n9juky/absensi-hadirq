@@ -22,12 +22,12 @@ const envPaths = [
 let loaded = false;
 for (const envPath of envPaths) {
     if (fs_1.default.existsSync(envPath)) {
-        dotenv_1.default.config({ path: envPath });
+        dotenv_1.default.config({ path: envPath, override: true });
         loaded = true;
         break;
     }
 }
 if (!loaded) {
     // Default fallback
-    dotenv_1.default.config();
+    dotenv_1.default.config({ override: true });
 }

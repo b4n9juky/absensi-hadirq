@@ -27,6 +27,7 @@ exports.scheduleRouter.put('/:id', (0, validate_js_1.validate)(validation_js_1.u
         res.json({ success: true, message: 'Jadwal sekolah berhasil diperbarui.' });
     }
     catch (err) {
+        console.error('[ScheduleRoutes] Error:', err);
         res.status(400).json({ success: false, error: err.message });
     }
 });

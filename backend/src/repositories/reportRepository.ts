@@ -44,7 +44,8 @@ export class ReportRepository {
       .innerJoin(classes, eq(attendances.classId, classes.id))
       .innerJoin(user, eq(students.userId, user.id))
       .innerJoin(academicYears, eq(attendances.academicYearId, academicYears.id))
-      .innerJoin(semesters, eq(attendances.semesterId, semesters.id));
+      .innerJoin(semesters, eq(attendances.semesterId, semesters.id))
+      .$dynamic();
 
     const conditions = [];
 

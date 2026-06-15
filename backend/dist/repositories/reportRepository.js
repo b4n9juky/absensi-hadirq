@@ -6,7 +6,9 @@ const schema_js_1 = require("../db/schema.js");
 const drizzle_orm_1 = require("drizzle-orm");
 class ReportRepository {
     async getAttendanceReport(filters) {
-        const query = index_js_1.db.select({
+        // Build base query selecting required fields
+        let query = index_js_1.db
+            .select({
             id: schema_js_1.attendances.id,
             attendanceDate: schema_js_1.attendances.attendanceDate,
             status: schema_js_1.attendances.status,
@@ -26,14 +28,15 @@ class ReportRepository {
             academicYearId: schema_js_1.academicYears.id,
             academicYearName: schema_js_1.academicYears.name,
             semesterId: schema_js_1.semesters.id,
-            semesterName: schema_js_1.semesters.name
+            semesterName: schema_js_1.semesters.name,
         })
             .from(schema_js_1.attendances)
             .innerJoin(schema_js_1.students, (0, drizzle_orm_1.eq)(schema_js_1.attendances.studentId, schema_js_1.students.id))
             .innerJoin(schema_js_1.classes, (0, drizzle_orm_1.eq)(schema_js_1.attendances.classId, schema_js_1.classes.id))
             .innerJoin(schema_js_1.user, (0, drizzle_orm_1.eq)(schema_js_1.students.userId, schema_js_1.user.id))
             .innerJoin(schema_js_1.academicYears, (0, drizzle_orm_1.eq)(schema_js_1.attendances.academicYearId, schema_js_1.academicYears.id))
-            .innerJoin(schema_js_1.semesters, (0, drizzle_orm_1.eq)(schema_js_1.attendances.semesterId, schema_js_1.semesters.id));
+            .innerJoin(schema_js_1.semesters, (0, drizzle_orm_1.eq)(schema_js_1.attendances.semesterId, schema_js_1.semesters.id))
+            .$dynamic();
         const conditions = [];
         if (filters.studentId !== undefined) {
             conditions.push((0, drizzle_orm_1.eq)(schema_js_1.attendances.studentId, filters.studentId));
@@ -61,12 +64,14 @@ class ReportRepository {
                 conditions.push((0, drizzle_orm_1.lte)(schema_js_1.attendances.attendanceDate, filters.endDate));
             }
         }
+        // Apply where clause if any conditions were added
         if (conditions.length > 0) {
-            query.where((0, drizzle_orm_1.and)(...conditions));
+            query = query.where((0, drizzle_orm_1.and)(...conditions));
         }
-        // Order descending by date, then checkin time
-        query.orderBy(schema_js_1.attendances.attendanceDate, schema_js_1.attendances.checkinTime);
-        return query;
+        // Order results: newest date first, then latest check‑in time
+        query = query.orderBy(schema_js_1.attendances.attendanceDate, schema_js_1.attendances.checkinTime);
+        // Execute the query and return rows
+        return await query;
     }
 }
 exports.ReportRepository = ReportRepository;

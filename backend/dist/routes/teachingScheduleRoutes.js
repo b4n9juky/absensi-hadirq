@@ -10,6 +10,7 @@ exports.teachingSchedulesRouter.get('/', async (req, res) => {
         res.json({ success: true, data });
     }
     catch (err) {
+        console.error('[TeachingSchedulesRouter GET /] Error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });

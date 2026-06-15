@@ -56,6 +56,7 @@ exports.reportRouter.get('/attendance', async (req, res) => {
         res.json({ success: true, data });
     }
     catch (err) {
+        console.error('[ReportRoutes /attendance] Error:', err);
         res.status(400).json({ success: false, error: err.message });
     }
 });

@@ -18,7 +18,6 @@ class ScheduleRepository {
             checkinStart,
             lateAfter,
             checkoutTime,
-            updatedAt: new Date()
         })
             .where((0, drizzle_orm_1.eq)(schema_js_1.schedules.id, id));
     }

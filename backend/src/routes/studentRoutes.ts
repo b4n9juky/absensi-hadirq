@@ -117,19 +117,7 @@ studentsRouter.post('/promote', async (req, res) => {
   }
 });
 
-studentsRouter.get('/embeddings', async (req, res) => {
-  try {
-    const kioskToken = req.headers['x-kiosk-token'];
-    const expectedToken = process.env.KIOSK_SECRET_KEY || 'absensi-kiosk-secret-key-12345';
-    if (!kioskToken || kioskToken !== expectedToken) {
-      return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
-    }
-    const data = await studentService.getStudentEmbeddings();
-    res.json({ success: true, data });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+
 
 studentsRouter.put('/:id/register-face', async (req, res) => {
   try {

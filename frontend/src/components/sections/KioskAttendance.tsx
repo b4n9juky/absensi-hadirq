@@ -43,7 +43,7 @@ export const KioskAttendance = () => {
 
     const loadData = async () => {
       try {
-        const res = await fetch('/api/students/embeddings', {
+        const res = await fetch('/api/kiosk/embeddings', {
           headers: { 'x-kiosk-token': kioskKey }
         });
         if (res.status === 401) {
@@ -206,7 +206,7 @@ export const KioskAttendance = () => {
       e.preventDefault();
       setAuthError('');
       try {
-        const res = await fetch('/api/students/embeddings', {
+        const res = await fetch('/api/kiosk/embeddings', {
           headers: { 'x-kiosk-token': inputKey }
         });
         if (res.status === 401) {

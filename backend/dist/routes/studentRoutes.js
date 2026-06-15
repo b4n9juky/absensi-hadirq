@@ -115,15 +115,6 @@ exports.studentsRouter.post('/promote', async (req, res) => {
         res.status(400).json({ success: false, error: err.message });
     }
 });
-exports.studentsRouter.get('/embeddings', async (req, res) => {
-    try {
-        const data = await studentService_js_1.studentService.getStudentEmbeddings();
-        res.json({ success: true, data });
-    }
-    catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
 exports.studentsRouter.put('/:id/register-face', async (req, res) => {
     try {
         const id = parseInt(req.params.id);

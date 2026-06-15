@@ -1,10 +1,25 @@
 import { Router } from 'express';
 import { kioskService } from '../services/kioskService.js';
+import { studentService } from '../services/studentService.js';
 import { db } from '../db/index.js';
 import { students, user } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
 export const kioskRouter = Router();
+
+kioskRouter.get('/embeddings', async (req, res) => {
+  try {
+    const kioskToken = req.headers['x-kiosk-token'];
+    const expectedToken = process.env.KIOSK_SECRET_KEY || 'absensi-kiosk-secret-key-12345';
+    if (!kioskToken || kioskToken !== expectedToken) {
+      return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
+    }
+    const data = await studentService.getStudentEmbeddings();
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 kioskRouter.post('/checkin', async (req, res) => {
   try {

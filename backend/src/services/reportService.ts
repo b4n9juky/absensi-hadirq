@@ -66,6 +66,10 @@ export class ReportService {
     const formatTimestamp = (dateVal: any): string | null => {
       if (!dateVal) return null;
       if (dateVal instanceof Date) {
+        if (isNaN(dateVal.getTime())) {
+          console.warn('[ReportService] Warning: Invalid Date object encountered:', dateVal);
+          return null;
+        }
         return dateVal.toISOString().slice(0, -1);
       }
       const str = String(dateVal);

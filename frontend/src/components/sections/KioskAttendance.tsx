@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as faceapi from '@vladmandic/face-api';
-import { Camera, CheckCircle2, UserCircle } from 'lucide-react';
+import { Camera, CheckCircle2, UserCircle, Maximize2, Minimize2 } from 'lucide-react';
 
 interface StudentEmbedding {
   id: number;
@@ -24,6 +24,29 @@ export const KioskAttendance = () => {
   const [kioskKey, setKioskKey] = useState<string | null>(localStorage.getItem('kiosk_secret_key'));
   const [inputKey, setInputKey] = useState('');
   const [authError, setAuthError] = useState('');
+
+  // Fullscreen States
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error entering fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
 
   // Refs to prevent stale closures inside setInterval
   const studentsDataRef = useRef<StudentEmbedding[]>([]);
@@ -262,9 +285,14 @@ export const KioskAttendance = () => {
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
       {/* Header */}
       <div className="absolute top-0 w-full p-6 z-20 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent">
-        <h1 className="text-2xl font-bold text-teal-400 flex items-center gap-2">
-          <Camera className="w-8 h-8" /> Kiosk Absensi
-        </h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-teal-400 flex items-center gap-2">
+            <Camera className="w-8 h-8" /> Kiosk Absensi
+          </h1>
+          <button onClick={handleToggleFullscreen} className="p-2 rounded-xl bg-zinc-900/50 hover:bg-zinc-800/80 border border-zinc-800/50 text-teal-400 hover:text-teal-300 transition-colors inline-flex z-30" title="Layar Penuh">
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        </div>
         <div className="text-right">
           <p className="text-sm text-gray-300">{statusMsg}</p>
           <p className="text-xs text-gray-500">{studentsData.length} data wajah dimuat</p>

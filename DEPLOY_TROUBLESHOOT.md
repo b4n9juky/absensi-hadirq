@@ -102,9 +102,33 @@ pm2 save
 
 ---
 
-## Rekomendasi ke Depan
+# Resume Troubleshoot - Kiosk Absensi Wajah & Kenaikan Kelas Massal
 
-1. **Simpan env vars di PM2 config** untuk production — jangan andalkan file `.env`
-2. **File `backend/.env` tetap boleh ada** untuk development lokal (jalan via `tsx src/index.ts` dari folder `backend/`)
-3. **Gunakan guard** di `ecosystem.config.js`: jika ada perubahan env, selalu pakai `--update-env`
-4. **Monitoring**: pantau restart count PM2 via `pm2 status` sebagai early warning
+## Timeline Masalah & Resolusi (15 Jun 2026)
+
+| Masalah | Penyebab (Root Cause) | Solusi yang Diterapkan |
+|---------|-----------------------|------------------------|
+| **Kamera/Wajah Tidak Terdeteksi** | Ukuran model `Tiny Face Detector` terlalu kecil sehingga tidak andal di kondisi minim cahaya atau jarak jauh (1-3m). | Mengupgrade pemindai utama menggunakan **SSD Mobilenet V1** yang jauh lebih akurat, dengan fallback otomatis ke `Tiny Face Detector` (sensitivitas `0.3`) jika gagal. |
+| **Absen Terbaca Ganda (Datang + Pulang Sekaligus)** | 1. Request API dikirim ganda oleh frame kamera asinkron yang berdekatan.<br>2. Ketiadaan jeda waktu minimum di server sehingga request kedua (selisih milidetik) langsung memicu check-out pulang di hari itu. | 1. Frontend: Menambahkan pengunci sinkron (`isScanningRef.current`) sebelum menembak API.<br>2. Backend: Membatasi check-out jika jeda sejak check-in kurang dari 5 menit menggunakan perhitungan zona waktu independen (`getLocalEpoch`). |
+| **Gagal Update Database (`db:push` di VPS)** | Drizzle-kit mencoba mengosongkan/menghapus (*truncate*) tabel `academic_years` untuk memproses ulang foreign key, tetapi ditolak MySQL karena relasi kunci aktif. | Mengabaikan `db:push` di VPS, dan beralih menggunakan skrip migrasi raw SQL aman: `npx tsx src/db/add-column.ts` untuk memproses `ALTER TABLE ADD COLUMN` tanpa menghapus data. |
+| **Error `Unexpected token '<'` (Bukan valid JSON)** | 1. Endpoint `/embeddings` terblokir `authMiddleware` sesi admin.<br>2. Berkas model AI `ssd_mobilenetv1` tidak ada di VPS karena dikecualikan dari Git. Server web mengembalikan HTML fallback (`index.html`) yang memicu error parsing JSON. | 1. Memindahkan endpoint ke `/api/kiosk/embeddings` dengan proteksi Kiosk Secret Key.<br>2. Memperbarui skrip `download-models.mjs` di VPS untuk mengunduh 8 berkas `.bin` model AI secara lengkap, lalu melakukan build ulang. |
+
+---
+
+## Panduan Perawatan & Migrasi Server Mendatang
+
+### 1. Penambahan Kolom Database Baru di VPS
+Jika ada pembaruan skema database di masa mendatang, **hindari penggunaan `npm run db:push` langsung di VPS** jika terdapat relasi foreign key aktif yang berisiko memicu truncation data. 
+* **Rekomendasi:** Tulis skrip migrasi SQL manual menggunakan perintah `ALTER TABLE` seperti pada [add-column.ts](file:///c:/Users/yayas/Documents/Aplikasi/absensilocation/backend/src/db/add-column.ts) lalu jalankan dengan `npx tsx`.
+
+### 2. Penanganan File Model AI Besar di Git
+* File `.bin` model AI (total ~12MB) sengaja dimasukkan ke `.gitignore` agar repositori Git tetap ringan.
+* Jika Anda memindahkan atau mengkloning proyek ini ke server baru, **selalu jalankan** perintah ini sekali sebelum melakukan build:
+  ```bash
+  cd frontend
+  node download-models.mjs
+  ```
+
+### 3. Pengamanan Link Kiosk Absensi
+* Selalu pastikan variabel `KIOSK_SECRET_KEY` terkonfigurasi dengan aman di file `.env` server backend (atau PM2 config).
+* Laptop kiosk sekolah harus diotentikasi sekali saat setup awal agar token tersimpan di browser (`localStorage`). Tanpa token ini, siapa pun (termasuk siswa dari ponsel pribadinya) tidak akan bisa menembak API absensi wajah.

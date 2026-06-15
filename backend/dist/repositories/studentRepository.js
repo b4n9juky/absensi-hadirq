@@ -13,6 +13,7 @@ class StudentRepository {
             classId: schema_js_1.students.classId,
             deviceUuid: schema_js_1.students.deviceUuid,
             qrcode: schema_js_1.students.qrcode,
+            faceEmbedding: schema_js_1.students.faceEmbedding,
             createdAt: schema_js_1.students.createdAt,
             updatedAt: schema_js_1.students.updatedAt,
             studentName: schema_js_1.user.name,

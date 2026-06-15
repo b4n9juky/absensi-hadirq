@@ -11,6 +11,7 @@ export class StudentRepository {
       classId: students.classId,
       deviceUuid: students.deviceUuid,
       qrcode: students.qrcode,
+      faceEmbedding: students.faceEmbedding,
       createdAt: students.createdAt,
       updatedAt: students.updatedAt,
       studentName: user.name,

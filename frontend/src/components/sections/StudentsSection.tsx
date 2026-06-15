@@ -11,6 +11,7 @@ interface StudentRecord {
   studentName: string; studentEmail: string; className: string;
   deviceUuid?: string | null;
   qrcode?: string | null;
+  faceEmbedding?: string | null;
 }
 interface UserRecord { id: string; name: string; email: string; role: string; }
 interface ClassRecord { id: number; name: string; }
@@ -282,6 +283,22 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
       key: 'deviceUuid',
       header: 'Status Perangkat HP',
       render: (row: StudentRecord) => <DeviceBadge bound={!!row.deviceUuid} />
+    },
+    {
+      key: 'faceEmbedding',
+      header: 'Biometrik Wajah',
+      align: 'center' as const,
+      render: (row: StudentRecord) => (
+        row.faceEmbedding ? (
+          <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-teal-500/10 border-teal-500/20 text-teal-400">
+            Terdaftar
+          </span>
+        ) : (
+          <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-500/10 border-slate-500/20 text-slate-400">
+            Belum Ada
+          </span>
+        )
+      )
     },
     {
       key: 'qrcode',

@@ -95,8 +95,13 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
   const handleEditSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showEditSchedule) return;
+    if (!schedStart || !schedLate || !schedCheckout) {
+      setErrorMsg('Semua field waktu harus diisi.');
+      return;
+    }
     try {
-      const res = await fetch(`/api/schedules/${showEditSchedule.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ checkinStart: schedStart, lateAfter: schedLate, checkoutTime: schedCheckout }) });
+      const body = { checkinStart: schedStart, lateAfter: schedLate, checkoutTime: schedCheckout };
+      const res = await fetch(`/api/schedules/${showEditSchedule.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify(body) });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Jadwal diperbarui!'); setShowEditSchedule(null); fetchData(); }
       else throw new Error(data.error || 'Gagal.');
@@ -186,7 +191,7 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
                     Mulai: {sched.checkinStart} | Toleransi: {sched.lateAfter} | Pulang: {sched.checkoutTime}
                   </div>
                 </div>
-                <button onClick={() => { setSchedStart(sched.checkinStart); setSchedLate(sched.lateAfter); setSchedCheckout(sched.checkoutTime); setShowEditSchedule(sched); }}
+                <button onClick={() => { setSchedStart(sched.checkinStart.slice(0, 5)); setSchedLate(sched.lateAfter.slice(0, 5)); setSchedCheckout(sched.checkoutTime.slice(0, 5)); setShowEditSchedule(sched); }}
                   className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
                   <Pencil className="w-3.5 h-3.5" />
                 </button>

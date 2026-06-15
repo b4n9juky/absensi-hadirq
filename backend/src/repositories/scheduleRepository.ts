@@ -18,7 +18,6 @@ export class ScheduleRepository {
         checkinStart,
         lateAfter,
         checkoutTime,
-        updatedAt: new Date()
       })
       .where(eq(schedules.id, id));
   }

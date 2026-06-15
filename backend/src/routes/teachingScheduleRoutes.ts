@@ -8,6 +8,7 @@ teachingSchedulesRouter.get('/', async (req, res) => {
     const data = await teachingScheduleService.getAll();
     res.json({ success: true, data });
   } catch (err: any) {
+    console.error('[TeachingSchedulesRouter GET /] Error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

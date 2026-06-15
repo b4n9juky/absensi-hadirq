@@ -25,6 +25,7 @@ scheduleRouter.put('/:id', validate(updateScheduleSchema), async (req, res) => {
     await scheduleService.updateSchedule(id, { checkinStart, lateAfter, checkoutTime });
     res.json({ success: true, message: 'Jadwal sekolah berhasil diperbarui.' });
   } catch (err: any) {
+    console.error('[ScheduleRoutes] Error:', err);
     res.status(400).json({ success: false, error: err.message });
   }
 });

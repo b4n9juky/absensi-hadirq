@@ -1,0 +1,109 @@
+import mysql from 'mysql2/promise';
+import '../lib/env.js';
+
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is missing!');
+}
+
+async function run() {
+  console.log('Connecting to database...');
+  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+  
+  try {
+    // 1. Create teaching_schedules table if it doesn't exist
+    console.log('Checking if table teaching_schedules already exists...');
+    const [tables] = await connection.query("SHOW TABLES LIKE 'teaching_schedules'");
+    
+    if ((tables as any[]).length === 0) {
+      console.log('Creating teaching_schedules table...');
+      await connection.query(`
+        CREATE TABLE \`teaching_schedules\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`teacher_id\` varchar(36) NOT NULL,
+          \`class_id\` int(11) NOT NULL,
+          \`day_name\` varchar(20) NOT NULL,
+          \`start_time\` time NOT NULL,
+          \`end_time\` time NOT NULL,
+          \`subject\` varchar(100) DEFAULT NULL,
+          \`created_at\` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+          \`updated_at\` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`id\`),
+          CONSTRAINT \`teaching_schedules_teacher_id_user_id_fk\` FOREIGN KEY (\`teacher_id\`) REFERENCES \`user\` (\`id\`),
+          CONSTRAINT \`teaching_schedules_class_id_classes_id_fk\` FOREIGN KEY (\`class_id\`) REFERENCES \`classes\` (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      console.log('Table teaching_schedules created successfully.');
+    } else {
+      console.log('Table teaching_schedules already exists.');
+    }
+
+    // 2. Check & Add class_id to attendances
+    console.log('Checking if column class_id already exists in attendances...');
+    const [classCols] = await connection.query('SHOW COLUMNS FROM attendances LIKE "class_id"');
+    if ((classCols as any[]).length === 0) {
+      console.log('Adding class_id column to attendances table...');
+      await connection.query('ALTER TABLE attendances ADD COLUMN class_id int NULL');
+      console.log('Column class_id added successfully.');
+      
+      console.log('Adding foreign key constraint for class_id...');
+      try {
+        await connection.query('ALTER TABLE attendances ADD CONSTRAINT attendances_class_id_classes_id_fk FOREIGN KEY (class_id) REFERENCES classes(id)');
+        console.log('Foreign key constraint added successfully.');
+      } catch (fkErr: any) {
+        console.warn('Warning adding foreign key constraint:', fkErr.message);
+      }
+    } else {
+      console.log('Column class_id already exists.');
+    }
+
+    // 3. Check & Add is_verified to attendances
+    console.log('Checking if column is_verified already exists in attendances...');
+    const [isVerifiedCols] = await connection.query('SHOW COLUMNS FROM attendances LIKE "is_verified"');
+    if ((isVerifiedCols as any[]).length === 0) {
+      console.log('Adding is_verified column to attendances table...');
+      await connection.query('ALTER TABLE attendances ADD COLUMN is_verified tinyint(1) NOT NULL DEFAULT 0');
+      console.log('Column is_verified added successfully.');
+    } else {
+      console.log('Column is_verified already exists.');
+    }
+
+    // 4. Update status enum definition in attendances
+    console.log('Updating status enum values in attendances table...');
+    try {
+      await connection.query("ALTER TABLE attendances MODIFY COLUMN status enum('PRESENT', 'LATE', 'SICK', 'EXCUSED', 'ABSENT') NOT NULL");
+      console.log('Status enum updated successfully.');
+    } catch (err: any) {
+      console.error('Error updating status enum:', err.message);
+    }
+
+    // 5. Check & Add face_embedding to students
+    console.log('Checking if column face_embedding already exists in students...');
+    const [faceColumns] = await connection.query('SHOW COLUMNS FROM students LIKE "face_embedding"');
+    if ((faceColumns as any[]).length === 0) {
+      console.log('Adding face_embedding column to students table...');
+      await connection.query('ALTER TABLE students ADD COLUMN face_embedding text NULL');
+      console.log('Column face_embedding added successfully.');
+    } else {
+      console.log('Column face_embedding already exists.');
+    }
+    
+    // 6. Backfill class_id for old records
+    console.log('Backfilling class_id for existing attendance records...');
+    const [result] = await connection.query(`
+      UPDATE attendances
+      INNER JOIN students ON attendances.student_id = students.id
+      SET attendances.class_id = students.class_id
+      WHERE attendances.class_id IS NULL
+    `);
+    console.log(`Backfill completed. Rows updated: ${(result as any).affectedRows}`);
+    
+    console.log('Migration completed successfully!');
+  } catch (err: any) {
+    console.error('Error during migration:', err);
+  } finally {
+    await connection.end();
+    console.log('Database connection closed.');
+  }
+}
+
+run().catch(console.error);

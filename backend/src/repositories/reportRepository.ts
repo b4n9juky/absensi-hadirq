@@ -15,34 +15,36 @@ export interface ReportFilters {
 
 export class ReportRepository {
   async getAttendanceReport(filters: ReportFilters) {
-    const query = db.select({
-      id: attendances.id,
-      attendanceDate: attendances.attendanceDate,
-      status: attendances.status,
-      checkinTime: attendances.checkinTime,
-      checkinPhoto: attendances.checkinPhoto,
-      checkinLatitude: attendances.checkinLatitude,
-      checkinLongitude: attendances.checkinLongitude,
-      checkoutTime: attendances.checkoutTime,
-      checkoutPhoto: attendances.checkoutPhoto,
-      checkoutLatitude: attendances.checkoutLatitude,
-      checkoutLongitude: attendances.checkoutLongitude,
-      studentId: students.id,
-      studentNis: students.nis,
-      studentName: user.name,
-      classId: classes.id,
-      className: classes.name,
-      academicYearId: academicYears.id,
-      academicYearName: academicYears.name,
-      semesterId: semesters.id,
-      semesterName: semesters.name
-    })
-    .from(attendances)
-    .innerJoin(students, eq(attendances.studentId, students.id))
-    .innerJoin(classes, eq(attendances.classId, classes.id))
-    .innerJoin(user, eq(students.userId, user.id))
-    .innerJoin(academicYears, eq(attendances.academicYearId, academicYears.id))
-    .innerJoin(semesters, eq(attendances.semesterId, semesters.id));
+    // Build base query selecting required fields
+    let query = db
+      .select({
+        id: attendances.id,
+        attendanceDate: attendances.attendanceDate,
+        status: attendances.status,
+        checkinTime: attendances.checkinTime,
+        checkinPhoto: attendances.checkinPhoto,
+        checkinLatitude: attendances.checkinLatitude,
+        checkinLongitude: attendances.checkinLongitude,
+        checkoutTime: attendances.checkoutTime,
+        checkoutPhoto: attendances.checkoutPhoto,
+        checkoutLatitude: attendances.checkoutLatitude,
+        checkoutLongitude: attendances.checkoutLongitude,
+        studentId: students.id,
+        studentNis: students.nis,
+        studentName: user.name,
+        classId: classes.id,
+        className: classes.name,
+        academicYearId: academicYears.id,
+        academicYearName: academicYears.name,
+        semesterId: semesters.id,
+        semesterName: semesters.name,
+      })
+      .from(attendances)
+      .innerJoin(students, eq(attendances.studentId, students.id))
+      .innerJoin(classes, eq(attendances.classId, classes.id))
+      .innerJoin(user, eq(students.userId, user.id))
+      .innerJoin(academicYears, eq(attendances.academicYearId, academicYears.id))
+      .innerJoin(semesters, eq(attendances.semesterId, semesters.id));
 
     const conditions = [];
 
@@ -72,14 +74,16 @@ export class ReportRepository {
       }
     }
 
+    // Apply where clause if any conditions were added
     if (conditions.length > 0) {
-      query.where(and(...conditions));
+      query = query.where(and(...conditions));
     }
 
-    // Order descending by date, then checkin time
-    query.orderBy(attendances.attendanceDate, attendances.checkinTime);
+    // Order results: newest date first, then latest check‑in time
+    query = query.orderBy(attendances.attendanceDate, attendances.checkinTime);
 
-    return query;
+    // Execute the query and return rows
+    return await query;
   }
 }
 

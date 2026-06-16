@@ -190,6 +190,11 @@ export class AttendanceService {
       return { success: false, message: 'Anda sudah melakukan absen pulang hari ini.' };
     }
 
+    if (currentTimeStr < schedule.checkinStart) {
+      this.cleanupFile(photoPath);
+      return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
+    }
+
     if (currentTimeStr < schedule.checkoutTime) {
       this.cleanupFile(photoPath);
       return { success: false, message: `Absen datang sudah Anda lakukan hari ini. Silakan absen pulang setelah jam ${schedule.checkoutTime}.` };

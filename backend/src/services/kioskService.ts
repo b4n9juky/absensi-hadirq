@@ -77,6 +77,10 @@ export class KioskService {
         return { success: false, message: `Peringatan: Anda sudah melakukan absen datang hari ini.` };
       }
 
+      if (currentTimeStr < schedule.checkinStart) {
+        return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
+      }
+
       if (currentTimeStr < schedule.checkoutTime) {
         return { success: false, message: `Peringatan: Anda sudah absen datang. Absen pulang baru dibuka pukul ${schedule.checkoutTime}.` };
       }

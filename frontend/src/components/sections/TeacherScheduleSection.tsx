@@ -6,8 +6,6 @@ import { FormInput, FormSelect } from '../shared/FormField';
 
 interface ScheduleRecord {
   id: number;
-  teacherId: string;
-  teacherName: string;
   classId: number;
   className: string;
   dayName: string;
@@ -17,7 +15,6 @@ interface ScheduleRecord {
 }
 
 interface ClassRecord { id: number; name: string; }
-interface TeacherRecord { id: string; name: string; email: string; role: string; }
 interface SubjectRecord { id: number; name: string; }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -28,11 +25,10 @@ const DAY_LABELS: Record<string, string> = {
 
 interface Props { token: string; }
 
-export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
+export const TeacherScheduleSection: React.FC<Props> = ({ token }) => {
   const authHeader = { 'Authorization': `Bearer ${token}` };
   const [list, setList] = useState<ScheduleRecord[]>([]);
   const [classesList, setClassesList] = useState<ClassRecord[]>([]);
-  const [teachersList, setTeachersList] = useState<TeacherRecord[]>([]);
   const [subjectsList, setSubjectsList] = useState<SubjectRecord[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
@@ -41,7 +37,6 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
 
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<ScheduleRecord | null>(null);
-  const [formTeacherId, setFormTeacherId] = useState('');
   const [formClassId, setFormClassId] = useState('');
   const [formDay, setFormDay] = useState('Monday');
   const [formStart, setFormStart] = useState('07:00:00');
@@ -52,15 +47,13 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
   const fetchList = useCallback(async () => {
     setListLoading(true);
     try {
-      const [resSched, resClasses, resUsers, resSubjects] = await Promise.all([
-        fetch('/api/teaching-schedules', { headers: authHeader }),
+      const [resSched, resClasses, resSubjects] = await Promise.all([
+        fetch('/api/teacher/my-schedules', { headers: authHeader }),
         fetch('/api/classes', { headers: authHeader }),
-        fetch('/api/users', { headers: authHeader }),
         fetch('/api/subjects', { headers: authHeader }),
       ]);
       const dSched = await resSched.json(); if (dSched.success) setList(dSched.data);
       const dClasses = await resClasses.json(); if (dClasses.success) setClassesList(dClasses.data);
-      const dUsers = await resUsers.json(); if (dUsers.success) setTeachersList(dUsers.data.filter((u: TeacherRecord) => u.role === 'guru'));
       const dSubjects = await resSubjects.json(); if (dSubjects.success) setSubjectsList(dSubjects.data);
     } catch { /* ignore */ } finally { setListLoading(false); }
   }, [token]);
@@ -70,19 +63,17 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
 
   const openAdd = () => {
     setEditItem(null);
-    setFormTeacherId(teachersList.length > 0 ? teachersList[0].id : '');
     setFormClassId(classesList.length > 0 ? String(classesList[0].id) : '');
     setFormDay('Monday');
     setFormStart('07:00:00');
     setFormEnd('08:30:00');
-    setFormSubject('');
+    setFormSubject(subjectsList.length > 0 ? subjectsList[0].name : '');
     setFormError('');
     setShowModal(true);
   };
 
   const openEdit = (item: ScheduleRecord) => {
     setEditItem(item);
-    setFormTeacherId(item.teacherId);
     setFormClassId(String(item.classId));
     setFormDay(item.dayName);
     setFormStart(item.startTime);
@@ -95,13 +86,13 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (!formTeacherId || !formClassId || !formStart || !formEnd) {
+    if (!formClassId || !formStart || !formEnd) {
       setFormError('Semua field wajib diisi.');
       return;
     }
     try {
-      const body = { teacherId: formTeacherId, classId: Number(formClassId), dayName: formDay, startTime: formStart, endTime: formEnd, subject: formSubject };
-      const url = editItem ? `/api/teaching-schedules/${editItem.id}` : '/api/teaching-schedules';
+      const body = { classId: Number(formClassId), dayName: formDay, startTime: formStart, endTime: formEnd, subject: formSubject };
+      const url = editItem ? `/api/teacher/my-schedules/${editItem.id}` : '/api/teacher/my-schedules';
       const method = editItem ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify(body) });
       const data = await res.json();
@@ -116,7 +107,7 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
   const handleDelete = async (id: number) => {
     if (!confirm('Hapus jadwal mengajar ini?')) return;
     try {
-      const res = await fetch(`/api/teaching-schedules/${id}`, { method: 'DELETE', headers: authHeader });
+      const res = await fetch(`/api/teacher/my-schedules/${id}`, { method: 'DELETE', headers: authHeader });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Jadwal berhasil dihapus.'); fetchList(); }
       else throw new Error(data.error || 'Gagal menghapus jadwal.');
@@ -129,8 +120,8 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
     <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl animate-fadeIn">
       <div className="px-6 py-5 border-b border-border flex justify-between items-center gap-4">
         <div>
-          <h2 className="text-md font-bold text-foreground">Jadwal Mengajar Guru</h2>
-          <p className="text-[10px] text-muted-foreground mt-1">Atur jadwal mata pelajaran per guru, kelas, dan hari.</p>
+          <h2 className="text-md font-bold text-foreground">Jadwal Mengajar Saya</h2>
+          <p className="text-[10px] text-muted-foreground mt-1">Atur jadwal mata pelajaran Anda per kelas dan hari.</p>
         </div>
         <button onClick={openAdd}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
@@ -153,8 +144,7 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
                       <div key={s.id} className="px-4 py-3 space-y-1.5 hover:bg-muted/10 transition-colors">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-foreground truncate">{s.teacherName}</div>
-                            <div className="text-[10px] text-muted-foreground">{s.className}</div>
+                            <div className="text-xs font-bold text-foreground truncate">{s.className}</div>
                           </div>
                           <div className="flex gap-1 shrink-0">
                             <button onClick={() => openEdit(s)}
@@ -182,10 +172,9 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
         <ModalShell title={editItem ? 'Edit Jadwal Mengajar' : 'Tambah Jadwal Mengajar'} onClose={() => setShowModal(false)} maxWidth="md"
           footer={<>
             <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button>
-            <button type="submit" form="schedForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">{editItem ? 'Simpan Perubahan' : 'Simpan'}</button>
+            <button type="submit" form="teacherSchedForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">{editItem ? 'Simpan Perubahan' : 'Simpan'}</button>
           </>}>
-          <form id="schedForm" onSubmit={handleSubmit} className="space-y-4">
-            <FormSelect label="Guru" value={formTeacherId} onChange={e => setFormTeacherId(e.target.value)} placeholder="-- Pilih Guru --" options={teachersList.map(t => ({ value: t.id, label: t.name }))} />
+          <form id="teacherSchedForm" onSubmit={handleSubmit} className="space-y-4">
             <FormSelect label="Kelas" value={formClassId} onChange={e => setFormClassId(e.target.value)} placeholder="-- Pilih Kelas --" options={classesList.map(c => ({ value: String(c.id), label: c.name }))} />
             <FormSelect label="Hari" value={formDay} onChange={e => setFormDay(e.target.value)} options={DAYS.map(d => ({ value: d, label: DAY_LABELS[d] }))} />
             <div className="grid grid-cols-2 gap-4">

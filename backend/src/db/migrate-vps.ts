@@ -87,7 +87,26 @@ async function run() {
       console.log('Column face_embedding already exists.');
     }
     
-    // 6. Backfill class_id for old records
+    // 6. Create subjects table if it doesn't exist
+    console.log('Checking if table subjects already exists...');
+    const [subjectTables] = await connection.query("SHOW TABLES LIKE 'subjects'");
+    if ((subjectTables as any[]).length === 0) {
+      console.log('Creating subjects table...');
+      await connection.query(`
+        CREATE TABLE \`subjects\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`name\` varchar(100) NOT NULL,
+          \`created_at\` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`id\`),
+          UNIQUE KEY \`name\` (\`name\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      console.log('Table subjects created successfully.');
+    } else {
+      console.log('Table subjects already exists.');
+    }
+
+    // 7. Backfill class_id for old records
     console.log('Backfilling class_id for existing attendance records...');
     const [result] = await connection.query(`
       UPDATE attendances

@@ -47,6 +47,68 @@ teacherRouter.post('/mark-attendance', authMiddleware, requireRole(['guru']), as
   }
 });
 
+teacherRouter.get('/my-schedules', authMiddleware, requireRole(['guru']), async (req, res) => {
+  try {
+    const teacherId = req.context!.user.id;
+    const schedules = await teacherService.getMySchedules(teacherId);
+    res.json({ success: true, data: schedules });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+teacherRouter.post('/my-schedules', authMiddleware, requireRole(['guru']), async (req, res) => {
+  try {
+    const teacherId = req.context!.user.id;
+    const { classId, dayName, startTime, endTime, subject } = req.body;
+    if (!classId || !dayName || !startTime || !endTime) {
+      return res.status(400).json({ success: false, error: 'Semua field wajib diisi (classId, dayName, startTime, endTime).' });
+    }
+    const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    if (!validDays.includes(dayName)) {
+      return res.status(400).json({ success: false, error: 'Hari tidak valid. Gunakan bahasa Inggris (Monday-Sunday).' });
+    }
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
+    if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+      return res.status(400).json({ success: false, error: 'Format waktu harus HH:MM:SS.' });
+    }
+    const scheduleId = await teacherService.createMySchedule(teacherId, {
+      classId: Number(classId), dayName, startTime, endTime, subject: subject || '',
+    });
+    res.status(201).json({ success: true, message: 'Jadwal berhasil dibuat.', data: { id: scheduleId } });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+teacherRouter.put('/my-schedules/:id', authMiddleware, requireRole(['guru']), async (req, res) => {
+  try {
+    const teacherId = req.context!.user.id;
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    const { classId, dayName, startTime, endTime, subject } = req.body;
+    await teacherService.updateMySchedule(teacherId, id, {
+      classId: classId ? Number(classId) : undefined,
+      dayName, startTime, endTime, subject,
+    });
+    res.json({ success: true, message: 'Jadwal berhasil diperbarui.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+teacherRouter.delete('/my-schedules/:id', authMiddleware, requireRole(['guru']), async (req, res) => {
+  try {
+    const teacherId = req.context!.user.id;
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    await teacherService.deleteMySchedule(teacherId, id);
+    res.json({ success: true, message: 'Jadwal berhasil dihapus.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 teacherRouter.post('/mark-attendance-bulk', authMiddleware, requireRole(['guru']), async (req, res) => {
   try {
     const { student_nis_list } = req.body;

@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import { teachingSchedules, students, classes, attendances, user } from '../db/schema.js';
-import { eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
+import { eq, and, gte, lte, sql, inArray, ne } from 'drizzle-orm';
 import { attendanceService } from './attendanceService.js';
 import { getJakartaDate } from '../lib/timezone.js';
 
@@ -132,6 +132,73 @@ export class TeacherService {
       ));
 
     return { success: true, message: `Berhasil memverifikasi ${studentNisList.length} siswa.` };
+  }
+  async getMySchedules(teacherId: string) {
+    const rows = await db.select({
+      id: teachingSchedules.id,
+      classId: teachingSchedules.classId,
+      className: classes.name,
+      dayName: teachingSchedules.dayName,
+      startTime: teachingSchedules.startTime,
+      endTime: teachingSchedules.endTime,
+      subject: teachingSchedules.subject,
+    })
+    .from(teachingSchedules)
+    .innerJoin(classes, eq(teachingSchedules.classId, classes.id))
+    .where(eq(teachingSchedules.teacherId, teacherId))
+    .orderBy(teachingSchedules.dayName, teachingSchedules.startTime);
+    return rows;
+  }
+
+  async createMySchedule(teacherId: string, dto: {
+    classId: number; dayName: string; startTime: string; endTime: string; subject: string;
+  }) {
+    const conflict = await db.select().from(teachingSchedules)
+      .where(and(
+        eq(teachingSchedules.teacherId, teacherId),
+        eq(teachingSchedules.dayName, dto.dayName),
+        eq(teachingSchedules.startTime, dto.startTime),
+      )).limit(1);
+    if (conflict.length > 0) {
+      throw new Error('Jadwal bentrok: Anda sudah memiliki jadwal di hari & jam yang sama.');
+    }
+    const [result] = await db.insert(teachingSchedules).values({
+      teacherId, classId: dto.classId, dayName: dto.dayName,
+      startTime: dto.startTime, endTime: dto.endTime, subject: dto.subject,
+    });
+    return result.insertId;
+  }
+
+  async updateMySchedule(teacherId: string, id: number, dto: {
+    classId?: number; dayName?: string; startTime?: string; endTime?: string; subject?: string;
+  }) {
+    const existing = await db.select().from(teachingSchedules)
+      .where(and(eq(teachingSchedules.id, id), eq(teachingSchedules.teacherId, teacherId)))
+      .limit(1);
+    if (existing.length === 0) throw new Error('Jadwal tidak ditemukan.');
+
+    const conflict = await db.select().from(teachingSchedules)
+      .where(and(
+        eq(teachingSchedules.teacherId, teacherId),
+        eq(teachingSchedules.dayName, dto.dayName ?? existing[0].dayName),
+        eq(teachingSchedules.startTime, dto.startTime ?? existing[0].startTime),
+        ne(teachingSchedules.id, id),
+      )).limit(1);
+    if (conflict.length > 0) {
+      throw new Error('Jadwal bentrok: Anda sudah memiliki jadwal di hari & jam yang sama.');
+    }
+
+    await db.update(teachingSchedules).set(dto)
+      .where(and(eq(teachingSchedules.id, id), eq(teachingSchedules.teacherId, teacherId)));
+  }
+
+  async deleteMySchedule(teacherId: string, id: number) {
+    const existing = await db.select().from(teachingSchedules)
+      .where(and(eq(teachingSchedules.id, id), eq(teachingSchedules.teacherId, teacherId)))
+      .limit(1);
+    if (existing.length === 0) throw new Error('Jadwal tidak ditemukan.');
+    await db.delete(teachingSchedules)
+      .where(and(eq(teachingSchedules.id, id), eq(teachingSchedules.teacherId, teacherId)));
   }
 }
 

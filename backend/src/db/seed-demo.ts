@@ -1,5 +1,5 @@
 import { db } from './index.js';
-import { academicYears, semesters, classes, students, schedules, user, teachingSchedules, attendances } from './schema.js';
+import { academicYears, semesters, classes, students, schedules, user, teachingSchedules, attendances, subjects } from './schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { auth } from '../lib/auth.js';
 import { generateQrCode } from '../lib/qrGenerator.js';
@@ -16,6 +16,20 @@ async function seedDemo() {
     const activeSemester = await db.select().from(semesters).where(eq(semesters.isActive, true)).limit(1);
     if (activeSemester.length === 0) { console.log('Jalankan seed.ts dulu!'); process.exit(1); }
     const activeSemesterId = activeSemester[0].id;
+
+    // === 1. SEED SUBJECTS ===
+    const subjectNames = [
+      'Matematika', 'Fisika', 'Biologi', 'Bahasa Inggris', 'Sejarah',
+      'Kimia', 'Ekonomi', 'Geografi', 'Sosiologi', 'PKN',
+      'Agama', 'Olahraga', 'Seni Budaya', 'Informatika', 'Bahasa Indonesia',
+    ];
+    for (const name of subjectNames) {
+      const existing = await db.select().from(subjects).where(eq(subjects.name, name)).limit(1);
+      if (existing.length === 0) {
+        await db.insert(subjects).values({ name });
+        console.log(`+ Subject: ${name}`);
+      }
+    }
 
     const today = new Date().toISOString().slice(0, 10);
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -38,7 +52,7 @@ async function seedDemo() {
       return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
     }
 
-    // === 1. TAMBAH KELAS ===
+    // === 2. TAMBAH KELAS ===
     const classNames = ['X IPA 1', 'X IPA 2', 'XI IPA 1', 'XI IPA 2', 'XII IPA 1', 'XII IPA 2'];
     const classIds: Record<string, number> = {};
     for (const name of classNames) {
@@ -53,7 +67,7 @@ async function seedDemo() {
       }
     }
 
-    // === 2. TAMBAH GURU ===
+    // === 3. TAMBAH GURU ===
     const guruData = [
       { email: 'guru.matematika@school.com', name: 'Dr. Ahmad Fauzi', mapel: 'Matematika' },
       { email: 'guru.fisika@school.com', name: 'Siti Nurhaliza, S.Si', mapel: 'Fisika' },
@@ -78,7 +92,7 @@ async function seedDemo() {
       }
     }
 
-    // === 3. TAMBAH SISWA PER KELAS ===
+    // === 4. TAMBAH SISWA PER KELAS ===
     const siswaPerKelas: Record<string, Array<{ email: string; name: string; nis: string }>> = {
       'X IPA 1': [
         { email: 'siswa.x1.1@school.com', name: 'Ani Rahmawati', nis: 'XIPA-001' },
@@ -159,7 +173,7 @@ async function seedDemo() {
       }
     }
 
-    // === 4. JADWAL MENGAJAR GURU ===
+    // === 5. JADWAL MENGAJAR GURU ===
     const jadwal: Array<{
       teacherId: string; className: string; subject: string; dayName: string; startTime: string; endTime: string
     }> = [];
@@ -233,7 +247,7 @@ async function seedDemo() {
       }
     }
 
-    // === 5. ABSENSI HARI INI (untuk simulasi) ===
+    // === 6. ABSENSI HARI INI (untuk simulasi) ===
     // Cari semua siswa per kelas, beri status PRESENT/LATE untuk beberapa
     for (const [kelas, daftar] of Object.entries(siswaPerKelas)) {
       const classId = classIds[kelas];

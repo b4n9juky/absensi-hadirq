@@ -9,6 +9,8 @@ import { StudentsSection } from './components/sections/StudentsSection';
 import { AcademicSection } from './components/sections/AcademicSection';
 import { SettingsSection } from './components/sections/SettingsSection';
 import { TeachingScheduleSection } from './components/sections/TeachingScheduleSection';
+import { TeacherScheduleSection } from './components/sections/TeacherScheduleSection';
+import { SubjectsSection } from './components/sections/SubjectsSection';
 import { KioskAttendance } from './components/sections/KioskAttendance';
 
 function App() {
@@ -80,7 +82,8 @@ function App() {
           <Route path="siswa" element={<StudentsSection token={token!} />} />
           <Route path="akademik" element={<AcademicSection token={token!} />} />
           <Route path="pengaturan" element={<SettingsSection token={token!} />} />
-          <Route path="jadwal-mengajar" element={<TeachingScheduleSection token={token!} />} />
+          <Route path="jadwal-mengajar" element={user?.role === 'guru' ? <TeacherScheduleSection token={token!} /> : <TeachingScheduleSection token={token!} />} />
+          <Route path="mata-pelajaran" element={user?.role === 'admin' ? <SubjectsSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
         </Route>
         <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
       </Routes>

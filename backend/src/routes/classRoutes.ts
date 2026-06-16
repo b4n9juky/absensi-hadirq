@@ -3,6 +3,7 @@ import { classService } from '../services/classService.js';
 import { students } from '../db/schema.js';
 import { db } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+import { requireRole } from '../middlewares/authMiddleware.js';
 
 export const classesRouter = Router();
 
@@ -17,7 +18,7 @@ classesRouter.get('/', async (req, res) => {
 });
 
 // POST create class
-classesRouter.post('/', async (req, res) => {
+classesRouter.post('/', requireRole(['admin']), async (req, res) => {
   try {
     const { name } = req.body;
     const classId = await classService.createClass({ name });
@@ -28,7 +29,7 @@ classesRouter.post('/', async (req, res) => {
 });
 
 // PUT update class
-classesRouter.put('/:id', async (req, res) => {
+classesRouter.put('/:id', requireRole(['admin']), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -43,7 +44,7 @@ classesRouter.put('/:id', async (req, res) => {
 });
 
 // DELETE class
-classesRouter.delete('/:id', async (req, res) => {
+classesRouter.delete('/:id', requireRole(['admin']), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

@@ -1,15 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Vibrate, Clock } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Vibrate, Clock, Book } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 
-const navItems = [
-  { path: '/dashboard/ringkasan', key: 'dashboard', icon: <LayoutDashboard className="w-4.5 h-4.5" />, label: 'Ringkasan & Absensi' },
-  { path: '/dashboard/pengguna', key: 'users', icon: <Users className="w-4.5 h-4.5" />, label: 'Kelola Pengguna' },
-  { path: '/dashboard/kelas', key: 'classes', icon: <BookOpen className="w-4.5 h-4.5" />, label: 'Kelola Kelas' },
-  { path: '/dashboard/siswa', key: 'students', icon: <GraduationCap className="w-4.5 h-4.5" />, label: 'Kelola Siswa' },
-  { path: '/dashboard/akademik', key: 'academic', icon: <Calendar className="w-4.5 h-4.5" />, label: 'Akademik & Jadwal' },
-  { path: '/dashboard/jadwal-mengajar', key: 'teaching-schedule', icon: <Clock className="w-4.5 h-4.5" />, label: 'Jadwal Mengajar' },
-  { path: '/dashboard/pengaturan', key: 'settings', icon: <Settings className="w-4.5 h-4.5" />, label: 'Pengaturan' },
+const allNavItems = [
+  { path: '/dashboard/ringkasan', key: 'dashboard', icon: <LayoutDashboard className="w-4.5 h-4.5" />, label: 'Ringkasan & Absensi', roles: ['admin', 'guru'] },
+  { path: '/dashboard/pengguna', key: 'users', icon: <Users className="w-4.5 h-4.5" />, label: 'Kelola Pengguna', roles: ['admin'] },
+  { path: '/dashboard/kelas', key: 'classes', icon: <BookOpen className="w-4.5 h-4.5" />, label: 'Kelola Kelas', roles: ['admin'] },
+  { path: '/dashboard/siswa', key: 'students', icon: <GraduationCap className="w-4.5 h-4.5" />, label: 'Kelola Siswa', roles: ['admin'] },
+  { path: '/dashboard/akademik', key: 'academic', icon: <Calendar className="w-4.5 h-4.5" />, label: 'Akademik & Jadwal', roles: ['admin'] },
+  { path: '/dashboard/jadwal-mengajar', key: 'teaching-schedule', icon: <Clock className="w-4.5 h-4.5" />, label: 'Jadwal Mengajar', roles: ['admin', 'guru'] },
+  { path: '/dashboard/mata-pelajaran', key: 'subjects', icon: <Book className="w-4.5 h-4.5" />, label: 'Mata Pelajaran', roles: ['admin'] },
+  { path: '/dashboard/pengaturan', key: 'settings', icon: <Settings className="w-4.5 h-4.5" />, label: 'Pengaturan', roles: ['admin'] },
 ];
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 
 export const Sidebar: React.FC<Props> = ({ activeSection, onSectionChange, user, onLogout }) => {
   const navigate = useNavigate();
+  const navItems = allNavItems.filter(item => item.roles.includes(user.role));
 
   return (
     <aside className="w-64 bg-card border-r border-border backdrop-blur-md hidden md:flex flex-col justify-between shrink-0">

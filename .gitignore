@@ -56,5 +56,6 @@ debug.keystore
 
 # Large AI Models
 /frontend/public/models/
+/frontend/design
 
 

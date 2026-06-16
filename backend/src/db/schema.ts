@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, double, float, timestamp, boolean, date, mysqlEnum, time, text } from 'drizzle-orm/mysql-core';
+import { mysqlTable, int, varchar, double, float, timestamp, boolean, date, mysqlEnum, time, text, uniqueIndex } from 'drizzle-orm/mysql-core';
 
 export const academicYears = mysqlTable('academic_years', {
   id: int('id').autoincrement().primaryKey(),
@@ -95,6 +95,19 @@ export const attendances = mysqlTable('attendances', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
+export const subjectAttendances = mysqlTable('subject_attendances', {
+  id: int('id').autoincrement().primaryKey(),
+  teachingScheduleId: int('teaching_schedule_id').references(() => teachingSchedules.id).notNull(),
+  studentId: int('student_id').references(() => students.id).notNull(),
+  attendanceDate: date('attendance_date', { mode: 'string' }).notNull(),
+  status: mysqlEnum('status', ['PRESENT', 'SICK', 'EXCUSED', 'ABSENT', 'DISPEN', 'SKIPPED']).notNull(),
+  notes: varchar('notes', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+  uniqueAttendance: uniqueIndex('unique_subject_attendance').on(table.teachingScheduleId, table.studentId, table.attendanceDate),
+}));
+
 export const session = mysqlTable('session', {
   id: varchar('id', { length: 36 }).primaryKey(),
   expiresAt: timestamp('expires_at').notNull(),
@@ -124,6 +137,12 @@ export const settings = mysqlTable('settings', {
   key: varchar('key', { length: 100 }).primaryKey(),
   value: text('value').notNull(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+});
+
+export const subjects = mysqlTable('subjects', {
+  id: int('id').autoincrement().primaryKey(),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const verification = mysqlTable('verification', {

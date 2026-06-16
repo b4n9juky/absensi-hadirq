@@ -8,6 +8,7 @@ const sectionMap: Record<string, string> = {
   students: '/dashboard/siswa',
   academic: '/dashboard/akademik',
   'teaching-schedule': '/dashboard/jadwal-mengajar',
+  subjects: '/dashboard/mata-pelajaran',
   settings: '/dashboard/pengaturan',
 };
 
@@ -18,6 +19,7 @@ const options = [
   { value: 'students', label: 'Siswa' },
   { value: 'academic', label: 'Jadwal & Periode' },
   { value: 'teaching-schedule', label: 'Jadwal Mengajar' },
+  { value: 'subjects', label: 'Mata Pelajaran' },
   { value: 'settings', label: 'Pengaturan' },
 ];
 

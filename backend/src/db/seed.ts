@@ -1,5 +1,5 @@
 import { db } from './index.js';
-import { academicYears, semesters, classes, students, schedules, user, teachingSchedules } from './schema.js';
+import { academicYears, semesters, classes, students, schedules, user, teachingSchedules, subjects } from './schema.js';
 import { eq } from 'drizzle-orm';
 import { auth } from '../lib/auth.js';
 import { generateQrCode } from '../lib/qrGenerator.js';
@@ -146,7 +146,23 @@ async function seed() {
       console.log('Student with NIS SISWA-BTG-025 already exists, updated userId reference');
     }
 
-    // 5. Default Schedules (Monday to Sunday)
+    // 5. Subjects
+    const subjectNames = [
+      'Matematika', 'Fisika', 'Biologi', 'Bahasa Inggris', 'Sejarah',
+      'Kimia', 'Ekonomi', 'Geografi', 'Sosiologi', 'PKN',
+      'Agama', 'Olahraga', 'Seni Budaya', 'Informatika', 'Bahasa Indonesia',
+    ];
+    for (const name of subjectNames) {
+      const existing = await db.select().from(subjects).where(eq(subjects.name, name)).limit(1);
+      if (existing.length === 0) {
+        await db.insert(subjects).values({ name });
+        console.log(`Inserted Subject: ${name}`);
+      } else {
+        console.log(`Subject "${name}" already exists`);
+      }
+    }
+
+    // 6. Default Schedules (Monday to Sunday)
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     for (const day of days) {
       const existingSchedule = await db.select().from(schedules).where(eq(schedules.dayName, day));

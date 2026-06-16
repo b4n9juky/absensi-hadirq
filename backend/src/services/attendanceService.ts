@@ -272,6 +272,10 @@ export class AttendanceService {
         return { success: false, message: `Siswa ${student_nis} sudah melakukan absen lengkap (datang + pulang) hari ini.` };
       }
 
+      if (currentTimeStr < schedule.checkinStart) {
+        return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
+      }
+
       if (currentTimeStr < schedule.checkoutTime) {
         // Class check-in verification
         await db.update(attendances)

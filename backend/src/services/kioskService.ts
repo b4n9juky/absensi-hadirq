@@ -92,6 +92,11 @@ export class KioskService {
     }
 
     // New Check-in
+    // Enforce rule: Cannot check in (Datang) before checkin start time
+    if (currentTimeStr < schedule.checkinStart) {
+      return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
+    }
+
     // Enforce rule: Cannot check in (Datang) if current time is past school checkout time
     if (currentTimeStr >= schedule.checkoutTime) {
       return { success: false, message: 'Anda belum absen datang hari ini. Silakan hubungi Guru/Admin.' };

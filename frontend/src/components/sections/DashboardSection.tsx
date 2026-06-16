@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+
 import { useQuery } from '@tanstack/react-query';
 import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, User, MapPin, Eye, Calendar, Camera } from 'lucide-react';
 import { ModalShell } from '../shared/ModalShell';
@@ -272,10 +272,10 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
             {statsData?.schoolName || 'Sistem Absensi Kehadiran Siswa'}
           </p>
           <div className="pt-2">
-            <Link to="/kiosk-absensi" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition-all shadow-lg hover:shadow-teal-500/20">
+            <a href="/kiosk-absensi" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition-all shadow-lg hover:shadow-teal-500/20">
               <Camera className="w-4 h-4" />
               <span>Buka Kiosk Absensi Wajah</span>
-            </Link>
+            </a>
           </div>
         </div>
         

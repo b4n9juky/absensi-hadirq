@@ -64,25 +64,31 @@ export class KioskService {
     if (existingAttendance.length > 0) {
       const record = existingAttendance[0];
 
-      if (record.checkoutTime !== null) {
+      const isCheckoutValid = record.checkoutTime != null &&
+        !(record.checkoutTime instanceof Date && isNaN(record.checkoutTime.getTime()));
+
+      if (isCheckoutValid) {
         return { success: false, message: `Peringatan: Anda sudah melakukan absen lengkap (datang + pulang) hari ini.` };
       }
 
-      // Buffer: Prevent checkout if it's too close to checkinTime (less than 5 minutes)
-      const checkinEpoch = record.checkinTime ? getLocalEpoch(new Date(record.checkinTime)) : 0;
+      const checkinTimeVal = record.checkinTime;
+      const isCheckinValid = checkinTimeVal != null &&
+        !(checkinTimeVal instanceof Date && isNaN(checkinTimeVal.getTime()));
+
+      if (!isCheckinValid) {
+        return { success: false, message: 'Data absen tidak valid. Silakan hubungi Guru/Admin.' };
+      }
+
+      const checkinEpoch = getLocalEpoch(new Date(checkinTimeVal));
       const serverEpoch = getLocalEpoch(serverTime);
       const diffMinutes = Math.abs(serverEpoch - checkinEpoch) / (1000 * 60);
 
       if (diffMinutes < 5) {
-        return { success: false, message: `Peringatan: Anda sudah melakukan absen datang hari ini.` };
-      }
-
-      if (currentTimeStr < schedule.checkinStart) {
-        return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
+        return { success: false, message: `Anda sudah absen datang. Silakan scan kembali setelah 5 menit untuk absen pulang.` };
       }
 
       if (currentTimeStr < schedule.checkoutTime) {
-        return { success: false, message: `Peringatan: Anda sudah absen datang. Absen pulang baru dibuka pukul ${schedule.checkoutTime}.` };
+        return { success: false, message: `Anda sudah absen datang. Absen pulang dimulai pukul ${schedule.checkoutTime}.` };
       }
 
       await db.update(attendances)
@@ -96,17 +102,14 @@ export class KioskService {
     }
 
     // New Check-in
-    // Enforce rule: Cannot check in (Datang) before checkin start time
     if (currentTimeStr < schedule.checkinStart) {
       return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
     }
 
-    // Enforce rule: Cannot check in (Datang) if current time is past school checkout time
     if (currentTimeStr >= schedule.checkoutTime) {
-      return { success: false, message: 'Anda belum absen datang hari ini. Silakan hubungi Guru/Admin.' };
+      return { success: false, message: 'Waktu absen datang sudah lewat. Silakan hubungi Guru/Admin.' };
     }
 
-    // Check-in
     await db.insert(attendances).values({
       studentId: student.id,
       classId: student.classId,
@@ -120,7 +123,7 @@ export class KioskService {
 
     let statusMsg = 'Hadir';
     if (targetStatus === 'LATE') statusMsg = 'Terlambat';
-    return { success: true, message: `Absen ${statusMsg} berhasil!` };
+    return { success: true, message: `Absen Datang ${statusMsg} berhasil!` };
   }
 
   private formatDate(date: Date): string {

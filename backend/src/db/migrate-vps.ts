@@ -106,7 +106,33 @@ async function run() {
       console.log('Table subjects already exists.');
     }
 
-    // 7. Backfill class_id for old records
+    // 7. Create subject_attendances table if it doesn't exist
+    console.log('Checking if table subject_attendances already exists...');
+    const [saTables] = await connection.query("SHOW TABLES LIKE 'subject_attendances'");
+    if ((saTables as any[]).length === 0) {
+      console.log('Creating subject_attendances table...');
+      await connection.query(`
+        CREATE TABLE \`subject_attendances\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`teaching_schedule_id\` int(11) NOT NULL,
+          \`student_id\` int(11) NOT NULL,
+          \`attendance_date\` date NOT NULL,
+          \`status\` enum('PRESENT','SICK','EXCUSED','ABSENT','DISPEN','SKIPPED') NOT NULL,
+          \`notes\` varchar(255) DEFAULT NULL,
+          \`created_at\` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+          \`updated_at\` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`id\`),
+          UNIQUE KEY \`unique_subject_attendance\` (\`teaching_schedule_id\`,\`student_id\`,\`attendance_date\`),
+          CONSTRAINT \`subject_attendances_teaching_schedule_id_fk\` FOREIGN KEY (\`teaching_schedule_id\`) REFERENCES \`teaching_schedules\` (\`id\`),
+          CONSTRAINT \`subject_attendances_student_id_fk\` FOREIGN KEY (\`student_id\`) REFERENCES \`students\` (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      `);
+      console.log('Table subject_attendances created successfully.');
+    } else {
+      console.log('Table subject_attendances already exists.');
+    }
+
+    // 8. Backfill class_id for old records
     console.log('Backfilling class_id for existing attendance records...');
     const [result] = await connection.query(`
       UPDATE attendances

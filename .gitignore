@@ -38,6 +38,9 @@ debug.keystore
 /gradle.properties
 /settings.gradle.kts
 
+# Backend compiled output
+/backend/dist/
+
 # Sensitive Backend Files & Uploads
 /backend/auth_debug.log
 /backend/backend.err

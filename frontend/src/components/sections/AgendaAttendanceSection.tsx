@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, ArrowLeft, QrCode, CheckSquare, Calendar, Clock, Users, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowLeft, QrCode, CheckSquare, Calendar, Clock, Users } from 'lucide-react';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ModalShell } from '../shared/ModalShell';
 import { FormInput, FormSelect } from '../shared/FormField';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as faceapi from '@vladmandic/face-api';
-import { CheckCircle2, XCircle, Camera, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface StudentRecord {
   id: number;
@@ -21,7 +21,6 @@ export const FaceRegistration = () => {
   const authHeaders = { 'x-kiosk-token': token || '' };
 
   const [authenticated, setAuthenticated] = useState(false);
-  const [modelsLoaded, setModelsLoaded] = useState(false);
   const [statusMsg, setStatusMsg] = useState('Memuat sistem...');
   const [classesList, setClassesList] = useState<ClassRecord[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
@@ -55,7 +54,6 @@ export const FaceRegistration = () => {
         faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
         faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
       ]);
-      setModelsLoaded(true);
     } catch {
       setStatusMsg('Gagal memuat model AI.');
     }

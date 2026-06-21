@@ -207,4 +207,37 @@ Guru dapat melakukan absensi siswa dengan scan QR Code (NIS) menggunakan kamera 
    └─ Response sukses/gagal → dialog
 6. Riwayat scan ditampilkan di layar
 ```
+
+---
+
+## Production Fix — Face Registration & Deployment — 2026-06-22
+
+### Ringkasan
+Memperbaiki error "Cannot find module @tensorflow/tfjs-node" di production, missing frontend build, dan Invalid Date warnings.
+
+### Root Cause #1 — Missing `@tensorflow/tfjs-node`
+`@vladmandic/face-api` (digunakan untuk registrasi wajah) melakukan `require("@tensorflow/tfjs-node")` di bundled code-nya (`dist/face-api.node.js`). Package `@tensorflow/tfjs-node` hanya ada di `devDependencies` `@vladmandic/face-api` dan tidak di-install sebagai transitive dependency saat `npm install`. Di Windows (dev) package ini ter-hoist oleh lockfile, tapi di Linux (production) fresh install tidak menginstalnya.
+
+**Fix:** Tambah `"@tensorflow/tfjs-node": "^4.22.0"` ke `dependencies` di `backend/package.json`.
+
+### Root Cause #2 — Missing dist files
+`faceRegistrationService.ts` dan `faceRegistrationRoutes.ts` tidak ter-compile ke `dist/` karena build belum dijalankan setelah file dibuat.
+`frontend/dist/index.html` tidak ada karena frontend belum di-build.
+
+**Fix:** Jalankan `npm run build` di backend dan frontend.
+
+### Root Cause #3 — Invalid Date warning di ReportService
+MySQL mengembalikan string tanggal kosong (`0000-00-00`) yang di-parse sebagai `Invalid Date` oleh JS, memicu `console.warn` setiap kali laporan diakses.
+
+**Fix:** Tambah guard untuk `0000-00-00` dan `0000-00-00 00:00:00` di `reportService.ts:formatTimestamp()`, serta validasi `isNaN()` sebelum akses `getFullYear()`.
+
+### Perubahan Lain
+- Buat tabel `agenda_attendances` di database (via SQL langsung, karena `drizzle-kit push` mendeteksi banyak perubahan berisiko)
+- Update BETTER_AUTH_SECRET menjadi minimal 32 karakter
+
+### File yang Dimodifikasi
+| File | Perubahan |
+|------|-----------|
+| `backend/package.json` | Tambah `@tensorflow/tfjs-node` ke dependencies |
+| `backend/src/services/reportService.ts` | Guard zero dates, suppress Invalid Date warning |
 ```

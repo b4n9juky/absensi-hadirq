@@ -66,16 +66,12 @@ export class ReportService {
     const formatTimestamp = (dateVal: any): string | null => {
       if (!dateVal) return null;
       if (dateVal instanceof Date) {
-        if (isNaN(dateVal.getTime())) {
-          console.warn('[ReportService] Warning: Invalid Date object encountered:', dateVal);
-          return null;
-        }
+        if (isNaN(dateVal.getTime())) return null;
         return dateVal.toISOString().slice(0, -1);
       }
       const str = String(dateVal);
-      if (str.endsWith('Z')) {
-        return str.slice(0, -1);
-      }
+      if (!str || str === '0000-00-00' || str === '0000-00-00 00:00:00') return null;
+      if (str.endsWith('Z')) return str.slice(0, -1);
       return str;
     };
 
@@ -84,10 +80,12 @@ export class ReportService {
       let attendanceDateStr = '';
       const rawDate = row.attendanceDate as any;
       if (rawDate instanceof Date) {
-        const y = rawDate.getFullYear();
-        const m = String(rawDate.getMonth() + 1).padStart(2, '0');
-        const d = String(rawDate.getDate()).padStart(2, '0');
-        attendanceDateStr = `${y}-${m}-${d}`;
+        if (!isNaN(rawDate.getTime())) {
+          const y = rawDate.getFullYear();
+          const m = String(rawDate.getMonth() + 1).padStart(2, '0');
+          const d = String(rawDate.getDate()).padStart(2, '0');
+          attendanceDateStr = `${y}-${m}-${d}`;
+        }
       } else {
         attendanceDateStr = String(row.attendanceDate);
       }

@@ -44,18 +44,25 @@ class KioskService {
         const targetStatus = status || (currentTimeStr > schedule.lateAfter ? 'LATE' : 'PRESENT');
         if (existingAttendance.length > 0) {
             const record = existingAttendance[0];
-            if (record.checkoutTime !== null) {
+            const isCheckoutValid = record.checkoutTime != null &&
+                !(record.checkoutTime instanceof Date && isNaN(record.checkoutTime.getTime()));
+            if (isCheckoutValid) {
                 return { success: false, message: `Peringatan: Anda sudah melakukan absen lengkap (datang + pulang) hari ini.` };
             }
-            // Buffer: Prevent checkout if it's too close to checkinTime (less than 5 minutes)
-            const checkinEpoch = record.checkinTime ? getLocalEpoch(new Date(record.checkinTime)) : 0;
+            const checkinTimeVal = record.checkinTime;
+            const isCheckinValid = checkinTimeVal != null &&
+                !(checkinTimeVal instanceof Date && isNaN(checkinTimeVal.getTime()));
+            if (!isCheckinValid) {
+                return { success: false, message: 'Data absen tidak valid. Silakan hubungi Guru/Admin.' };
+            }
+            const checkinEpoch = getLocalEpoch(new Date(checkinTimeVal));
             const serverEpoch = getLocalEpoch(serverTime);
             const diffMinutes = Math.abs(serverEpoch - checkinEpoch) / (1000 * 60);
             if (diffMinutes < 5) {
-                return { success: false, message: `Peringatan: Anda sudah melakukan absen datang hari ini.` };
+                return { success: false, message: `Anda sudah absen datang. Silakan scan kembali setelah 5 menit untuk absen pulang.` };
             }
             if (currentTimeStr < schedule.checkoutTime) {
-                return { success: false, message: `Peringatan: Anda sudah absen datang. Absen pulang baru dibuka pukul ${schedule.checkoutTime}.` };
+                return { success: false, message: `Anda sudah absen datang. Absen pulang dimulai pukul ${schedule.checkoutTime}.` };
             }
             await index_js_1.db.update(schema_js_1.attendances)
                 .set({
@@ -66,11 +73,12 @@ class KioskService {
             return { success: true, message: `Absen Pulang berhasil! Hati-hati di jalan.` };
         }
         // New Check-in
-        // Enforce rule: Cannot check in (Datang) if current time is past school checkout time
-        if (currentTimeStr >= schedule.checkoutTime) {
-            return { success: false, message: 'Anda belum absen datang hari ini. Silakan hubungi Guru/Admin.' };
+        if (currentTimeStr < schedule.checkinStart) {
+            return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
         }
-        // Check-in
+        if (currentTimeStr >= schedule.checkoutTime) {
+            return { success: false, message: 'Waktu absen datang sudah lewat. Silakan hubungi Guru/Admin.' };
+        }
         await index_js_1.db.insert(schema_js_1.attendances).values({
             studentId: student.id,
             classId: student.classId,
@@ -84,7 +92,7 @@ class KioskService {
         let statusMsg = 'Hadir';
         if (targetStatus === 'LATE')
             statusMsg = 'Terlambat';
-        return { success: true, message: `Absen ${statusMsg} berhasil!` };
+        return { success: true, message: `Absen Datang ${statusMsg} berhasil!` };
     }
     formatDate(date) {
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;

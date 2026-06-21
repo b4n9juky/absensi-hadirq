@@ -12,6 +12,7 @@ export class StudentRepository {
       deviceUuid: students.deviceUuid,
       qrcode: students.qrcode,
       faceEmbedding: students.faceEmbedding,
+      photo: students.photo,
       createdAt: students.createdAt,
       updatedAt: students.updatedAt,
       studentName: user.name,
@@ -53,6 +54,12 @@ export class StudentRepository {
     if (qrcode !== undefined) values.qrcode = qrcode;
     await db.update(students)
       .set(values)
+      .where(eq(students.id, id));
+  }
+
+  async updatePhoto(id: number, photoPath: string) {
+    await db.update(students)
+      .set({ photo: photoPath, updatedAt: new Date() })
       .where(eq(students.id, id));
   }
 

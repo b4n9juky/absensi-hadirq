@@ -29,6 +29,9 @@ const configRoutes_js_1 = require("./routes/configRoutes.js");
 const teacherRoutes_js_1 = require("./routes/teacherRoutes.js");
 const teachingScheduleRoutes_js_1 = require("./routes/teachingScheduleRoutes.js");
 const kioskRoutes_js_1 = require("./routes/kioskRoutes.js");
+const subjectAttendanceRoutes_js_1 = require("./routes/subjectAttendanceRoutes.js");
+const subjectRoutes_js_1 = require("./routes/subjectRoutes.js");
+const agendaAttendanceRoutes_js_1 = require("./routes/agendaAttendanceRoutes.js");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // Trust proxy — OpenLiteSpeed reverse proxy mengirim X-Forwarded-For
@@ -138,14 +141,17 @@ app.use('/api/schedules', authMiddleware_js_1.authMiddleware, (0, authMiddleware
 app.use('/api/dashboard', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin', 'guru']), dashboardRoutes_js_1.dashboardRouter);
 app.use('/api/reports', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin', 'guru']), reportRoutes_js_1.reportsRouter);
 app.use('/api/users', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), userRoutes_js_1.usersRouter);
-app.use('/api/classes', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), classRoutes_js_1.classesRouter);
+app.use('/api/classes', authMiddleware_js_1.authMiddleware, classRoutes_js_1.classesRouter);
 app.use('/api/students', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), studentRoutes_js_1.studentsRouter);
 app.use('/api/settings', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), settingRoutes_js_1.settingsRouter);
 app.use('/api/attendance', attendanceRoutes_js_1.attendanceRouter);
 app.use('/api/kiosk', kioskRoutes_js_1.kioskRouter);
 app.use('/api/config', configRoutes_js_1.configRouter);
 app.use('/api/teaching-schedules', authMiddleware_js_1.authMiddleware, (0, authMiddleware_js_1.requireRole)(['admin']), teachingScheduleRoutes_js_1.teachingSchedulesRouter);
+app.use('/api/subjects', authMiddleware_js_1.authMiddleware, subjectRoutes_js_1.subjectRouter);
 app.use('/api/teacher', teacherRoutes_js_1.teacherRouter);
+app.use('/api/teacher', agendaAttendanceRoutes_js_1.agendaAttendanceRouter);
+app.use('/api/subject-attendances', subjectAttendanceRoutes_js_1.subjectAttendanceRouter);
 // Serve uploaded images statically
 const uploadDir = path_1.default.join(__dirname, '../uploads');
 if (!fs_1.default.existsSync(uploadDir)) {

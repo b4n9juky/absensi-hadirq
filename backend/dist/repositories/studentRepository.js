@@ -14,6 +14,7 @@ class StudentRepository {
             deviceUuid: schema_js_1.students.deviceUuid,
             qrcode: schema_js_1.students.qrcode,
             faceEmbedding: schema_js_1.students.faceEmbedding,
+            photo: schema_js_1.students.photo,
             createdAt: schema_js_1.students.createdAt,
             updatedAt: schema_js_1.students.updatedAt,
             studentName: schema_js_1.user.name,
@@ -51,6 +52,11 @@ class StudentRepository {
             values.qrcode = qrcode;
         await index_js_1.db.update(schema_js_1.students)
             .set(values)
+            .where((0, drizzle_orm_1.eq)(schema_js_1.students.id, id));
+    }
+    async updatePhoto(id, photoPath) {
+        await index_js_1.db.update(schema_js_1.students)
+            .set({ photo: photoPath, updatedAt: new Date() })
             .where((0, drizzle_orm_1.eq)(schema_js_1.students.id, id));
     }
     async updateQrCode(id, qrcode) {

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { studentService } from '../services/studentService.js';
 import { studentRepo } from '../repositories/studentRepository.js';
 import { attendances } from '../db/schema.js';
@@ -8,6 +9,30 @@ import path from 'path';
 import fs from 'fs';
 import { validate } from '../middlewares/validate.js';
 import { createStudentSchema, updateStudentSchema } from '../lib/validation.js';
+
+const uploadDir = path.join(__dirname, '../../uploads/students');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const studentPhotoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname) || '.jpg';
+      cb(null, `student-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_req, _file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedMimes.includes(_file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Format file harus JPG, PNG, atau WebP.'));
+    }
+  },
+});
 
 export const studentsRouter = Router();
 
@@ -118,6 +143,36 @@ studentsRouter.post('/promote', async (req, res) => {
 });
 
 
+
+studentsRouter.put('/:id/photo', studentPhotoUpload.single('photo'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    }
+    const existing = await studentRepo.findById(id);
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'Siswa tidak ditemukan.' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'File foto tidak terkirim.' });
+    }
+    const photoPath = `/uploads/students/${req.file.filename}`;
+
+    // Delete old photo file if exists
+    if (existing.photo) {
+      const oldPath = path.join(__dirname, '../../', existing.photo.replace(/^\//, ''));
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    await studentRepo.updatePhoto(id, photoPath);
+    res.json({ success: true, message: 'Foto siswa berhasil diperbarui.', data: { photo: photoPath } });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
 
 studentsRouter.put('/:id/register-face', async (req, res) => {
   try {

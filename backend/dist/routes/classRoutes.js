@@ -6,6 +6,7 @@ const classService_js_1 = require("../services/classService.js");
 const schema_js_1 = require("../db/schema.js");
 const index_js_1 = require("../db/index.js");
 const drizzle_orm_1 = require("drizzle-orm");
+const authMiddleware_js_1 = require("../middlewares/authMiddleware.js");
 exports.classesRouter = (0, express_1.Router)();
 // GET all classes
 exports.classesRouter.get('/', async (req, res) => {
@@ -18,7 +19,7 @@ exports.classesRouter.get('/', async (req, res) => {
     }
 });
 // POST create class
-exports.classesRouter.post('/', async (req, res) => {
+exports.classesRouter.post('/', (0, authMiddleware_js_1.requireRole)(['admin']), async (req, res) => {
     try {
         const { name } = req.body;
         const classId = await classService_js_1.classService.createClass({ name });
@@ -29,7 +30,7 @@ exports.classesRouter.post('/', async (req, res) => {
     }
 });
 // PUT update class
-exports.classesRouter.put('/:id', async (req, res) => {
+exports.classesRouter.put('/:id', (0, authMiddleware_js_1.requireRole)(['admin']), async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         if (isNaN(id)) {
@@ -44,7 +45,7 @@ exports.classesRouter.put('/:id', async (req, res) => {
     }
 });
 // DELETE class
-exports.classesRouter.delete('/:id', async (req, res) => {
+exports.classesRouter.delete('/:id', (0, authMiddleware_js_1.requireRole)(['admin']), async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         if (isNaN(id)) {

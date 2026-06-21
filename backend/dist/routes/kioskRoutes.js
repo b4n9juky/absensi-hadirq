@@ -35,23 +35,89 @@ exports.kioskRouter.post('/checkin', async (req, res) => {
         }
         const result = await kioskService_js_1.kioskService.processKioskAttendance(parseInt(studentId), status);
         if (result.success) {
-            // Get student name for greeting
+            // Get student name and photo for greeting
             const studentRec = await index_js_1.db.select({
-                name: schema_js_1.user.name
+                name: schema_js_1.user.name,
+                photo: schema_js_1.students.photo,
             }).from(schema_js_1.students)
                 .leftJoin(schema_js_1.user, (0, drizzle_orm_1.eq)(schema_js_1.students.userId, schema_js_1.user.id))
                 .where((0, drizzle_orm_1.eq)(schema_js_1.students.id, parseInt(studentId)))
                 .limit(1);
             const studentName = studentRec.length > 0 && studentRec[0].name ? studentRec[0].name : '';
+            const studentPhoto = studentRec.length > 0 ? studentRec[0].photo : null;
             res.json({
                 success: true,
                 message: result.message,
-                data: { studentName }
+                data: { studentName, studentPhoto }
             });
         }
         else {
             res.status(400).json({ success: false, error: result.message });
         }
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+exports.kioskRouter.get('/classes', async (req, res) => {
+    try {
+        const kioskToken = req.headers['x-kiosk-token'];
+        const expectedToken = process.env.KIOSK_SECRET_KEY || 'absensi-kiosk-secret-key-12345';
+        if (!kioskToken || kioskToken !== expectedToken) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
+        }
+        const data = await index_js_1.db.select({ id: schema_js_1.classes.id, name: schema_js_1.classes.name }).from(schema_js_1.classes).orderBy(schema_js_1.classes.name);
+        res.json({ success: true, data });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+exports.kioskRouter.post('/register-face/:studentId', async (req, res) => {
+    try {
+        const kioskToken = req.headers['x-kiosk-token'];
+        const expectedToken = process.env.KIOSK_SECRET_KEY || 'absensi-kiosk-secret-key-12345';
+        if (!kioskToken || kioskToken !== expectedToken) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
+        }
+        const studentId = parseInt(req.params.studentId);
+        if (isNaN(studentId)) {
+            return res.status(400).json({ success: false, error: 'ID siswa tidak valid.' });
+        }
+        const { faceEmbedding } = req.body;
+        if (!faceEmbedding || !Array.isArray(faceEmbedding)) {
+            return res.status(400).json({ success: false, error: 'Face embedding tidak valid.' });
+        }
+        await studentService_js_1.studentService.registerFace(studentId, faceEmbedding);
+        res.json({ success: true, message: 'Wajah siswa berhasil didaftarkan.' });
+    }
+    catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+exports.kioskRouter.get('/students-without-face', async (req, res) => {
+    try {
+        const kioskToken = req.headers['x-kiosk-token'];
+        const expectedToken = process.env.KIOSK_SECRET_KEY || 'absensi-kiosk-secret-key-12345';
+        if (!kioskToken || kioskToken !== expectedToken) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
+        }
+        const classId = req.query.classId ? parseInt(req.query.classId) : undefined;
+        const conditions = [(0, drizzle_orm_1.isNull)(schema_js_1.students.faceEmbedding)];
+        if (classId && !isNaN(classId)) {
+            conditions.push((0, drizzle_orm_1.eq)(schema_js_1.students.classId, classId));
+        }
+        const data = await index_js_1.db.select({
+            id: schema_js_1.students.id,
+            nis: schema_js_1.students.nis,
+            studentName: schema_js_1.user.name,
+            classId: schema_js_1.students.classId,
+        })
+            .from(schema_js_1.students)
+            .innerJoin(schema_js_1.user, (0, drizzle_orm_1.eq)(schema_js_1.students.userId, schema_js_1.user.id))
+            .where((0, drizzle_orm_1.and)(...conditions))
+            .orderBy(schema_js_1.user.name);
+        res.json({ success: true, data });
     }
     catch (err) {
         res.status(500).json({ success: false, error: err.message });

@@ -144,7 +144,23 @@ async function seed() {
             }
             console.log('Student with NIS SISWA-BTG-025 already exists, updated userId reference');
         }
-        // 5. Default Schedules (Monday to Sunday)
+        // 5. Subjects
+        const subjectNames = [
+            'Matematika', 'Fisika', 'Biologi', 'Bahasa Inggris', 'Sejarah',
+            'Kimia', 'Ekonomi', 'Geografi', 'Sosiologi', 'PKN',
+            'Agama', 'Olahraga', 'Seni Budaya', 'Informatika', 'Bahasa Indonesia',
+        ];
+        for (const name of subjectNames) {
+            const existing = await index_js_1.db.select().from(schema_js_1.subjects).where((0, drizzle_orm_1.eq)(schema_js_1.subjects.name, name)).limit(1);
+            if (existing.length === 0) {
+                await index_js_1.db.insert(schema_js_1.subjects).values({ name });
+                console.log(`Inserted Subject: ${name}`);
+            }
+            else {
+                console.log(`Subject "${name}" already exists`);
+            }
+        }
+        // 6. Default Schedules (Monday to Sunday)
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         for (const day of days) {
             const existingSchedule = await index_js_1.db.select().from(schema_js_1.schedules).where((0, drizzle_orm_1.eq)(schema_js_1.schedules.dayName, day));

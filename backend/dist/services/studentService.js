@@ -151,12 +151,14 @@ class StudentService {
             nis: schema_js_1.students.nis,
             studentName: schema_js_1.user.name,
             faceEmbedding: schema_js_1.students.faceEmbedding,
+            photo: schema_js_1.students.photo,
         }).from(schema_js_1.students)
             .leftJoin(schema_js_1.user, (0, drizzle_orm_1.eq)(schema_js_1.students.userId, schema_js_1.user.id));
         return allStudents.filter(s => s.faceEmbedding).map(s => ({
             id: s.id,
             nis: s.nis,
             studentName: s.studentName,
+            photo: s.photo,
             faceEmbedding: JSON.parse(s.faceEmbedding)
         }));
     }

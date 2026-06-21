@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { teachingSchedules, students, classes, attendances, user } from '../db/schema.js';
+import { teachingSchedules, students, classes, attendances, user, subjectAttendances, teacherAgendas, agendaAttendances } from '../db/schema.js';
 import { eq, and, gte, lte, sql, inArray, ne } from 'drizzle-orm';
 import { attendanceService } from './attendanceService.js';
 import { getJakartaDate } from '../lib/timezone.js';
@@ -64,6 +64,26 @@ export class TeacherService {
     .limit(1);
 
     return rows.length > 0 ? rows[0] : null;
+  }
+
+  async getClassStudentsWithFaceStatus(classId: number) {
+    const rows = await db.select({
+      studentId: students.id,
+      nis: students.nis,
+      studentName: user.name,
+      hasFace: students.faceEmbedding,
+    })
+    .from(students)
+    .innerJoin(user, eq(students.userId, user.id))
+    .where(eq(students.classId, classId))
+    .orderBy(user.name);
+
+    return rows.map(r => ({
+      studentId: r.studentId,
+      nis: r.nis,
+      studentName: r.studentName,
+      hasFace: r.hasFace !== null,
+    }));
   }
 
   async getClassStudentsWithAttendance(classId: number) {
@@ -199,6 +219,140 @@ export class TeacherService {
     if (existing.length === 0) throw new Error('Jadwal tidak ditemukan.');
     await db.delete(teachingSchedules)
       .where(and(eq(teachingSchedules.id, id), eq(teachingSchedules.teacherId, teacherId)));
+  }
+
+  async getTeacherReport(teacherId: string, startDate: string, endDate: string) {
+    // 1. Get teacher's teaching schedules
+    const schedulesList = await db.select({
+      scheduleId: teachingSchedules.id,
+      classId: teachingSchedules.classId,
+      className: classes.name,
+      subject: teachingSchedules.subject,
+      startTime: teachingSchedules.startTime,
+      endTime: teachingSchedules.endTime,
+    })
+    .from(teachingSchedules)
+    .innerJoin(classes, eq(teachingSchedules.classId, classes.id))
+    .where(eq(teachingSchedules.teacherId, teacherId))
+    .orderBy(teachingSchedules.startTime);
+
+    const scheduleIds = schedulesList.map(s => s.scheduleId);
+
+    // Get subject attendance counts per schedule grouped by status
+    const subjectAttendanceCounts = scheduleIds.length > 0 ? await db.select({
+      scheduleId: subjectAttendances.teachingScheduleId,
+      status: subjectAttendances.status,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(subjectAttendances)
+    .where(and(
+      inArray(subjectAttendances.teachingScheduleId, scheduleIds),
+      gte(subjectAttendances.attendanceDate, startDate),
+      lte(subjectAttendances.attendanceDate, endDate),
+    ))
+    .groupBy(subjectAttendances.teachingScheduleId, subjectAttendances.status) : [];
+
+    // Batch query student counts per class
+    const scheduleClassIds = [...new Set(schedulesList.map(s => s.classId))];
+    const classStudentCounts = scheduleClassIds.length > 0 ? await db.select({
+      classId: students.classId,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(students)
+    .where(inArray(students.classId, scheduleClassIds))
+    .groupBy(students.classId) : [];
+
+    const studentCountMap = new Map(classStudentCounts.map(r => [r.classId, Number(r.count)]));
+
+    const schedules = schedulesList.map(sched => {
+      const statusCounts = subjectAttendanceCounts.filter(c => c.scheduleId === sched.scheduleId);
+      return {
+        scheduleId: sched.scheduleId,
+        className: sched.className,
+        subject: sched.subject || '',
+        startTime: sched.startTime,
+        endTime: sched.endTime,
+        totalStudents: studentCountMap.get(sched.classId) || 0,
+        presentCount: Number(statusCounts.find(c => c.status === 'PRESENT')?.count || 0),
+        sickCount: Number(statusCounts.find(c => c.status === 'SICK')?.count || 0),
+        excusedCount: Number(statusCounts.find(c => c.status === 'EXCUSED')?.count || 0),
+        absentCount: Number(statusCounts.find(c => c.status === 'ABSENT')?.count || 0),
+        dispensationCount: Number(statusCounts.find(c => c.status === 'DISPEN')?.count || 0),
+        skippedCount: Number(statusCounts.find(c => c.status === 'SKIPPED')?.count || 0),
+      };
+    });
+
+    // 2. Get teacher's agendas with attendance counts
+    const agendasList = await db.select({
+      agendaId: teacherAgendas.id,
+      title: teacherAgendas.title,
+      agendaType: teacherAgendas.agendaType,
+      className: classes.name,
+      classId: teacherAgendas.classId,
+    })
+    .from(teacherAgendas)
+    .innerJoin(classes, eq(teacherAgendas.classId, classes.id))
+    .where(and(
+      eq(teacherAgendas.teacherId, teacherId),
+      gte(teacherAgendas.date, startDate),
+      lte(teacherAgendas.date, endDate),
+    ))
+    .orderBy(teacherAgendas.date);
+
+    const agendaIds = agendasList.map(a => a.agendaId);
+
+    // Get agenda attendance counts per agenda grouped by status
+    const agendaAttendanceCounts = agendaIds.length > 0 ? await db.select({
+      agendaId: agendaAttendances.agendaId,
+      status: agendaAttendances.status,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(agendaAttendances)
+    .where(inArray(agendaAttendances.agendaId, agendaIds))
+    .groupBy(agendaAttendances.agendaId, agendaAttendances.status) : [];
+
+    // Batch query student counts per class for agendas
+    const agendaClassIds = [...new Set(agendasList.map(a => a.classId))];
+    const agendaClassStudentCounts = agendaClassIds.length > 0 ? await db.select({
+      classId: students.classId,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(students)
+    .where(inArray(students.classId, agendaClassIds))
+    .groupBy(students.classId) : [];
+
+    const agendaStudentCountMap = new Map(agendaClassStudentCounts.map(r => [r.classId, Number(r.count)]));
+
+    const agendas = agendasList.map(ag => {
+      const statusCounts = agendaAttendanceCounts.filter(c => c.agendaId === ag.agendaId);
+      return {
+        agendaId: ag.agendaId,
+        title: ag.title,
+        agendaType: ag.agendaType,
+        className: ag.className,
+        totalStudents: agendaStudentCountMap.get(ag.classId) || 0,
+        presentCount: Number(statusCounts.find(c => c.status === 'PRESENT')?.count || 0),
+        sickCount: Number(statusCounts.find(c => c.status === 'SICK')?.count || 0),
+        excusedCount: Number(statusCounts.find(c => c.status === 'EXCUSED')?.count || 0),
+        absentCount: Number(statusCounts.find(c => c.status === 'ABSENT')?.count || 0),
+        dispensationCount: Number(statusCounts.find(c => c.status === 'DISPEN')?.count || 0),
+      };
+    });
+
+    // 3. Overall stats
+    const scheduleTotalPresent = schedules.reduce((sum, s) => sum + s.presentCount, 0);
+    const agendaTotalPresent = agendas.reduce((sum, a) => sum + a.presentCount, 0);
+
+    return {
+      schedules,
+      agendas,
+      stats: {
+        scheduleCount: schedules.length,
+        agendaCount: agendas.length,
+        totalPresent: scheduleTotalPresent + agendaTotalPresent,
+        totalScheduleStudents: schedules.length > 0 ? Math.max(...schedules.map(s => s.totalStudents), 0) : 0,
+      },
+    };
   }
 }
 

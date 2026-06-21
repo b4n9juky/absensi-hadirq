@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, QrCode, Download, Camera } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, QrCode, Download, Camera, Upload } from 'lucide-react';
 import * as faceapi from '@vladmandic/face-api';
 import { DeviceBadge } from '../shared/StatusBadge';
 import { DataTable } from '../shared/DataTable';
@@ -12,6 +12,7 @@ interface StudentRecord {
   deviceUuid?: string | null;
   qrcode?: string | null;
   faceEmbedding?: string | null;
+  photo?: string | null;
 }
 interface UserRecord { id: string; name: string; email: string; role: string; }
 interface ClassRecord { id: number; name: string; }
@@ -42,6 +43,12 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
   const [promoteToClass, setPromoteToClass] = useState('');
   const [promoteSelectedStudents, setPromoteSelectedStudents] = useState<number[]>([]);
   const [promoteLoading, setPromoteLoading] = useState(false);
+
+  // Photo Upload
+  const [showPhotoUpload, setShowPhotoUpload] = useState<StudentRecord | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   // Face Registration
   const [showFaceRegister, setShowFaceRegister] = useState<StudentRecord | null>(null);
@@ -248,6 +255,50 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
     } catch (err: any) { setErrorMsg(err.message); }
   };
 
+  const handlePhotoUpload = async () => {
+    if (!showPhotoUpload || !photoFile) return;
+    setPhotoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+      const res = await fetch(`/api/students/${showPhotoUpload.id}/photo`, {
+        method: 'PUT',
+        headers: authHeader,
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerToast('Foto siswa berhasil diperbarui!');
+        setShowPhotoUpload(null);
+        setPhotoFile(null);
+        setPhotoPreview(null);
+        fetchData();
+      } else {
+        throw new Error(data.error || 'Gagal mengunggah foto.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const closePhotoUpload = () => {
+    setShowPhotoUpload(null);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleResetDevice = async (id: number) => {
     if (!confirm('Reset perangkat HP yang terikat pada siswa ini?')) return;
     try {
@@ -297,6 +348,23 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
           <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-500/10 border-slate-500/20 text-slate-400">
             Belum Ada
           </span>
+        )
+      )
+    },
+    {
+      key: 'photo',
+      header: 'Foto',
+      align: 'center' as const,
+      render: (row: StudentRecord) => (
+        row.photo ? (
+          <img src={row.photo} alt={row.studentName}
+            className="w-9 h-9 rounded-full object-cover border border-border cursor-pointer hover:border-primary transition-colors"
+            onClick={() => { setShowPhotoUpload(row); setPhotoPreview(row.photo!); }} />
+        ) : (
+          <button onClick={() => { setShowPhotoUpload(row); setPhotoPreview(null); setPhotoFile(null); }}
+            className="p-1.5 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex" title="Upload Foto">
+            <Upload className="w-3.5 h-3.5" />
+          </button>
         )
       )
     },
@@ -440,6 +508,34 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
           </div>
         </ModalShell>
       )}
+      {/* Photo Upload Modal */}
+      {showPhotoUpload && (
+        <ModalShell title={`Upload Foto - ${showPhotoUpload.studentName || showPhotoUpload.nis}`} onClose={closePhotoUpload} maxWidth="sm"
+          footer={<>
+            <button onClick={closePhotoUpload} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button>
+            <button onClick={handlePhotoUpload} disabled={!photoFile || photoUploading}
+              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs flex items-center gap-2">
+              <Upload className="w-3.5 h-3.5" /> {photoUploading ? 'Mengunggah...' : 'Simpan Foto'}
+            </button>
+          </>}>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {photoPreview ? (
+              <img src={photoPreview} alt="Preview"
+                className="w-40 h-40 rounded-full object-cover border-4 border-border shadow-lg" />
+            ) : (
+              <div className="w-40 h-40 rounded-full bg-background border-2 border-dashed border-border flex items-center justify-center text-muted-foreground/60">
+                <Upload className="w-10 h-10" />
+              </div>
+            )}
+            <label className="cursor-pointer px-4 py-2 rounded-xl bg-secondary hover:bg-accent border border-border text-muted-foreground hover:text-foreground text-xs font-bold transition-all inline-flex items-center gap-2">
+              <Upload className="w-3.5 h-3.5" /> Pilih File Foto
+              <input type="file" accept="image/*" onChange={handlePhotoFileChange} className="hidden" />
+            </label>
+            <p className="text-[10px] text-muted-foreground/70 text-center">Format: JPG, PNG, WebP. Maks: 2MB.</p>
+          </div>
+        </ModalShell>
+      )}
+
       {/* Promote Students Modal */}
       {showPromoteModal && (
         <ModalShell title="Kenaikan Kelas Massal" onClose={() => setShowPromoteModal(false)} maxWidth="lg"

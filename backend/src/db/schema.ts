@@ -43,6 +43,7 @@ export const students = mysqlTable('students', {
   deviceUuid: varchar('device_uuid', { length: 255 }),
   qrcode: varchar('qrcode', { length: 255 }),
   faceEmbedding: text('face_embedding'),
+  photo: varchar('photo', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
@@ -144,6 +145,34 @@ export const subjects = mysqlTable('subjects', {
   name: varchar('name', { length: 100 }).notNull().unique(),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const teacherAgendas = mysqlTable('teacher_agendas', {
+  id: int('id').autoincrement().primaryKey(),
+  teacherId: varchar('teacher_id', { length: 36 }).references(() => user.id).notNull(),
+  classId: int('class_id').references(() => classes.id).notNull(),
+  title: varchar('title', { length: 200 }).notNull(),
+  agendaType: varchar('agenda_type', { length: 50 }),
+  date: date('date', { mode: 'string' }).notNull(),
+  startTime: time('start_time'),
+  endTime: time('end_time'),
+  academicYearId: int('academic_year_id').references(() => academicYears.id).notNull(),
+  semesterId: int('semester_id').references(() => semesters.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+});
+
+export const agendaAttendances = mysqlTable('agenda_attendances', {
+  id: int('id').autoincrement().primaryKey(),
+  agendaId: int('agenda_id').references(() => teacherAgendas.id).notNull(),
+  studentId: int('student_id').references(() => students.id).notNull(),
+  status: mysqlEnum('status', ['PRESENT', 'SICK', 'EXCUSED', 'ABSENT', 'DISPEN']).default('ABSENT').notNull(),
+  checkinTime: timestamp('checkin_time'),
+  notes: varchar('notes', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+  uniqueAttendance: uniqueIndex('unique_agenda_attendance').on(table.agendaId, table.studentId),
+}));
 
 export const verification = mysqlTable('verification', {
   id: varchar('id', { length: 36 }).primaryKey(),

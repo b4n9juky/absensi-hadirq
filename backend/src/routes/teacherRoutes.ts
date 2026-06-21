@@ -18,6 +18,19 @@ teacherRouter.get('/current-schedule', authMiddleware, requireRole(['guru']), as
   }
 });
 
+teacherRouter.get('/students-with-face-status/:classId', authMiddleware, requireRole(['guru']), async (req, res) => {
+  try {
+    const classId = parseInt(req.params.classId);
+    if (isNaN(classId)) {
+      return res.status(400).json({ success: false, error: 'ID kelas tidak valid.' });
+    }
+    const students = await teacherService.getClassStudentsWithFaceStatus(classId);
+    res.json({ success: true, data: students });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 teacherRouter.get('/class-students/:classId', authMiddleware, requireRole(['guru']), async (req, res) => {
   try {
     const classId = parseInt(req.params.classId);
@@ -104,6 +117,29 @@ teacherRouter.delete('/my-schedules/:id', authMiddleware, requireRole(['guru']),
     if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID tidak valid.' });
     await teacherService.deleteMySchedule(teacherId, id);
     res.json({ success: true, message: 'Jadwal berhasil dihapus.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+teacherRouter.get('/report', authMiddleware, requireRole(['guru']), async (req, res) => {
+  try {
+    const teacherId = req.context!.user.id;
+    const startDate = req.query.startDate as string | undefined;
+    const endDate = req.query.endDate as string | undefined;
+
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const resolvedStart = startDate || today;
+    const resolvedEnd = endDate || today;
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(resolvedStart) || !dateRegex.test(resolvedEnd)) {
+      return res.status(400).json({ success: false, error: 'Format tanggal harus YYYY-MM-DD.' });
+    }
+
+    const data = await teacherService.getTeacherReport(teacherId, resolvedStart, resolvedEnd);
+    res.json({ success: true, data });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
   }

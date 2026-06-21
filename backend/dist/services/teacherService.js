@@ -103,6 +103,57 @@ class TeacherService {
             .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.inArray)(schema_js_1.attendances.studentId, studentIds), (0, drizzle_orm_1.eq)(schema_js_1.attendances.attendanceDate, today)));
         return { success: true, message: `Berhasil memverifikasi ${studentNisList.length} siswa.` };
     }
+    async getMySchedules(teacherId) {
+        const rows = await index_js_1.db.select({
+            id: schema_js_1.teachingSchedules.id,
+            classId: schema_js_1.teachingSchedules.classId,
+            className: schema_js_1.classes.name,
+            dayName: schema_js_1.teachingSchedules.dayName,
+            startTime: schema_js_1.teachingSchedules.startTime,
+            endTime: schema_js_1.teachingSchedules.endTime,
+            subject: schema_js_1.teachingSchedules.subject,
+        })
+            .from(schema_js_1.teachingSchedules)
+            .innerJoin(schema_js_1.classes, (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.classId, schema_js_1.classes.id))
+            .where((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, teacherId))
+            .orderBy(schema_js_1.teachingSchedules.dayName, schema_js_1.teachingSchedules.startTime);
+        return rows;
+    }
+    async createMySchedule(teacherId, dto) {
+        const conflict = await index_js_1.db.select().from(schema_js_1.teachingSchedules)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, teacherId), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.dayName, dto.dayName), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.startTime, dto.startTime))).limit(1);
+        if (conflict.length > 0) {
+            throw new Error('Jadwal bentrok: Anda sudah memiliki jadwal di hari & jam yang sama.');
+        }
+        const [result] = await index_js_1.db.insert(schema_js_1.teachingSchedules).values({
+            teacherId, classId: dto.classId, dayName: dto.dayName,
+            startTime: dto.startTime, endTime: dto.endTime, subject: dto.subject,
+        });
+        return result.insertId;
+    }
+    async updateMySchedule(teacherId, id, dto) {
+        const existing = await index_js_1.db.select().from(schema_js_1.teachingSchedules)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.id, id), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, teacherId)))
+            .limit(1);
+        if (existing.length === 0)
+            throw new Error('Jadwal tidak ditemukan.');
+        const conflict = await index_js_1.db.select().from(schema_js_1.teachingSchedules)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, teacherId), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.dayName, dto.dayName ?? existing[0].dayName), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.startTime, dto.startTime ?? existing[0].startTime), (0, drizzle_orm_1.ne)(schema_js_1.teachingSchedules.id, id))).limit(1);
+        if (conflict.length > 0) {
+            throw new Error('Jadwal bentrok: Anda sudah memiliki jadwal di hari & jam yang sama.');
+        }
+        await index_js_1.db.update(schema_js_1.teachingSchedules).set(dto)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.id, id), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, teacherId)));
+    }
+    async deleteMySchedule(teacherId, id) {
+        const existing = await index_js_1.db.select().from(schema_js_1.teachingSchedules)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.id, id), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, teacherId)))
+            .limit(1);
+        if (existing.length === 0)
+            throw new Error('Jadwal tidak ditemukan.');
+        await index_js_1.db.delete(schema_js_1.teachingSchedules)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.id, id), (0, drizzle_orm_1.eq)(schema_js_1.teachingSchedules.teacherId, teacherId)));
+    }
 }
 exports.TeacherService = TeacherService;
 exports.teacherService = new TeacherService();

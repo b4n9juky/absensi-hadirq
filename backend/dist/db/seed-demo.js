@@ -21,6 +21,19 @@ async function seedDemo() {
             process.exit(1);
         }
         const activeSemesterId = activeSemester[0].id;
+        // === 1. SEED SUBJECTS ===
+        const subjectNames = [
+            'Matematika', 'Fisika', 'Biologi', 'Bahasa Inggris', 'Sejarah',
+            'Kimia', 'Ekonomi', 'Geografi', 'Sosiologi', 'PKN',
+            'Agama', 'Olahraga', 'Seni Budaya', 'Informatika', 'Bahasa Indonesia',
+        ];
+        for (const name of subjectNames) {
+            const existing = await index_js_1.db.select().from(schema_js_1.subjects).where((0, drizzle_orm_1.eq)(schema_js_1.subjects.name, name)).limit(1);
+            if (existing.length === 0) {
+                await index_js_1.db.insert(schema_js_1.subjects).values({ name });
+                console.log(`+ Subject: ${name}`);
+            }
+        }
         const today = new Date().toISOString().slice(0, 10);
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const dayName = days[new Date().getDay()];
@@ -39,7 +52,7 @@ async function seedDemo() {
             const m = randMin % 60;
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
         }
-        // === 1. TAMBAH KELAS ===
+        // === 2. TAMBAH KELAS ===
         const classNames = ['X IPA 1', 'X IPA 2', 'XI IPA 1', 'XI IPA 2', 'XII IPA 1', 'XII IPA 2'];
         const classIds = {};
         for (const name of classNames) {
@@ -54,7 +67,7 @@ async function seedDemo() {
                 console.log(`= Kelas: ${name} sudah ada`);
             }
         }
-        // === 2. TAMBAH GURU ===
+        // === 3. TAMBAH GURU ===
         const guruData = [
             { email: 'guru.matematika@school.com', name: 'Dr. Ahmad Fauzi', mapel: 'Matematika' },
             { email: 'guru.fisika@school.com', name: 'Siti Nurhaliza, S.Si', mapel: 'Fisika' },
@@ -79,7 +92,7 @@ async function seedDemo() {
                 console.log(`= Guru: ${g.name} sudah ada`);
             }
         }
-        // === 3. TAMBAH SISWA PER KELAS ===
+        // === 4. TAMBAH SISWA PER KELAS ===
         const siswaPerKelas = {
             'X IPA 1': [
                 { email: 'siswa.x1.1@school.com', name: 'Ani Rahmawati', nis: 'XIPA-001' },
@@ -160,7 +173,7 @@ async function seedDemo() {
                 allStudentIds.push(studentId);
             }
         }
-        // === 4. JADWAL MENGAJAR GURU ===
+        // === 5. JADWAL MENGAJAR GURU ===
         const jadwal = [];
         const guruIds = Object.values(guruMap);
         const kelasList = Object.keys(classIds);
@@ -190,7 +203,7 @@ async function seedDemo() {
                 console.log(`+ Jadwal: ${j.subject} - ${j.className} (${j.dayName} ${j.startTime}-${j.endTime})`);
             }
         }
-        // === 5. ABSENSI HARI INI (untuk simulasi) ===
+        // === 6. ABSENSI HARI INI (untuk simulasi) ===
         // Cari semua siswa per kelas, beri status PRESENT/LATE untuk beberapa
         for (const [kelas, daftar] of Object.entries(siswaPerKelas)) {
             const classId = classIds[kelas];

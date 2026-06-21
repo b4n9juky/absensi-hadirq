@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verification = exports.settings = exports.account = exports.session = exports.attendances = exports.teachingSchedules = exports.schedules = exports.students = exports.user = exports.classes = exports.semesters = exports.academicYears = void 0;
+exports.verification = exports.agendaAttendances = exports.teacherAgendas = exports.subjects = exports.settings = exports.account = exports.session = exports.subjectAttendances = exports.attendances = exports.teachingSchedules = exports.schedules = exports.students = exports.user = exports.classes = exports.semesters = exports.academicYears = void 0;
 const mysql_core_1 = require("drizzle-orm/mysql-core");
 exports.academicYears = (0, mysql_core_1.mysqlTable)('academic_years', {
     id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
@@ -41,6 +41,7 @@ exports.students = (0, mysql_core_1.mysqlTable)('students', {
     deviceUuid: (0, mysql_core_1.varchar)('device_uuid', { length: 255 }),
     qrcode: (0, mysql_core_1.varchar)('qrcode', { length: 255 }),
     faceEmbedding: (0, mysql_core_1.text)('face_embedding'),
+    photo: (0, mysql_core_1.varchar)('photo', { length: 255 }),
     createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
     updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
 });
@@ -86,6 +87,18 @@ exports.attendances = (0, mysql_core_1.mysqlTable)('attendances', {
     createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
     updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
 });
+exports.subjectAttendances = (0, mysql_core_1.mysqlTable)('subject_attendances', {
+    id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
+    teachingScheduleId: (0, mysql_core_1.int)('teaching_schedule_id').references(() => exports.teachingSchedules.id).notNull(),
+    studentId: (0, mysql_core_1.int)('student_id').references(() => exports.students.id).notNull(),
+    attendanceDate: (0, mysql_core_1.date)('attendance_date', { mode: 'string' }).notNull(),
+    status: (0, mysql_core_1.mysqlEnum)('status', ['PRESENT', 'SICK', 'EXCUSED', 'ABSENT', 'DISPEN', 'SKIPPED']).notNull(),
+    notes: (0, mysql_core_1.varchar)('notes', { length: 255 }),
+    createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
+    updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+    uniqueAttendance: (0, mysql_core_1.uniqueIndex)('unique_subject_attendance').on(table.teachingScheduleId, table.studentId, table.attendanceDate),
+}));
 exports.session = (0, mysql_core_1.mysqlTable)('session', {
     id: (0, mysql_core_1.varchar)('id', { length: 36 }).primaryKey(),
     expiresAt: (0, mysql_core_1.timestamp)('expires_at').notNull(),
@@ -114,6 +127,37 @@ exports.settings = (0, mysql_core_1.mysqlTable)('settings', {
     value: (0, mysql_core_1.text)('value').notNull(),
     updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
 });
+exports.subjects = (0, mysql_core_1.mysqlTable)('subjects', {
+    id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
+    name: (0, mysql_core_1.varchar)('name', { length: 100 }).notNull().unique(),
+    createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
+});
+exports.teacherAgendas = (0, mysql_core_1.mysqlTable)('teacher_agendas', {
+    id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
+    teacherId: (0, mysql_core_1.varchar)('teacher_id', { length: 36 }).references(() => exports.user.id).notNull(),
+    classId: (0, mysql_core_1.int)('class_id').references(() => exports.classes.id).notNull(),
+    title: (0, mysql_core_1.varchar)('title', { length: 200 }).notNull(),
+    agendaType: (0, mysql_core_1.varchar)('agenda_type', { length: 50 }),
+    date: (0, mysql_core_1.date)('date', { mode: 'string' }).notNull(),
+    startTime: (0, mysql_core_1.time)('start_time'),
+    endTime: (0, mysql_core_1.time)('end_time'),
+    academicYearId: (0, mysql_core_1.int)('academic_year_id').references(() => exports.academicYears.id).notNull(),
+    semesterId: (0, mysql_core_1.int)('semester_id').references(() => exports.semesters.id).notNull(),
+    createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
+    updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
+});
+exports.agendaAttendances = (0, mysql_core_1.mysqlTable)('agenda_attendances', {
+    id: (0, mysql_core_1.int)('id').autoincrement().primaryKey(),
+    agendaId: (0, mysql_core_1.int)('agenda_id').references(() => exports.teacherAgendas.id).notNull(),
+    studentId: (0, mysql_core_1.int)('student_id').references(() => exports.students.id).notNull(),
+    status: (0, mysql_core_1.mysqlEnum)('status', ['PRESENT', 'SICK', 'EXCUSED', 'ABSENT', 'DISPEN']).default('ABSENT').notNull(),
+    checkinTime: (0, mysql_core_1.timestamp)('checkin_time'),
+    notes: (0, mysql_core_1.varchar)('notes', { length: 255 }),
+    createdAt: (0, mysql_core_1.timestamp)('created_at').defaultNow(),
+    updatedAt: (0, mysql_core_1.timestamp)('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+    uniqueAttendance: (0, mysql_core_1.uniqueIndex)('unique_agenda_attendance').on(table.agendaId, table.studentId),
+}));
 exports.verification = (0, mysql_core_1.mysqlTable)('verification', {
     id: (0, mysql_core_1.varchar)('id', { length: 36 }).primaryKey(),
     identifier: (0, mysql_core_1.varchar)('identifier', { length: 255 }).notNull(),

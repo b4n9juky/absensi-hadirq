@@ -139,13 +139,15 @@ class AttendanceService {
         }
         // CHECK-OUT
         const record = existingAttendance[0];
-        if (record.checkoutTime !== null) {
+        const isCheckoutValid = record.checkoutTime != null &&
+            !(record.checkoutTime instanceof Date && isNaN(record.checkoutTime.getTime()));
+        if (isCheckoutValid) {
             this.cleanupFile(photoPath);
             return { success: false, message: 'Anda sudah melakukan absen pulang hari ini.' };
         }
         if (currentTimeStr < schedule.checkoutTime) {
             this.cleanupFile(photoPath);
-            return { success: false, message: `Absen datang sudah Anda lakukan hari ini. Silakan absen pulang setelah jam ${schedule.checkoutTime}.` };
+            return { success: false, message: `Anda sudah absen datang. Silakan absen pulang setelah jam ${schedule.checkoutTime}.` };
         }
         await index_js_1.db.update(schema_js_1.attendances)
             .set({
@@ -207,8 +209,13 @@ class AttendanceService {
                     statusText = 'Terlambat';
                 return { success: true, message: `Status siswa ${student_nis} diubah menjadi ${statusText}.` };
             }
-            if (record.checkoutTime !== null) {
+            const isQrCheckoutValid = record.checkoutTime != null &&
+                !(record.checkoutTime instanceof Date && isNaN(record.checkoutTime.getTime()));
+            if (isQrCheckoutValid) {
                 return { success: false, message: `Siswa ${student_nis} sudah melakukan absen lengkap (datang + pulang) hari ini.` };
+            }
+            if (currentTimeStr < schedule.checkinStart) {
+                return { success: false, message: `Absen datang belum dibuka. Mulai pada jam ${schedule.checkinStart}.` };
             }
             if (currentTimeStr < schedule.checkoutTime) {
                 // Class check-in verification

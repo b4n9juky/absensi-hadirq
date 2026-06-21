@@ -34,6 +34,21 @@ const upload = multer({
 
 export const attendanceRouter = Router();
 
+attendanceRouter.delete(
+  '/:id',
+  authMiddleware,
+  requireRole(['admin']),
+  async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(200).json({ success: false, message: 'ID absensi tidak valid.' });
+    }
+
+    const result = await attendanceService.deleteAttendance(id);
+    return res.status(200).json(result);
+  }
+);
+
 attendanceRouter.post(
   '/',
   authMiddleware,

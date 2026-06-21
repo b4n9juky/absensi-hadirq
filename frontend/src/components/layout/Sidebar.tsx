@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Vibrate, Clock, Book } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Vibrate, Clock, Book, ClipboardCheck } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 
 const allNavItems = [
@@ -10,6 +10,7 @@ const allNavItems = [
   { path: '/dashboard/akademik', key: 'academic', icon: <Calendar className="w-4.5 h-4.5" />, label: 'Akademik & Jadwal', roles: ['admin'] },
   { path: '/dashboard/jadwal-mengajar', key: 'teaching-schedule', icon: <Clock className="w-4.5 h-4.5" />, label: 'Jadwal Mengajar', roles: ['admin', 'guru'] },
   { path: '/dashboard/mata-pelajaran', key: 'subjects', icon: <Book className="w-4.5 h-4.5" />, label: 'Mata Pelajaran', roles: ['admin'] },
+  { path: '/dashboard/agenda-absensi', key: 'agenda-attendance', icon: <ClipboardCheck className="w-4.5 h-4.5" />, label: 'Agenda Absensi', roles: ['guru'] },
   { path: '/dashboard/pengaturan', key: 'settings', icon: <Settings className="w-4.5 h-4.5" />, label: 'Pengaturan', roles: ['admin'] },
 ];
 

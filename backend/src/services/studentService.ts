@@ -174,6 +174,7 @@ export class StudentService {
       nis: students.nis,
       studentName: user.name,
       faceEmbedding: students.faceEmbedding,
+      photo: students.photo,
     }).from(students)
       .leftJoin(user, eq(students.userId, user.id));
 
@@ -181,6 +182,7 @@ export class StudentService {
       id: s.id,
       nis: s.nis,
       studentName: s.studentName,
+      photo: s.photo,
       faceEmbedding: JSON.parse(s.faceEmbedding!) as number[]
     }));
   }

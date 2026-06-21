@@ -28,6 +28,8 @@ import { teachingSchedulesRouter } from './routes/teachingScheduleRoutes.js';
 import { kioskRouter } from './routes/kioskRoutes.js';
 import { subjectAttendanceRouter } from './routes/subjectAttendanceRoutes.js';
 import { subjectRouter } from './routes/subjectRoutes.js';
+import { agendaAttendanceRouter } from './routes/agendaAttendanceRoutes.js';
+import { faceRegistrationRouter } from './routes/faceRegistrationRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -149,6 +151,7 @@ app.use('/api/dashboard', authMiddleware, requireRole(['admin', 'guru']), dashbo
 app.use('/api/reports', authMiddleware, requireRole(['admin', 'guru']), reportsRouter);
 app.use('/api/users', authMiddleware, requireRole(['admin']), usersRouter);
 app.use('/api/classes', authMiddleware, classesRouter);
+app.use('/api', faceRegistrationRouter);
 app.use('/api/students', authMiddleware, requireRole(['admin']), studentsRouter);
 app.use('/api/settings', authMiddleware, requireRole(['admin']), settingsRouter);
 app.use('/api/attendance', attendanceRouter);
@@ -157,6 +160,7 @@ app.use('/api/config', configRouter);
 app.use('/api/teaching-schedules', authMiddleware, requireRole(['admin']), teachingSchedulesRouter);
 app.use('/api/subjects', authMiddleware, subjectRouter);
 app.use('/api/teacher', teacherRouter);
+app.use('/api/teacher', agendaAttendanceRouter);
 app.use('/api/subject-attendances', subjectAttendanceRouter);
 
 // Serve uploaded images statically

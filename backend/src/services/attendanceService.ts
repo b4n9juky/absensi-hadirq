@@ -5,6 +5,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import { getDistance } from 'geolib';
 import fs from 'fs';
+import path from 'path';
 import { settingService } from './settingService.js';
 import { getJakartaDate } from '../lib/timezone.js';
 
@@ -322,6 +323,29 @@ export class AttendanceService {
     else if (targetStatus === 'ABSENT') statusMsg = 'Alfa';
     else if (targetStatus === 'LATE') statusMsg = 'Terlambat';
     return { success: true, message: `Absen ${statusMsg} berhasil untuk ${student_nis} via QR.` };
+  }
+
+  async deleteAttendance(id: number) {
+    const records = await db.select().from(attendances).where(eq(attendances.id, id)).limit(1);
+
+    if (records.length === 0) {
+      return { success: false, message: 'Data absensi tidak ditemukan.' };
+    }
+
+    const record = records[0];
+
+    if (record.checkinPhoto) {
+      const filePath = path.join(__dirname, '../..', record.checkinPhoto);
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch { /* ignore */ }
+    }
+    if (record.checkoutPhoto) {
+      const filePath = path.join(__dirname, '../..', record.checkoutPhoto);
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch { /* ignore */ }
+    }
+
+    await db.delete(attendances).where(eq(attendances.id, id));
+
+    return { success: true, message: 'Data absensi berhasil dihapus.' };
   }
 
   private formatDate(date: Date): string {

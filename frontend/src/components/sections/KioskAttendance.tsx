@@ -6,6 +6,7 @@ interface StudentEmbedding {
   id: number;
   nis: string;
   studentName: string;
+  photo?: string;
   faceEmbedding: number[];
 }
 
@@ -17,7 +18,7 @@ export const KioskAttendance = () => {
   const [studentsData, setStudentsData] = useState<StudentEmbedding[]>([]);
   const [statusMsg, setStatusMsg] = useState('Memuat sistem kiosk...');
   
-  const [matchResult, setMatchResult] = useState<{name: string, isSuccess: boolean, message: string} | null>(null);
+  const [matchResult, setMatchResult] = useState<{name: string, isSuccess: boolean, message: string, photo?: string} | null>(null);
   const isScanningRef = useRef(true);
   
   // Kiosk Authentication States
@@ -209,12 +210,12 @@ export const KioskAttendance = () => {
       const data = await res.json();
       
       if (res.ok && data.success) {
-        setMatchResult({ name: data.data.studentName || name, isSuccess: true, message: data.message });
+        setMatchResult({ name: data.data.studentName || name, isSuccess: true, message: data.message, photo: data.data.studentPhoto });
       } else {
-        setMatchResult({ name, isSuccess: false, message: data.error || 'Gagal check-in' });
+        setMatchResult({ name, isSuccess: false, message: data.error || 'Gagal check-in', photo: undefined });
       }
     } catch (err: any) {
-      setMatchResult({ name, isSuccess: false, message: 'Kesalahan jaringan' });
+      setMatchResult({ name, isSuccess: false, message: 'Kesalahan jaringan', photo: undefined });
     }
     
     setTimeout(() => {
@@ -321,7 +322,10 @@ export const KioskAttendance = () => {
       {matchResult && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in zoom-in duration-300">
           <div className={`p-8 rounded-3xl flex flex-col items-center text-center max-w-md w-full mx-4 shadow-2xl ${matchResult.isSuccess ? 'bg-teal-900/40 border border-teal-500/50' : 'bg-red-900/40 border border-red-500/50'}`}>
-            {matchResult.isSuccess ? (
+            {matchResult.photo ? (
+              <img src={matchResult.photo} alt={matchResult.name}
+                className="w-28 h-28 rounded-full object-cover border-4 border-teal-500/50 shadow-lg mb-4" />
+            ) : matchResult.isSuccess ? (
               <CheckCircle2 className="w-24 h-24 text-teal-400 mb-4 drop-shadow-lg" />
             ) : (
               <UserCircle className="w-24 h-24 text-red-400 mb-4 drop-shadow-lg" />

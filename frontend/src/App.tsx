@@ -11,6 +11,8 @@ import { SettingsSection } from './components/sections/SettingsSection';
 import { TeachingScheduleSection } from './components/sections/TeachingScheduleSection';
 import { TeacherScheduleSection } from './components/sections/TeacherScheduleSection';
 import { SubjectsSection } from './components/sections/SubjectsSection';
+import { AgendaAttendanceSection } from './components/sections/AgendaAttendanceSection';
+import { FaceRegistration } from './components/sections/FaceRegistration';
 import { KioskAttendance } from './components/sections/KioskAttendance';
 
 function App() {
@@ -55,6 +57,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/kiosk-absensi" element={<KioskAttendance />} />
+        <Route path="/registrasi-wajah" element={<FaceRegistration />} />
         <Route
           path="/login"
           element={
@@ -84,6 +87,7 @@ function App() {
           <Route path="pengaturan" element={<SettingsSection token={token!} />} />
           <Route path="jadwal-mengajar" element={user?.role === 'guru' ? <TeacherScheduleSection token={token!} /> : <TeachingScheduleSection token={token!} />} />
           <Route path="mata-pelajaran" element={user?.role === 'admin' ? <SubjectsSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
+          <Route path="agenda-absensi" element={user?.role === 'guru' ? <AgendaAttendanceSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
         </Route>
         <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
       </Routes>

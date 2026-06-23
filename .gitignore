@@ -47,7 +47,7 @@ debug.keystore
 /backend/backend.log
 /backend/server_err.log
 /backend/server_out.log
-/backend/uploads/
+/backend/uploads/*
 /backend/*.log
 /backend/*.cjs
 /backend/*.mjs
@@ -60,5 +60,3 @@ debug.keystore
 # Large AI Models
 /frontend/public/models/
 /frontend/design
-
-

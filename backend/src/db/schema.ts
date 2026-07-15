@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, double, float, timestamp, boolean, date, mysqlEnum, time, text, uniqueIndex } from 'drizzle-orm/mysql-core';
+import { mysqlTable, int, varchar, double, float, timestamp, boolean, date, mysqlEnum, time, text, uniqueIndex, foreignKey } from 'drizzle-orm/mysql-core';
 
 export const academicYears = mysqlTable('academic_years', {
   id: int('id').autoincrement().primaryKey(),
@@ -99,7 +99,7 @@ export const attendances = mysqlTable('attendances', {
 
 export const subjectAttendances = mysqlTable('subject_attendances', {
   id: int('id').autoincrement().primaryKey(),
-  teachingScheduleId: int('teaching_schedule_id').references(() => teachingSchedules.id).notNull(),
+  teachingScheduleId: int('teaching_schedule_id').notNull(),
   studentId: int('student_id').references(() => students.id).notNull(),
   attendanceDate: date('attendance_date', { mode: 'string' }).notNull(),
   status: mysqlEnum('status', ['PRESENT', 'SICK', 'EXCUSED', 'ABSENT', 'DISPEN', 'SKIPPED']).notNull(),
@@ -108,11 +108,12 @@ export const subjectAttendances = mysqlTable('subject_attendances', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 }, (table) => ({
   uniqueAttendance: uniqueIndex('unique_subject_attendance').on(table.teachingScheduleId, table.studentId, table.attendanceDate),
+  tschedFk: foreignKey({ columns: [table.teachingScheduleId], foreignColumns: [teachingSchedules.id], name: 'sa_tsched_fk' }),
 }));
 
 export const teachingSessionLogs = mysqlTable('teaching_session_logs', {
   id: int('id').autoincrement().primaryKey(),
-  teachingScheduleId: int('teaching_schedule_id').references(() => teachingSchedules.id).notNull(),
+  teachingScheduleId: int('teaching_schedule_id').notNull(),
   attendanceDate: date('attendance_date', { mode: 'string' }).notNull(),
   materi: varchar('materi', { length: 500 }),
   kegiatan: varchar('kegiatan', { length: 500 }),
@@ -122,6 +123,7 @@ export const teachingSessionLogs = mysqlTable('teaching_session_logs', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 }, (table) => ({
   uniqueSession: uniqueIndex('unique_teaching_session').on(table.teachingScheduleId, table.attendanceDate),
+  tschedFk: foreignKey({ columns: [table.teachingScheduleId], foreignColumns: [teachingSchedules.id], name: 'tsl_tsched_fk' }),
 }));
 
 export const session = mysqlTable('session', {

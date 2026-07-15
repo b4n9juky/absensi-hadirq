@@ -63,8 +63,8 @@ async function seed() {
     }
 
     // ================ 4. USERS (Admin & Guru) ================
-    const adminPassword = 'admin123';
-    const guruPassword = 'guru123';
+    const adminPassword = 'adminPassword123';
+    const guruPassword = 'guruPassword123';
 
     let [adminUser] = await db.select().from(user).where(eq(user.email, 'admin@school.com')).limit(1);
     if (!adminUser) {

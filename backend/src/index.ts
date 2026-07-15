@@ -43,6 +43,9 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
+// Parse JSON bodies
+app.use(express.json());
+
 // CORS — baca dari env, fallback ke semua origin untuk development
 const corsOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(s => s.trim());
 app.use(cors({

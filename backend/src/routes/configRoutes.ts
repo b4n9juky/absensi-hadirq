@@ -73,9 +73,10 @@ configRouter.get('/debug', async (_req, res) => {
         .limit(1);
       results.studentsQuery = `OK (${r.length} rows)`;
     } catch (e: any) {
-      results.studentsQuery = `FAILED: ${e.sqlMessage || e.message}`;
-      results.studentsQueryCode = e.code;
-      results.studentsQueryErrno = e.errno;
+      const cause = e.cause || e;
+      results.studentsQuery = `FAILED: ${cause.sqlMessage || e.message}`;
+      results.studentsQueryCode = cause.code;
+      results.studentsQueryErrno = cause.errno;
     }
 
     // Test 3: Full import query (all columns)
@@ -94,7 +95,8 @@ configRouter.get('/debug', async (_req, res) => {
       }).from(students).where(eq(students.nis, '999999')).limit(1);
       results.fullStudentsQuery = `OK (${r.length} rows)`;
     } catch (e: any) {
-      results.fullStudentsQuery = `FAILED: ${e.sqlMessage || e.message}`;
+      const cause = e.cause || e;
+      results.fullStudentsQuery = `FAILED: ${cause.sqlMessage || e.message}`;
     }
 
     // Test 4: Schedules table (is_active column)
@@ -104,15 +106,43 @@ configRouter.get('/debug', async (_req, res) => {
         .where(eq(schedules.isActive, true));
       results.schedulesQuery = `OK (${s.length} rows)`;
     } catch (e: any) {
-      results.schedulesQuery = `FAILED: ${e.sqlMessage || e.message}`;
+      const cause = e.cause || e;
+      results.schedulesQuery = `FAILED: ${cause.sqlMessage || e.message}`;
     }
 
     // Test 5: Tables list
     const [tablesRaw] = await db.execute('SHOW TABLES');
     results.tables = (tablesRaw as unknown as any[]).map((t: any) => Object.values(t)[0]);
 
+    // Test 6: Find class by name (exact import flow)
+    try {
+      const c = await db.select({ id: classes.id, name: classes.name }).from(classes).where(eq(classes.name, 'X IPA 1')).limit(1);
+      results.classListQuery = `OK (${c.length} rows)`;
+    } catch (e: any) {
+      const cause = e.cause || e;
+      results.classListQuery = `FAILED: ${cause.sqlMessage || e.message}`;
+    }
+
+    // Test 7: Simulate INSERT student (will be rolled back)
+    try {
+      const classesExist = await db.select({ id: classes.id }).from(classes).limit(1);
+      if (classesExist.length > 0) {
+        const [ins] = await db.insert(students).values({ name: 'TEST_DELETE_ME', nis: '999999', classId: classesExist[0].id });
+        results.studentInsert = `OK (insertId: ${ins.insertId})`;
+        await db.delete(students).where(eq(students.nis, '999999'));
+      } else {
+        results.studentInsert = 'SKIPPED (no classes exist)';
+      }
+    } catch (e: any) {
+      const cause = e.cause || e;
+      results.studentInsert = `FAILED: ${cause.sqlMessage || e.message}`;
+      results.studentInsertCode = cause.code;
+      results.studentInsertErrno = cause.errno;
+    }
+
     res.json({ success: true, data: results });
   } catch (e: any) {
-    res.json({ success: true, data: { ...results, fatal: e.sqlMessage || e.message } });
+    const cause = e.cause || e;
+    res.json({ success: true, data: { ...results, fatal: cause.sqlMessage || e.message } });
   }
 });

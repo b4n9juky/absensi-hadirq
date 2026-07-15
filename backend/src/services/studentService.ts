@@ -258,7 +258,15 @@ export class StudentService {
         results.push({ row: rowNum, nis: row.nis, status: 'imported' });
         imported++;
       } catch (err: any) {
-        results.push({ row: rowNum, nis: row.nis, status: 'failed', error: err.message || 'Gagal menyimpan siswa.' });
+        console.error(`[Import] Error row ${rowNum} NIS ${row.nis}:`, {
+          message: err.message,
+          code: err.code,
+          errno: err.errno,
+          sqlMessage: err.sqlMessage,
+          sqlState: err.sqlState,
+          sql: err.sql,
+        });
+        results.push({ row: rowNum, nis: row.nis, status: 'failed', error: err.sqlMessage || err.message || 'Gagal menyimpan siswa.' });
         failed++;
       }
     }

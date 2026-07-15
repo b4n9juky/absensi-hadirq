@@ -18,11 +18,13 @@ const sizeMap: Record<string, string> = {
 
 export const ModalShell: React.FC<Props> = ({ title, onClose, children, footer, maxWidth = 'md' }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     contentRef.current?.focus();
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
       if (e.key === 'Tab') {
         const focusable = contentRef.current?.querySelectorAll<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -45,7 +47,7 @@ export const ModalShell: React.FC<Props> = ({ title, onClose, children, footer, 
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = '';
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-background/70 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>

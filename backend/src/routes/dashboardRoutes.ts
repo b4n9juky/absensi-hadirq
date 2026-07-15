@@ -15,6 +15,7 @@ dashboardRouter.get('/stats', validate(dashboardStatsSchema, 'query'), async (re
     const stats = await dashboardService.getStats({ date, month, year, classId });
     res.json({ success: true, data: stats });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[DashboardRoutes /stats] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });

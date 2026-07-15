@@ -14,7 +14,8 @@ teacherRouter.get('/current-schedule', authMiddleware, requireRole(['guru']), as
     }
     res.json({ success: true, data: schedule });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /current-schedule] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -27,7 +28,8 @@ teacherRouter.get('/students-with-face-status/:classId', authMiddleware, require
     const students = await teacherService.getClassStudentsWithFaceStatus(classId);
     res.json({ success: true, data: students });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /students-with-face-status] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -40,7 +42,8 @@ teacherRouter.get('/class-students/:classId', authMiddleware, requireRole(['guru
     const students = await teacherService.getClassStudentsWithAttendance(classId);
     res.json({ success: true, data: students });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /class-students] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -56,7 +59,8 @@ teacherRouter.post('/mark-attendance', authMiddleware, requireRole(['guru']), as
     const result = await teacherService.markAttendance(teacherId, teacherName, student_nis, status, finalIsVerified);
     res.json({ success: result.success, message: result.message });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /mark-attendance] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -66,7 +70,8 @@ teacherRouter.get('/my-schedules', authMiddleware, requireRole(['guru']), async 
     const schedules = await teacherService.getMySchedules(teacherId);
     res.json({ success: true, data: schedules });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /my-schedules GET] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -90,7 +95,8 @@ teacherRouter.post('/my-schedules', authMiddleware, requireRole(['guru']), async
     });
     res.status(201).json({ success: true, message: 'Jadwal berhasil dibuat.', data: { id: scheduleId } });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /my-schedules POST] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -106,7 +112,8 @@ teacherRouter.put('/my-schedules/:id', authMiddleware, requireRole(['guru']), as
     });
     res.json({ success: true, message: 'Jadwal berhasil diperbarui.' });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /my-schedules PUT] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -118,7 +125,8 @@ teacherRouter.delete('/my-schedules/:id', authMiddleware, requireRole(['guru']),
     await teacherService.deleteMySchedule(teacherId, id);
     res.json({ success: true, message: 'Jadwal berhasil dihapus.' });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /my-schedules DELETE] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -141,7 +149,8 @@ teacherRouter.get('/report', authMiddleware, requireRole(['guru']), async (req, 
     const data = await teacherService.getTeacherReport(teacherId, resolvedStart, resolvedEnd);
     res.json({ success: true, data });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /report] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -156,7 +165,8 @@ teacherRouter.post('/mark-attendance-bulk', authMiddleware, requireRole(['guru']
     const result = await teacherService.markAttendanceBulk(teacherId, teacherName, student_nis_list);
     res.json({ success: result.success, message: result.message });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
+    console.error('[TeacherRoutes /mark-attendance-bulk] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -183,6 +193,7 @@ teacherRouter.post('/mark-class-attendance', authMiddleware, requireRole(['guru'
     const result = await teacherService.markClassAttendance(teacherId, Number(classId), date, studentEntries);
     res.json(result);
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message });
-  }
+    console.error('[TeacherRoutes /mark-class-attendance] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }  
 });

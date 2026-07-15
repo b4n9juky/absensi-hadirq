@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, User, MapPin, Eye, Trash2, Calendar, Camera, BookOpen, ClipboardCheck } from 'lucide-react';
+import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, FileDown, User, MapPin, Eye, Trash2, Calendar, Camera, BookOpen, ClipboardCheck, ScanBarcode } from 'lucide-react';
 import { ModalShell } from '../shared/ModalShell';
 import { DataTable } from '../shared/DataTable';
 
@@ -31,6 +31,10 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
   const [reportStartDate, setReportStartDate] = useState(todayStr);
   const [reportEndDate, setReportEndDate] = useState(todayStr);
 
+  // Schedule detail view state
+  const [scheduleDetail, setScheduleDetail] = useState<any | null>(null);
+  const [scheduleDetailLoading, setScheduleDetailLoading] = useState(false);
+
   const authHeader = { 'Authorization': `Bearer ${token}` };
 
   const columns = [
@@ -49,7 +53,7 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
           )}
           <div>
             <div className="font-bold text-foreground text-xs">{row.student?.name || 'Siswa'}</div>
-            <div className="text-[10px] text-muted-foreground">{row.student?.nis || '-'} | {row.class?.name || 'Umum'}</div>
+            <div className="text-xs text-muted-foreground">{row.student?.nis || '-'} | {row.class?.name || 'Umum'}</div>
           </div>
         </div>
       )
@@ -65,10 +69,10 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
           case 'PRESENT':
             return (
               <div className="flex flex-col gap-1 items-center justify-center">
-                <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-emerald-500/10 border-emerald-500/20 text-emerald-500">
+                <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-500/10 border-emerald-500/20 text-emerald-500">
                   TEPAT WAKTU
                 </span>
-                <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold border ${isVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-amber-500/10 border-amber-500/20 text-amber-600'}`}>
+                <span className={`inline-flex px-2 py-0.5 rounded-full text-2xs font-semibold border ${isVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-amber-500/10 border-amber-500/20 text-amber-600'}`}>
                   {isVerified ? 'Terverifikasi' : 'Belum Diverifikasi'}
                 </span>
               </div>
@@ -76,35 +80,35 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
           case 'LATE':
             return (
               <div className="flex flex-col gap-1 items-center justify-center">
-                <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-amber-500/10 border-amber-500/20 text-amber-500">
+                <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold border bg-amber-500/10 border-amber-500/20 text-amber-500">
                   TERLAMBAT
                 </span>
-                <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-semibold border ${isVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-amber-500/10 border-amber-500/20 text-amber-600'}`}>
+                <span className={`inline-flex px-2 py-0.5 rounded-full text-2xs font-semibold border ${isVerified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-amber-500/10 border-amber-500/20 text-amber-600'}`}>
                   {isVerified ? 'Terverifikasi' : 'Belum Diverifikasi'}
                 </span>
               </div>
             );
           case 'SICK':
             return (
-              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-blue-500/10 border-blue-500/20 text-blue-500">
+              <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold border bg-blue-500/10 border-blue-500/20 text-blue-500">
                 SAKIT
               </span>
             );
           case 'EXCUSED':
             return (
-              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-purple-500/10 border-purple-500/20 text-purple-500">
+              <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold border bg-purple-500/10 border-purple-500/20 text-purple-500">
                 IZIN
               </span>
             );
           case 'ABSENT':
             return (
-              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-rose-500/10 border-rose-500/20 text-rose-500">
+              <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold border bg-rose-500/10 border-rose-500/20 text-rose-500">
                 ALFA
               </span>
             );
           default:
             return (
-              <span className="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold border bg-muted border-muted-foreground/20 text-muted-foreground">
+              <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold border bg-muted border-muted-foreground/20 text-muted-foreground">
                 {status}
               </span>
             );
@@ -117,7 +121,7 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
       render: (row: any) => (
         <>
           <div className="text-foreground">{formatTimeString(row.checkinTime)}</div>
-          <div className="text-[9px] text-muted-foreground mt-0.5">{formatDateString(row.attendanceDate)}</div>
+          <div className="text-2xs text-muted-foreground mt-0.5">{formatDateString(row.attendanceDate)}</div>
         </>
       )
     },
@@ -128,9 +132,9 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
         row.checkoutTime ? (
           <div>
             <div className="text-foreground">{formatTimeString(row.checkoutTime)}</div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">Checkout Selesai</div>
+            <div className="text-2xs text-muted-foreground mt-0.5">Checkout Selesai</div>
           </div>
-        ) : <span className="text-[11px] text-muted-foreground/60 italic">Belum Pulang</span>
+        ) : <span className="text-xs text-muted-foreground/60 italic">Belum Pulang</span>
       )
     },
     {
@@ -142,7 +146,7 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
             <MapPin className="w-3 h-3 text-muted-foreground" />
             <span>Jarak: <span className="font-semibold text-foreground">{row.distance?.toFixed(1) || '-'}m</span></span>
           </div>
-          <div className="text-[9px] text-muted-foreground mt-0.5">Akurasi GPS: {row.accuracy?.toFixed(1) || '-'}m</div>
+          <div className="text-2xs text-muted-foreground mt-0.5">Akurasi GPS: {row.accuracy?.toFixed(1) || '-'}m</div>
         </>
       )
     },
@@ -287,44 +291,89 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
     catch { return timeStr; }
   };
 
+  const downloadCsv = (csvContent: string, filename: string) => {
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleExportCsv = () => {
-    const csvContent = reports.map((r: any) => `${r.attendanceDate},${r.student?.nis || ''},${r.status}`).join('\n');
-    navigator.clipboard.writeText(`Tanggal,NIS,Status\n${csvContent}`);
-    alert('Rekap absensi disalin ke clipboard!');
+    const csvContent = ['Tanggal,NIS,Status',
+      ...reports.map((r: any) => `${r.attendanceDate},${r.student?.nis || ''},${r.status}`)
+    ].join('\n');
+    downloadCsv(csvContent, `rekap-absensi-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  const handleExportTeacherCsv = () => {
+    if (!teacherReport) return;
+    const rows: string[] = ['Tanggal,Kelas,Mapel,Jam,Materi,Kegiatan,Catatan,Total Siswa,Persentase'];
+    teacherReport.schedules?.forEach((s: any) => {
+      const total = s.totalStudents || 1;
+      const attended = s.presentCount + s.sickCount + s.excusedCount + s.dispensationCount;
+      const pct = Math.round((attended / total) * 100);
+      rows.push(`${reportStartDate},${s.className},${s.subject || ''},${s.startTime?.slice(0, 5)}-${s.endTime?.slice(0, 5)},${s.materi || ''},${s.kegiatan || ''},${s.catatanKendala || ''},${total},${pct}%`);
+    });
+    teacherReport.agendas?.forEach((a: any) => {
+      const total = a.totalStudents || 1;
+      const attended = a.presentCount + a.sickCount + a.excusedCount + a.dispensationCount;
+      const pct = Math.round((attended / total) * 100);
+      rows.push(`${reportStartDate},${a.className},${a.agendaType || 'Agenda'},"${a.title}",,,,,${total},${pct}%`);
+    });
+    downloadCsv(rows.join('\n'), `rekap-mengajar-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
+  const handleOpenScheduleDetail = async (scheduleId: number) => {
+    setScheduleDetailLoading(true);
+    setScheduleDetail(null);
+    try {
+      const res = await fetch(`/api/subject-attendances/schedule/${scheduleId}/date/${reportStartDate}`, { headers: authHeader });
+      const data = await res.json();
+      if (data.success) setScheduleDetail(data.data);
+      else setScheduleDetail({ error: data.error || 'Gagal memuat detail' });
+    } catch { setScheduleDetail({ error: 'Gagal memuat detail' }); }
+    setScheduleDetailLoading(false);
   };
 
   return (
     <>
       {/* Welcome & Live Server Clock Banner */}
-      <section className="bg-gradient-to-r from-teal-950 via-slate-900 to-slate-950 border border-teal-500/20 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl relative overflow-hidden animate-fadeIn mb-2">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.08),transparent_50%)]" />
-        <div className="space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-teal-500/10 border border-teal-500/20 text-teal-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+      <section className="bg-card border border-border rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fadeIn mb-2">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-primary/10 border border-primary/20 text-primary">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             Sistem Aktif
           </div>
-          <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
-            Selamat datang kembali, <span className="text-teal-400">{user?.name || 'Admin'}</span>!
+          <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+            Selamat datang kembali, <span className="text-primary">{user?.name || 'Admin'}</span>!
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {statsData?.schoolName || 'Sistem Absensi Kehadiran Siswa'}
           </p>
-          <div className="pt-2">
-            <a href="/kiosk-absensi" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold transition-all shadow-lg hover:shadow-teal-500/20">
+          <div className="pt-2 flex items-center gap-3">
+            <a href="/kiosk-absensi" target="_blank" rel="noopener noreferrer" className="btn-primary">
               <Camera className="w-4 h-4" />
               <span>Buka Kiosk Absensi Wajah</span>
+            </a>
+            <a href="/kiosk-qr" target="_blank" rel="noopener noreferrer" className="btn-secondary">
+              <ScanBarcode className="w-4 h-4" />
+              <span>Buka Kiosk QR Code</span>
             </a>
           </div>
         </div>
         
         {/* Digital Clock Section */}
-        <div className="bg-background/40 backdrop-blur-md border border-border/80 rounded-2xl px-6 py-4 flex flex-col md:items-end justify-center gap-1.5 relative z-10 min-w-[200px] shadow-inner">
-          <div className="flex items-center gap-2 text-teal-400 font-mono text-3xl font-extrabold tracking-wider drop-shadow-[0_0_8px_rgba(20,184,166,0.3)]">
-            <Clock className="w-5 h-5 text-teal-400/80" />
+        <div className="bg-background border border-border rounded-xl px-6 py-4 flex flex-col md:items-end justify-center gap-1.5 min-w-[200px]">
+          <div className="flex items-center gap-2 text-primary font-mono text-3xl font-bold tracking-wider">
+            <Clock className="w-5 h-5 text-primary/70" />
             <span>{getClockString()}</span>
-            <span className="text-[10px] font-sans font-bold px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30 uppercase tracking-widest ml-1">WIB</span>
+            <span className="text-xs font-sans font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase tracking-widest ml-1">WIB</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Calendar className="w-3.5 h-3.5 text-muted-foreground/80" />
             <span>{getClockDateString()}</span>
           </div>
@@ -334,20 +383,19 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
       {/* Stats Cards */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fadeIn">
         {[
-          { label: 'Total Siswa', value: stats.totalStudents, icon: <Users className="w-5 h-5" />, color: 'from-blue-500 to-teal-500', iconBg: 'bg-blue-500/10 text-blue-500', textColor: 'text-foreground' },
-          { label: 'Hadir Tepat Waktu', value: stats.presentCount, icon: <CheckCircle className="w-5 h-5" />, color: 'from-teal-500 to-emerald-500', iconBg: 'bg-teal-500/10 text-teal-500', textColor: 'text-teal-500' },
-          { label: 'Siswa Terlambat', value: stats.lateCount, icon: <Clock className="w-5 h-5" />, color: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-500/10 text-amber-500', textColor: 'text-amber-500' },
-          { label: 'Belum Hadir / Absen', value: stats.absentCount, icon: <UserMinus className="w-5 h-5" />, color: 'from-red-500 to-rose-500', iconBg: 'bg-red-500/10 text-red-500', textColor: 'text-red-500' },
+          { label: 'Total Siswa', value: stats.totalStudents, icon: <Users className="w-5 h-5" />, iconBg: 'bg-blue-500/10 text-blue-500' },
+          { label: 'Hadir Tepat Waktu', value: stats.presentCount, icon: <CheckCircle className="w-5 h-5" />, iconBg: 'bg-teal-500/10 text-teal-500' },
+          { label: 'Siswa Terlambat', value: stats.lateCount, icon: <Clock className="w-5 h-5" />, iconBg: 'bg-amber-500/10 text-amber-500' },
+          { label: 'Belum Hadir / Absen', value: stats.absentCount, icon: <UserMinus className="w-5 h-5" />, iconBg: 'bg-muted text-muted-foreground' },
         ].map((card, i) => (
-          <div key={i} className="bg-card border border-border rounded-2xl p-5 relative overflow-hidden group hover:border-border/80 transition-all">
+          <div key={i} className="bg-card border border-border rounded-xl p-5 transition-all">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{card.label}</p>
-                <h3 className={`text-3xl font-extrabold mt-2 ${card.textColor}`}>{statsLoading ? '...' : card.value}</h3>
+                <p className="text-sm text-muted-foreground">{card.label}</p>
+                <h3 className="text-xl font-bold mt-2 text-foreground">{statsLoading ? '...' : card.value}</h3>
               </div>
               <div className={`p-3 rounded-xl ${card.iconBg}`}>{card.icon}</div>
             </div>
-            <div className={`absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r ${card.color}`} />
           </div>
         ))}
       </section>
@@ -362,12 +410,12 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tanggal Mulai</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tanggal Mulai</label>
                 <input type="date" value={reportStartDate} onChange={(e) => setReportStartDate(e.target.value)}
                   className="w-full bg-background border border-input rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary" />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tanggal Selesai</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tanggal Selesai</label>
                 <input type="date" value={reportEndDate} onChange={(e) => setReportEndDate(e.target.value)}
                   className="w-full bg-background border border-input rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary" />
               </div>
@@ -386,23 +434,30 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
                 <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl">
                   <div className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <BookOpen className="w-5 h-5 text-primary" />
-                    <h2 className="text-md font-bold text-foreground">Absensi Jadwal Mengajar</h2>
-                    <span className="ml-auto text-[10px] text-muted-foreground">{teacherReport.schedules.length} jadwal</span>
+                    <h2 className="text-base font-bold text-foreground">Absensi Jadwal Mengajar</h2>
+                    <span className="text-xs text-muted-foreground">{reportStartDate}{reportEndDate !== reportStartDate ? ` s/d ${reportEndDate}` : ''}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{teacherReport.schedules.length} jadwal</span>
+                    <button onClick={handleExportTeacherCsv} title="Ekspor CSV"
+                      className="ml-2 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 text-xs font-bold transition-all">
+                      <FileDown className="w-3.5 h-3.5" />
+                      <span>CSV</span>
+                    </button>
                   </div>
                   <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teacherReport.schedules.map((sched: any) => {
                       const attended = sched.presentCount + sched.sickCount + sched.excusedCount + sched.dispensationCount;
                       const total = sched.totalStudents || 1;
                       return (
-                        <div key={sched.scheduleId} className="bg-muted/10 border border-border/50 rounded-xl p-4 space-y-3 hover:border-border transition-colors">
+                        <div key={sched.scheduleId} onClick={() => handleOpenScheduleDetail(sched.scheduleId)}
+                          className="bg-muted/10 border border-border/50 rounded-xl p-4 space-y-3 hover:border-primary/50 transition-all cursor-pointer hover:shadow-md">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <div className="font-bold text-foreground text-sm">{sched.className}</div>
-                              {sched.subject && <div className="text-[10px] text-muted-foreground mt-0.5">{sched.subject}</div>}
+                              {sched.subject && <div className="text-xs text-muted-foreground mt-0.5">{sched.subject}</div>}
                             </div>
-                            <span className="text-[10px] font-mono text-teal-400 font-bold shrink-0">{sched.startTime.slice(0, 5)}</span>
+                            <span className="text-xs font-mono text-teal-400 font-bold shrink-0">{sched.startTime.slice(0, 5)}-{sched.endTime?.slice(0, 5)}</span>
                           </div>
-                          <div className="flex gap-1.5 text-[10px] flex-wrap">
+                          <div className="flex gap-1.5 text-xs flex-wrap">
                             <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold">{sched.presentCount} Hadir</span>
                             {sched.sickCount > 0 && <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-semibold">{sched.sickCount} Sakit</span>}
                             {sched.excusedCount > 0 && <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 font-semibold">{sched.excusedCount} Izin</span>}
@@ -414,7 +469,7 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
                             <div className="h-full bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500 rounded-full transition-all"
                               style={{ width: `${Math.min((attended / total) * 100, 100)}%` }} />
                           </div>
-                          <div className="text-[10px] text-muted-foreground flex justify-between">
+                          <div className="text-xs text-muted-foreground flex justify-between">
                             <span>{attended} dari {sched.totalStudents} siswa</span>
                             <span className="font-semibold">{Math.round((attended / total) * 100)}%</span>
                           </div>
@@ -430,8 +485,8 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
                 <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl">
                   <div className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <ClipboardCheck className="w-5 h-5 text-primary" />
-                    <h2 className="text-md font-bold text-foreground">Absensi Agenda</h2>
-                    <span className="ml-auto text-[10px] text-muted-foreground">{teacherReport.agendas.length} agenda</span>
+                    <h2 className="text-base font-bold text-foreground">Absensi Agenda</h2>
+                    <span className="ml-auto text-xs text-muted-foreground">{teacherReport.agendas.length} agenda</span>
                   </div>
                   <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {teacherReport.agendas.map((ag: any) => {
@@ -442,13 +497,13 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <div className="font-bold text-foreground text-sm">{ag.title}</div>
-                              <div className="text-[10px] text-muted-foreground mt-0.5">{ag.className}</div>
+                              <div className="text-xs text-muted-foreground mt-0.5">{ag.className}</div>
                             </div>
                             {ag.agendaType && (
-                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-semibold shrink-0">{ag.agendaType}</span>
+                              <span className="text-2xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-semibold shrink-0">{ag.agendaType}</span>
                             )}
                           </div>
-                          <div className="flex gap-1.5 text-[10px] flex-wrap">
+                          <div className="flex gap-1.5 text-xs flex-wrap">
                             <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold">{ag.presentCount} Hadir</span>
                             {ag.sickCount > 0 && <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-semibold">{ag.sickCount} Sakit</span>}
                             {ag.excusedCount > 0 && <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 font-semibold">{ag.excusedCount} Izin</span>}
@@ -459,7 +514,7 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
                             <div className="h-full bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500 rounded-full transition-all"
                               style={{ width: `${Math.min((attended / total) * 100, 100)}%` }} />
                           </div>
-                          <div className="text-[10px] text-muted-foreground flex justify-between">
+                          <div className="text-xs text-muted-foreground flex justify-between">
                             <span>{attended} dari {ag.totalStudents} siswa</span>
                             <span className="font-semibold">{Math.round((attended / total) * 100)}%</span>
                           </div>
@@ -475,55 +530,115 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
                 <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground text-sm">
                   <Calendar className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   <p>Tidak ada data absensi untuk periode ini.</p>
-                  <p className="text-[10px] mt-2 opacity-60">Ubah rentang tanggal untuk melihat laporan.</p>
+                  <p className="text-xs mt-2 opacity-60">Ubah rentang tanggal untuk melihat laporan.</p>
                 </div>
               )}
             </>
-          ) : null}
-        </>
+              ) : null}
+
+              {/* Schedule Detail Modal */}
+              {scheduleDetail && !scheduleDetail.error && (
+                <ModalShell onClose={() => setScheduleDetail(null)} title="Detail Absensi Jadwal">
+                  <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><span className="text-muted-foreground text-xs uppercase">Kelas</span><div className="font-bold">{scheduleDetail.schedule?.className}</div></div>
+                      <div><span className="text-muted-foreground text-xs uppercase">Mapel</span><div className="font-bold">{scheduleDetail.schedule?.subject || '-'}</div></div>
+                      <div><span className="text-muted-foreground text-xs uppercase">Jam</span><div className="font-mono text-teal-400">{scheduleDetail.schedule?.startTime?.slice(0, 5)}-{scheduleDetail.schedule?.endTime?.slice(0, 5)}</div></div>
+                      <div><span className="text-muted-foreground text-xs uppercase">Tanggal</span><div className="font-bold">{reportStartDate}</div></div>
+                    </div>
+                    {scheduleDetail.sessionLog && (
+                      <div className="border-t border-border pt-4 space-y-3">
+                        {scheduleDetail.sessionLog.materi && <div><span className="text-xs uppercase text-muted-foreground font-semibold">Materi</span><p className="text-sm mt-1">{scheduleDetail.sessionLog.materi}</p></div>}
+                        {scheduleDetail.sessionLog.kegiatan && <div><span className="text-xs uppercase text-muted-foreground font-semibold">Kegiatan</span><p className="text-sm mt-1">{scheduleDetail.sessionLog.kegiatan}</p></div>}
+                        {scheduleDetail.sessionLog.catatanKendala && <div><span className="text-xs uppercase text-muted-foreground font-semibold">Catatan / Kendala</span><p className="text-sm mt-1 whitespace-pre-wrap">{scheduleDetail.sessionLog.catatanKendala}</p></div>}
+                        {scheduleDetail.sessionLog.fotoPembelajaran && (
+                          <div><span className="text-xs uppercase text-muted-foreground font-semibold mb-2 block">Foto Pembelajaran</span>
+                            <img src={scheduleDetail.sessionLog.fotoPembelajaran} alt="Foto Pembelajaran" className="rounded-xl border border-border max-h-48 object-cover" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="border-t border-border pt-4">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Daftar Siswa ({scheduleDetail.students?.length || 0})</h4>
+                      <div className="space-y-2">
+                        {scheduleDetail.students?.map((s: any) => {
+                          const statusColors: Record<string, string> = {
+                            PRESENT: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                            SICK: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                            EXCUSED: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+                            ABSENT: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+                            DISPEN: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                            SKIPPED: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+                          };
+                          const labels: Record<string, string> = { PRESENT: 'Hadir', SICK: 'Sakit', EXCUSED: 'Izin', ABSENT: 'Alpa', DISPEN: 'Dispensasi', SKIPPED: 'Kosong' };
+                          return (
+                            <div key={s.studentId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/5 border border-border/30">
+                              <div>
+                                <div className="text-sm font-semibold">{s.studentName}</div>
+                                <div className="text-xs text-muted-foreground">{s.nis}</div>
+                              </div>
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${statusColors[s.status] || 'bg-muted text-muted-foreground'}`}>
+                                {labels[s.status] || s.status}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </ModalShell>
+              )}
+              {scheduleDetailLoading && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+                  <div className="bg-card rounded-2xl p-8 shadow-2xl animate-pulse text-muted-foreground text-sm">Memuat detail...</div>
+                </div>
+              )}
+              {scheduleDetail?.error && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setScheduleDetail(null)}>
+                  <div className="bg-card rounded-2xl p-6 shadow-2xl max-w-sm text-center space-y-3">
+                    <p className="text-sm text-rose-500">{scheduleDetail.error}</p>
+                    <button onClick={() => setScheduleDetail(null)} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold">Tutup</button>
+                  </div>
+                </div>
+              )}
+            </>
       ) : (
         <>
           {/* Admin: Filter Panel */}
-          <section className="bg-card/50 border border-border rounded-2xl p-6 space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-5 h-5 text-primary" />
-                <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Saringan & Filter Data</h2>
-              </div>
-              <button onClick={handleResetFilters} className="px-4 py-2 rounded-xl bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-bold transition-all self-end">
-                Atur Ulang Filter
-              </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <section className="card-surface p-4">
+            <div className="flex flex-wrap gap-3 items-end">
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tanggal Absensi</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Tanggal Absensi</label>
                 <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
-                  className="w-full bg-background border border-input rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary" />
+                  className="w-full bg-background border border-input rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary" />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Kelas</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Kelas</label>
                 <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)}
-                  className="w-full bg-background border border-input rounded-xl px-3 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary">
+                  className="w-full bg-background border border-input rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary">
                   <option value="">Semua Kelas</option>
                   {classesList.map((cls: any) => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Bulan Rekap</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Bulan Rekap</label>
                 <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}
-                  className="w-full bg-background border border-input rounded-xl px-3 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary">
+                  className="w-full bg-background border border-input rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary">
                   <option value="">Pilih Bulan (Opsional)</option>
                   {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tahun Rekap</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Tahun Rekap</label>
                 <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)}
-                  className="w-full bg-background border border-input rounded-xl px-3 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary">
+                  className="w-full bg-background border border-input rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary">
                   <option value="">Pilih Tahun (Opsional)</option>
                   {[2025, 2026, 2027].map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
+              <button onClick={handleResetFilters} className="btn-secondary">
+                Reset Filter
+              </button>
             </div>
           </section>
 
@@ -531,8 +646,8 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
           <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl">
             <div className="px-6 py-5 border-b border-border flex justify-between items-center gap-4">
               <div>
-                <h2 className="text-md font-bold text-foreground">Log Riwayat Kehadiran Siswa</h2>
-                <p className="text-[10px] text-muted-foreground mt-1">Ditemukan {reports.length} rekaman absensi cocok.</p>
+                <h2 className="text-base font-bold text-foreground">Log Riwayat Kehadiran Siswa</h2>
+                <p className="text-xs text-muted-foreground mt-1">Ditemukan {reports.length} rekaman absensi cocok.</p>
               </div>
               <button onClick={handleExportCsv}
                 className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 text-xs font-bold transition-all">

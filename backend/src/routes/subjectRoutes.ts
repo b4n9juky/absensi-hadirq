@@ -63,3 +63,45 @@ subjectRouter.delete('/:id', requireRole(['admin']), async (req, res) => {
     res.status(400).json({ success: false, error: err.message });
   }
 });
+
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+const uploadExcel = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const importDir = path.join(__dirname, '../../uploads/imports');
+      if (!fs.existsSync(importDir)) fs.mkdirSync(importDir, { recursive: true });
+      cb(null, importDir);
+    },
+    filename: (_req, _file, cb) => {
+      cb(null, `import-subjects-${Date.now()}-${Math.round(Math.random() * 1e9)}.xlsx`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Format file harus .xlsx atau .xls'));
+    }
+  },
+});
+
+subjectRouter.post('/import', requireRole(['admin']), uploadExcel.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'File Excel tidak terkirim.' });
+    }
+    const result = await subjectService.importSubjects(file.path);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});

@@ -47,8 +47,8 @@ studentsRouter.get('/', async (req, res) => {
 
 studentsRouter.post('/', validate(createStudentSchema), async (req, res) => {
   try {
-    const { userId, nis, classId } = req.body;
-    const studentId = await studentService.createStudent({ userId, nis, classId });
+    const { name, nis, classId } = req.body;
+    const studentId = await studentService.createStudent({ name, nis, classId });
     res.status(201).json({ success: true, message: 'Siswa berhasil dibuat.', data: { id: studentId } });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -61,8 +61,8 @@ studentsRouter.put('/:id', validate(updateStudentSchema), async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ success: false, error: 'ID tidak valid.' });
     }
-    const { userId, nis, classId } = req.body;
-    await studentService.updateStudent(id, { userId, nis, classId });
+    const { name, nis, classId } = req.body;
+    await studentService.updateStudent(id, { name, nis, classId });
     res.json({ success: true, message: 'Siswa berhasil diperbarui.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -184,8 +184,59 @@ studentsRouter.put('/:id/register-face', async (req, res) => {
     if (!faceEmbedding || !Array.isArray(faceEmbedding)) {
       return res.status(400).json({ success: false, error: 'Face embedding tidak valid.' });
     }
-    await studentService.registerFace(id, faceEmbedding);
+    await studentService.appendFaceEmbedding(id, faceEmbedding);
     res.json({ success: true, message: 'Wajah siswa berhasil didaftarkan.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+studentsRouter.delete('/:id/delete-face', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    }
+    await studentService.deleteFace(id);
+    res.json({ success: true, message: 'Data biometrik wajah berhasil dihapus.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+const uploadExcel = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const importDir = path.join(__dirname, '../../uploads/imports');
+      if (!fs.existsSync(importDir)) fs.mkdirSync(importDir, { recursive: true });
+      cb(null, importDir);
+    },
+    filename: (_req, _file, cb) => {
+      cb(null, `import-students-${Date.now()}-${Math.round(Math.random() * 1e9)}.xlsx`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Format file harus .xlsx atau .xls'));
+    }
+  },
+});
+
+studentsRouter.post('/import', uploadExcel.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'File Excel tidak terkirim.' });
+    }
+    const result = await studentService.importStudents(file.path);
+    res.json({ success: true, data: result });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
   }

@@ -41,8 +41,10 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       headers: req.headers as any
     });
 
-    const logMsg = `[${new Date().toISOString()}] URL: ${req.url}, Method: ${req.method}, Auth: ${req.headers.authorization ? req.headers.authorization.substring(0, 20) + '...' : 'NONE'}, Session: ${sessionData ? `User: ${sessionData.user.email}, Role: ${sessionData.user.role}` : 'NULL'}\n`;
-    fs.appendFileSync(logPath, logMsg);
+    if (process.env.DEBUG_AUTH === 'true') {
+      const logMsg = `[${new Date().toISOString()}] URL: ${req.url}, Method: ${req.method}, Auth: ${req.headers.authorization ? req.headers.authorization.substring(0, 20) + '...' : 'NONE'}, Session: ${sessionData ? `User: ${sessionData.user.email}, Role: ${sessionData.user.role}` : 'NULL'}\n`;
+      fs.appendFileSync(logPath, logMsg);
+    }
 
     if (!sessionData) {
       return res.status(401).json({ success: false, error: 'Unauthorized: Sesi tidak ditemukan.' });
@@ -62,8 +64,10 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
 export const requireRole = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const contextMsg = `[requireRole] URL: ${req.url}, context: ${!!req.context}, user: ${!!req.context?.user}, role: ${req.context?.user?.role}, allowed: ${JSON.stringify(allowedRoles)}\n`;
-    fs.appendFileSync(logPath, contextMsg);
+    if (process.env.DEBUG_AUTH === 'true') {
+      const contextMsg = `[requireRole] URL: ${req.url}, context: ${!!req.context}, user: ${!!req.context?.user}, role: ${req.context?.user?.role}, allowed: ${JSON.stringify(allowedRoles)}\n`;
+      fs.appendFileSync(logPath, contextMsg);
+    }
 
     if (!req.context || !req.context.user) {
       return res.status(401).json({ success: false, error: 'Unauthorized: Sesi tidak ditemukan.' });

@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { teachingSchedules, students, classes, attendances, user, subjectAttendances, teacherAgendas, agendaAttendances } from '../db/schema.js';
+import { teachingSchedules, students, classes, attendances, user, subjectAttendances, teacherAgendas, agendaAttendances, teachingSessionLogs, academicYears, semesters } from '../db/schema.js';
 import { eq, and, gte, lte, sql, inArray, ne } from 'drizzle-orm';
 import { attendanceService } from './attendanceService.js';
 import { getJakartaDate } from '../lib/timezone.js';
@@ -70,13 +70,12 @@ export class TeacherService {
     const rows = await db.select({
       studentId: students.id,
       nis: students.nis,
-      studentName: user.name,
+      studentName: students.name,
       hasFace: students.faceEmbedding,
     })
     .from(students)
-    .innerJoin(user, eq(students.userId, user.id))
     .where(eq(students.classId, classId))
-    .orderBy(user.name);
+    .orderBy(students.name);
 
     return rows.map(r => ({
       studentId: r.studentId,
@@ -93,20 +92,19 @@ export class TeacherService {
     const rows = await db.select({
       studentId: students.id,
       nis: students.nis,
-      studentName: user.name,
+      studentName: students.name,
       status: attendances.status,
       checkinTime: attendances.checkinTime,
       checkoutTime: attendances.checkoutTime,
       isVerified: attendances.isVerified,
     })
     .from(students)
-    .innerJoin(user, eq(students.userId, user.id))
     .leftJoin(attendances, and(
       eq(attendances.studentId, students.id),
       eq(attendances.attendanceDate, today),
     ))
     .where(eq(students.classId, classId))
-    .orderBy(user.name);
+    .orderBy(students.name);
 
     return rows;
   }
@@ -153,6 +151,77 @@ export class TeacherService {
 
     return { success: true, message: `Berhasil memverifikasi ${studentNisList.length} siswa.` };
   }
+
+  async markClassAttendance(teacherId: string, classId: number, date: string, entries: { studentId: number; status: string | null }[]) {
+    const scheduleCheck = await db.select()
+      .from(teachingSchedules)
+      .where(and(eq(teachingSchedules.teacherId, teacherId), eq(teachingSchedules.classId, classId)))
+      .limit(1);
+
+    if (scheduleCheck.length === 0) {
+      throw new Error('Anda tidak mengajar kelas ini. Hanya bisa mengabsen kelas yang Anda ajar.');
+    }
+
+    const activeYear = await db.select().from(academicYears).where(eq(academicYears.isActive, true)).limit(1);
+    const activeSemester = await db.select().from(semesters).where(eq(semesters.isActive, true)).limit(1);
+
+    if (activeYear.length === 0 || activeSemester.length === 0) {
+      throw new Error('Tahun ajaran atau semester aktif belum diatur.');
+    }
+
+    let upserted = 0;
+    let deleted = 0;
+
+    for (const entry of entries) {
+      if (entry.status === null || entry.status === '') {
+        const existing = await db.select({ id: attendances.id })
+          .from(attendances)
+          .where(and(
+            eq(attendances.studentId, entry.studentId),
+            eq(attendances.attendanceDate, date),
+          ))
+          .limit(1);
+
+        if (existing.length > 0) {
+          await db.delete(attendances).where(eq(attendances.id, existing[0].id));
+          deleted++;
+        }
+      } else {
+        const existing = await db.select({ id: attendances.id })
+          .from(attendances)
+          .where(and(
+            eq(attendances.studentId, entry.studentId),
+            eq(attendances.attendanceDate, date),
+          ))
+          .limit(1);
+
+        if (existing.length > 0) {
+          await db.update(attendances)
+            .set({
+              status: entry.status as any,
+              isVerified: true,
+              updatedAt: new Date(),
+            })
+            .where(eq(attendances.id, existing[0].id));
+        } else {
+          await db.insert(attendances).values({
+            studentId: entry.studentId,
+            classId,
+            academicYearId: activeYear[0].id,
+            semesterId: activeSemester[0].id,
+            attendanceDate: date,
+            status: entry.status as any,
+            isVerified: true,
+            checkinTime: new Date(),
+          });
+        }
+        upserted++;
+      }
+    }
+
+    return { success: true, upserted, deleted, message: `Berhasil menyimpan absensi: ${upserted} siswa ditandai, ${deleted} dikosongkan.` };
+  }
+
   async getMySchedules(teacherId: string) {
     const rows = await db.select({
       id: teachingSchedules.id,
@@ -264,6 +333,23 @@ export class TeacherService {
 
     const studentCountMap = new Map(classStudentCounts.map(r => [r.classId, Number(r.count)]));
 
+    const sessionLogs = scheduleIds.length > 0 ? await db.select({
+      teachingScheduleId: teachingSessionLogs.teachingScheduleId,
+      attendanceDate: teachingSessionLogs.attendanceDate,
+      materi: teachingSessionLogs.materi,
+      kegiatan: teachingSessionLogs.kegiatan,
+      catatanKendala: teachingSessionLogs.catatanKendala,
+      fotoPembelajaran: teachingSessionLogs.fotoPembelajaran,
+    })
+    .from(teachingSessionLogs)
+    .where(and(
+      inArray(teachingSessionLogs.teachingScheduleId, scheduleIds),
+      gte(teachingSessionLogs.attendanceDate, startDate),
+      lte(teachingSessionLogs.attendanceDate, endDate),
+    )) : [];
+
+    const sessionLogMap = new Map(sessionLogs.map(l => [`${l.teachingScheduleId}_${l.attendanceDate}`, l]));
+
     const schedules = schedulesList.map(sched => {
       const statusCounts = subjectAttendanceCounts.filter(c => c.scheduleId === sched.scheduleId);
       return {
@@ -279,6 +365,10 @@ export class TeacherService {
         absentCount: Number(statusCounts.find(c => c.status === 'ABSENT')?.count || 0),
         dispensationCount: Number(statusCounts.find(c => c.status === 'DISPEN')?.count || 0),
         skippedCount: Number(statusCounts.find(c => c.status === 'SKIPPED')?.count || 0),
+        materi: sessionLogMap.get(`${sched.scheduleId}_${startDate}`)?.materi || '',
+        kegiatan: sessionLogMap.get(`${sched.scheduleId}_${startDate}`)?.kegiatan || '',
+        catatanKendala: sessionLogMap.get(`${sched.scheduleId}_${startDate}`)?.catatanKendala || '',
+        fotoPembelajaran: sessionLogMap.get(`${sched.scheduleId}_${startDate}`)?.fotoPembelajaran || '',
       };
     });
 

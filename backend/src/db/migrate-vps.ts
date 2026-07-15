@@ -141,6 +141,53 @@ async function run() {
       WHERE attendances.class_id IS NULL
     `);
     console.log(`Backfill completed. Rows updated: ${(result as any).affectedRows}`);
+
+    // 9. Migrate students table: add name, drop user_id
+    console.log('Migrating students table (dropping user_id reference, adding name directly)...');
+    
+    // Check if name column exists
+    const [nameCols] = await connection.query('SHOW COLUMNS FROM students LIKE "name"');
+    if ((nameCols as any[]).length === 0) {
+      console.log('Adding name column to students table...');
+      await connection.query('ALTER TABLE students ADD COLUMN name varchar(255) NULL');
+      
+      // Attempt to backfill names of existing students from user table
+      console.log('Backfilling student names from user table...');
+      try {
+        await connection.query(`
+          UPDATE students
+          INNER JOIN user ON students.user_id = user.id
+          SET students.name = user.name
+          WHERE students.name IS NULL
+        `);
+      } catch (bfErr: any) {
+        console.warn('Warning backfilling names:', bfErr.message);
+      }
+      
+      // Make name column NOT NULL
+      await connection.query('UPDATE students SET name = nis WHERE name IS NULL');
+      await connection.query('ALTER TABLE students MODIFY COLUMN name varchar(255) NOT NULL');
+      console.log('Name column added and populated successfully.');
+    } else {
+      console.log('Column name already exists in students table.');
+    }
+
+    // Drop user_id foreign key constraint & column if exists
+    const [userIdCols] = await connection.query('SHOW COLUMNS FROM students LIKE "user_id"');
+    if ((userIdCols as any[]).length > 0) {
+      console.log('Dropping foreign key students_user_id_user_id_fk...');
+      try {
+        await connection.query('ALTER TABLE students DROP FOREIGN KEY students_user_id_user_id_fk');
+      } catch (fkErr: any) {
+        console.warn('Warning dropping foreign key:', fkErr.message);
+      }
+      
+      console.log('Dropping user_id column from students table...');
+      await connection.query('ALTER TABLE students DROP COLUMN user_id');
+      console.log('user_id column dropped successfully.');
+    } else {
+      console.log('Column user_id already dropped.');
+    }
     
     console.log('Migration completed successfully!');
   } catch (err: any) {

@@ -60,3 +60,9 @@ debug.keystore
 # Large AI Models
 /frontend/public/models/
 /frontend/design
+DEPLOY.md
+DEPLOY_CYBERPANEL.md
+DEPLOY_TROUBLESHOOT.md
+plan.md
+deploy.sh
+Hadirq_IOs.md

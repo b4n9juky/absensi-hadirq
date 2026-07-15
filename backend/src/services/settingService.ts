@@ -18,6 +18,8 @@ export class SettingService {
       'max_accuracy_meters',
       'api_base_url',
       'school_name',
+      'school_logo',
+      'school_days',
     ];
 
     for (const key of Object.keys(entries)) {

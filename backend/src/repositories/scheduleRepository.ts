@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import { schedules } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 export class ScheduleRepository {
   async findAll() {
@@ -20,6 +20,17 @@ export class ScheduleRepository {
         checkoutTime,
       })
       .where(eq(schedules.id, id));
+  }
+
+  async updateActive(id: number, isActive: boolean) {
+    await db.update(schedules)
+      .set({ isActive })
+      .where(eq(schedules.id, id));
+  }
+
+  async countActive(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(schedules).where(eq(schedules.isActive, true));
+    return Number(result[0]?.count || 0);
   }
 }
 export const scheduleRepo = new ScheduleRepository();

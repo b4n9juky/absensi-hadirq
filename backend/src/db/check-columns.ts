@@ -42,7 +42,7 @@ async function main() {
         a.checkout_longitude as checkoutLongitude, 
         s.id as studentId, 
         s.nis as studentNis, 
-        u.name as studentName, 
+        s.name as studentName, 
         c.id as classId, 
         c.name as className, 
         ay.id as academicYearId, 
@@ -52,7 +52,6 @@ async function main() {
       FROM attendances a
       INNER JOIN students s ON a.student_id = s.id
       INNER JOIN classes c ON a.class_id = c.id
-      INNER JOIN user u ON s.user_id = u.id
       INNER JOIN academic_years ay ON a.academic_year_id = ay.id
       INNER JOIN semesters sem ON a.semester_id = sem.id
       WHERE a.attendance_date = ?

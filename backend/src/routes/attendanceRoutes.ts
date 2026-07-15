@@ -50,46 +50,6 @@ attendanceRouter.delete(
 );
 
 attendanceRouter.post(
-  '/',
-  authMiddleware,
-  requireRole(['siswa']),
-  upload.single('photo'),
-  async (req, res) => {
-    const file = req.file;
-    const { student_id, latitude, longitude, accuracy, device_uuid } = req.body;
-
-    const missingFields: string[] = [];
-    if (!student_id) missingFields.push('student_id');
-    if (!latitude) missingFields.push('latitude');
-    if (!longitude) missingFields.push('longitude');
-    if (!accuracy) missingFields.push('accuracy');
-    if (!device_uuid) missingFields.push('device_uuid');
-
-    if (missingFields.length > 0) {
-      if (file) fs.unlinkSync(file.path);
-      return res.status(200).json({ success: false, message: 'Payload request tidak lengkap.' });
-    }
-
-    if (!file) {
-      return res.status(200).json({ success: false, message: 'Foto bukti selfie tidak terkirim.' });
-    }
-
-    const result = await attendanceService.processAttendance({
-      student_id,
-      latitude,
-      longitude,
-      accuracy,
-      device_uuid,
-      photoPath: file.path,
-      authenticatedUserId: req.context!.user.id,
-      authenticatedUserName: req.context!.user.name,
-    });
-
-    return res.status(200).json(result);
-  }
-);
-
-attendanceRouter.post(
   '/qr',
   authMiddleware,
   requireRole(['guru']),

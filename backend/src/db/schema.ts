@@ -37,7 +37,7 @@ export const user = mysqlTable('user', {
 
 export const students = mysqlTable('students', {
   id: int('id').autoincrement().primaryKey(),
-  userId: varchar('user_id', { length: 36 }).references(() => user.id),
+  name: varchar('name', { length: 255 }).notNull(),
   nis: varchar('nis', { length: 50 }).notNull().unique(),
   classId: int('class_id').references(() => classes.id).notNull(),
   deviceUuid: varchar('device_uuid', { length: 255 }),
@@ -54,6 +54,7 @@ export const schedules = mysqlTable('schedules', {
   checkinStart: time('checkin_start').notNull(), // HH:MM:SS
   lateAfter: time('late_after').notNull(),       // HH:MM:SS
   checkoutTime: time('checkout_time').notNull(),   // HH:MM:SS
+  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
@@ -109,6 +110,20 @@ export const subjectAttendances = mysqlTable('subject_attendances', {
   uniqueAttendance: uniqueIndex('unique_subject_attendance').on(table.teachingScheduleId, table.studentId, table.attendanceDate),
 }));
 
+export const teachingSessionLogs = mysqlTable('teaching_session_logs', {
+  id: int('id').autoincrement().primaryKey(),
+  teachingScheduleId: int('teaching_schedule_id').references(() => teachingSchedules.id).notNull(),
+  attendanceDate: date('attendance_date', { mode: 'string' }).notNull(),
+  materi: varchar('materi', { length: 500 }),
+  kegiatan: varchar('kegiatan', { length: 500 }),
+  catatanKendala: text('catatan_kendala'),
+  fotoPembelajaran: varchar('foto_pembelajaran', { length: 500 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+  uniqueSession: uniqueIndex('unique_teaching_session').on(table.teachingScheduleId, table.attendanceDate),
+}));
+
 export const session = mysqlTable('session', {
   id: varchar('id', { length: 36 }).primaryKey(),
   expiresAt: timestamp('expires_at').notNull(),
@@ -152,6 +167,7 @@ export const teacherAgendas = mysqlTable('teacher_agendas', {
   classId: int('class_id').references(() => classes.id).notNull(),
   title: varchar('title', { length: 200 }).notNull(),
   agendaType: varchar('agenda_type', { length: 50 }),
+  subject: varchar('subject', { length: 100 }),
   date: date('date', { mode: 'string' }).notNull(),
   startTime: time('start_time'),
   endTime: time('end_time'),

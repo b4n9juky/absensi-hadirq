@@ -3,6 +3,7 @@ import { auth } from '../lib/auth.js';
 import { db } from '../db/index.js';
 import { user } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
+import crypto from 'crypto';
 import { parseExcelUserFile } from '../lib/excelParser.js';
 import fs from 'fs';
 
@@ -113,10 +114,12 @@ export class UserService {
           continue;
         }
 
+        const randomPassword = crypto.randomBytes(8).toString('hex');
+
         await auth.api.signUpEmail({
           body: {
             email: row.email,
-            password: 'Absen123!',
+            password: randomPassword,
             name: row.name,
           },
         });

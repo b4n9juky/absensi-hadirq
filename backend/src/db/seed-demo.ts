@@ -142,23 +142,10 @@ async function seedDemo() {
     for (const [kelas, daftar] of Object.entries(siswaPerKelas)) {
       const classId = classIds[kelas];
       for (const s of daftar) {
-        let [existingUser] = await db.select().from(user).where(eq(user.email, s.email)).limit(1);
-        let userId: string;
-        if (!existingUser) {
-          const res = await auth.api.signUpEmail({
-            body: { email: s.email, password: 'siswaPassword123', name: s.name }
-          });
-          await db.update(user).set({ role: 'siswa' }).where(eq(user.id, res.user.id));
-          userId = res.user.id;
-        } else {
-          await db.update(user).set({ role: 'siswa' }).where(eq(user.email, s.email));
-          userId = existingUser.id;
-        }
-
         let [existingStudent] = await db.select().from(students).where(eq(students.nis, s.nis)).limit(1);
         let studentId: number;
         if (!existingStudent) {
-          const [ins] = await db.insert(students).values({ userId, nis: s.nis, classId });
+          const [ins] = await db.insert(students).values({ name: s.name, nis: s.nis, classId });
           studentId = ins.insertId;
           try {
             const qrPath = await generateQrCode(s.nis, studentId);
@@ -167,7 +154,7 @@ async function seedDemo() {
           console.log(`+ Siswa: ${s.name} (${s.nis}) -> ${kelas}`);
         } else {
           studentId = existingStudent.id;
-          await db.update(students).set({ userId, classId }).where(eq(students.id, studentId));
+          await db.update(students).set({ name: s.name, classId }).where(eq(students.id, studentId));
         }
         allStudentIds.push(studentId);
       }
@@ -307,11 +294,11 @@ async function seedDemo() {
       console.log(`  ${g.name} -> ${g.email} / guruPassword123`);
     }
     console.log('');
-    console.log('Akun Siswa Demo (password: siswaPassword123):');
+    console.log('Siswa Demo (Tanpa Akun Login):');
     for (const [kelas, daftar] of Object.entries(siswaPerKelas)) {
       console.log(`  ${kelas}:`);
       for (const s of daftar) {
-        console.log(`    - ${s.name} (${s.email}) NIS: ${s.nis}`);
+        console.log(`    - ${s.name} NIS: ${s.nis}`);
       }
     }
 

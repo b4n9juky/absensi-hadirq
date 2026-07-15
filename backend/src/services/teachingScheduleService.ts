@@ -1,7 +1,9 @@
 import { db } from '../db/index.js';
 import { teachingSchedules, classes, user } from '../db/schema.js';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, or, sql } from 'drizzle-orm';
 import { userRepo } from '../repositories/userRepository.js';
+import fs from 'fs';
+import { parseExcelScheduleFile } from '../lib/excelParser.js';
 
 export interface CreateTeachingScheduleDto {
   teacherId: string;
@@ -73,6 +75,78 @@ export class TeachingScheduleService {
     const existing = await db.select().from(teachingSchedules).where(eq(teachingSchedules.id, id)).limit(1);
     if (existing.length === 0) throw new Error('Jadwal tidak ditemukan.');
     await db.delete(teachingSchedules).where(eq(teachingSchedules.id, id));
+  }
+
+  async importSchedules(filePath: string) {
+    const { rows, errors: parseErrors } = parseExcelScheduleFile(filePath);
+
+    const results: { row: number; status: string; error?: string }[] = [];
+    let imported = 0;
+    let failed = 0;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNum = i + 2;
+
+      try {
+        // Resolve teacher
+        const teacher = await db.select().from(user)
+          .where(or(eq(user.email, row.teacherEmailOrName), eq(user.name, row.teacherEmailOrName)))
+          .limit(1);
+        if (teacher.length === 0) {
+          results.push({ row: rowNum, status: 'failed', error: `Guru "${row.teacherEmailOrName}" tidak ditemukan.` });
+          failed++;
+          continue;
+        }
+
+        // Resolve class
+        const classRecord = await db.select().from(classes)
+          .where(eq(classes.name, row.className))
+          .limit(1);
+        if (classRecord.length === 0) {
+          results.push({ row: rowNum, status: 'failed', error: `Kelas "${row.className}" tidak ditemukan.` });
+          failed++;
+          continue;
+        }
+
+        // Check conflict
+        const conflict = await db.select().from(teachingSchedules)
+          .where(and(
+            eq(teachingSchedules.teacherId, teacher[0].id),
+            eq(teachingSchedules.dayName, row.dayName),
+            eq(teachingSchedules.startTime, row.startTime),
+          )).limit(1);
+        if (conflict.length > 0) {
+          results.push({ row: rowNum, status: 'skipped', error: 'Jadwal bentrok dengan jadwal guru yang sudah ada.' });
+          failed++;
+          continue;
+        }
+
+        await db.insert(teachingSchedules).values({
+          teacherId: teacher[0].id,
+          classId: classRecord[0].id,
+          dayName: row.dayName,
+          startTime: row.startTime,
+          endTime: row.endTime,
+          subject: row.subject,
+        });
+
+        results.push({ row: rowNum, status: 'imported' });
+        imported++;
+      } catch (err: any) {
+        results.push({ row: rowNum, status: 'failed', error: err.message || 'Gagal menyimpan jadwal.' });
+        failed++;
+      }
+    }
+
+    for (const pe of parseErrors) {
+      results.push({ row: pe.row, status: 'failed', error: pe.error });
+      failed++;
+    }
+
+    try { fs.unlinkSync(filePath); } catch { /* ignore */ }
+
+    return { imported, failed, results };
   }
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Upload, Pencil, Trash2, RefreshCw, FileSpreadsheet, Check } from 'lucide-react';
+import { Plus, Upload, Pencil, Trash2, RefreshCw, FileSpreadsheet, Check, Download } from 'lucide-react';
 import { RoleBadge } from '../shared/StatusBadge';
 import { DataTable } from '../shared/DataTable';
 import { ModalShell } from '../shared/ModalShell';
@@ -40,7 +40,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       render: (row: UserRecord) => (
         <div className="space-x-2 inline-flex">
           <button onClick={() => { setUserName(row.name); setUserEmail(row.email); setUserRole(row.role); setShowEditUser(row); }}
-            className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex">
+            className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex" aria-label="Edit pengguna">
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => handleDeleteUser(row.id)}
@@ -67,7 +67,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
-  const [userRole, setUserRole] = useState('siswa');
+  const [userRole, setUserRole] = useState('guru');
 
   // Import Excel state
   const [showImportModal, setShowImportModal] = useState(false);
@@ -181,19 +181,19 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
   useEffect(() => { if (toastMsg) { const t = setTimeout(() => setToastMsg(''), 4000); return () => clearTimeout(t); } }, [toastMsg]);
 
   return (
-    <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl animate-fadeIn">
+    <section className="bg-card border border-border rounded-xl overflow-hidden shadow-xl animate-fadeIn">
       <div className="px-6 py-5 border-b border-border flex justify-between items-center gap-4">
         <div>
-          <h2 className="text-md font-bold text-foreground">Kelola Akun Pengguna</h2>
-          <p className="text-[10px] text-muted-foreground mt-1">Daftar hak akses Admin, Guru, dan Siswa.</p>
+          <h2 className="text-base font-bold text-foreground">Kelola Akun Pengguna</h2>
+          <p className="text-xs text-muted-foreground mt-1">Daftar hak akses Admin, Guru, dan Siswa.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => { setUserName(''); setUserEmail(''); setUserPassword(''); setUserRole('siswa'); setShowAddUser(true); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
+          <button onClick={() => { setUserName(''); setUserEmail(''); setUserPassword(''); setUserRole('guru'); setShowAddUser(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all" aria-label="Tambah pengguna">
             <Plus className="w-4 h-4" /><span>Tambah User</span>
           </button>
           <button onClick={() => { setImportFile(null); setImportPreview([]); setImportResult(null); setShowImportModal(true); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
             <Upload className="w-4 h-4" /><span>Import Excel</span>
           </button>
         </div>
@@ -215,14 +215,14 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       {/* Add User Modal */}
       {showAddUser && (
         <ModalShell title="Tambah Akun Pengguna" onClose={() => setShowAddUser(false)} maxWidth="md"
-          footer={<><button type="button" onClick={() => setShowAddUser(false)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="addUserForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan</button></>}>
+          footer={<><button type="button" onClick={() => setShowAddUser(false)} className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="addUserForm" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan</button></>}>
           <form id="addUserForm" onSubmit={handleAddUser}>
             <div className="space-y-4">
               <FormInput label="Nama Lengkap" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Nama Pengguna" required />
               <FormInput label="Alamat Email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} placeholder="name@school.com" required />
               <FormInput label="Kata Sandi" type="password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} placeholder="Minimal 6 karakter" required />
               <FormSelect label="Peran (Role)" value={userRole} onChange={(e) => setUserRole(e.target.value)}
-                options={[{ value: 'siswa', label: 'Siswa' }, { value: 'guru', label: 'Guru' }, { value: 'admin', label: 'Administrator' }]} />
+                options={[{ value: 'guru', label: 'Guru' }, { value: 'admin', label: 'Administrator' }]} />
             </div>
           </form>
         </ModalShell>
@@ -231,13 +231,13 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       {/* Edit User Modal */}
       {showEditUser && (
         <ModalShell title="Edit Akun Pengguna" onClose={() => setShowEditUser(null)} maxWidth="md"
-          footer={<><button type="button" onClick={() => setShowEditUser(null)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="editUserForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan Perubahan</button></>}>
+          footer={<><button type="button" onClick={() => setShowEditUser(null)} className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="editUserForm" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan Perubahan</button></>}>
           <form id="editUserForm" onSubmit={handleEditUserSubmit}>
             <div className="space-y-4">
               <FormInput label="Nama Lengkap" value={userName} onChange={(e) => setUserName(e.target.value)} required />
               <FormInput label="Alamat Email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} required />
               <FormSelect label="Peran (Role)" value={userRole} onChange={(e) => setUserRole(e.target.value)}
-                options={[{ value: 'siswa', label: 'Siswa' }, { value: 'guru', label: 'Guru' }, { value: 'admin', label: 'Administrator' }]} />
+                options={[{ value: 'guru', label: 'Guru' }, { value: 'admin', label: 'Administrator' }]} />
             </div>
           </form>
         </ModalShell>
@@ -246,9 +246,9 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       {/* Import Excel Modal */}
       {showImportModal && (
         <ModalShell title="Import User dari Excel" onClose={() => { setShowImportModal(false); setImportResult(null); setImportFile(null); setImportPreview([]); }} maxWidth="lg"
-          footer={!importResult ? <><button type="button" onClick={() => setShowImportModal(false)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button>
+          footer={!importResult ? <><button type="button" onClick={() => setShowImportModal(false)} className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button>
             <button onClick={handleImportSubmit} disabled={!importFile || importLoading}
-              className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 ${!importFile || importLoading ? 'bg-secondary text-muted-foreground cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}>
+              className={`px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 ${!importFile || importLoading ? 'bg-secondary text-muted-foreground cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}>
               {importLoading ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Mengimport...</> : <><Upload className="w-3.5 h-3.5" /> Import</>}
             </button></> : undefined}>
           {importResult ? (
@@ -276,10 +276,17 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
                 </div>
               )}
               <button onClick={() => { setShowImportModal(false); setImportResult(null); setImportFile(null); setImportPreview([]); }}
-                className="w-full px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Tutup</button>
+                className="w-full px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Tutup</button>
             </div>
           ) : (
             <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10">
+                <span className="text-xs text-muted-foreground">Butuh template? Download file contoh Excel:</span>
+                <a href="/uploads/templates/template-import-user.xlsx" download
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
+                  <Download className="w-3.5 h-3.5" /> Download Template
+                </a>
+              </div>
               <div>
                 <label className="block text-muted-foreground mb-1.5 uppercase font-semibold">File Excel</label>
                 <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
@@ -288,13 +295,13 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
                     <div className="text-foreground">
                       <FileSpreadsheet className="w-8 h-8 mx-auto text-primary mb-2" />
                       <p className="font-semibold">{importFile.name}</p>
-                      <p className="text-muted-foreground text-[10px] mt-1">{(importFile.size / 1024).toFixed(1)} KB</p>
+                      <p className="text-muted-foreground text-xs mt-1">{(importFile.size / 1024).toFixed(1)} KB</p>
                     </div>
                   ) : (
                     <div className="text-muted-foreground">
                       <Upload className="w-8 h-8 mx-auto mb-2" />
                       <p className="font-semibold">Klik untuk pilih file Excel</p>
-                      <p className="text-muted-foreground/60 text-[10px] mt-1">Format .xlsx atau .xls</p>
+                      <p className="text-muted-foreground/60 text-xs mt-1">Format .xlsx atau .xls</p>
                     </div>
                   )}
                   <input id="excel-file-input" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFileChange} />
@@ -304,7 +311,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
                 <div>
                   <h4 className="text-foreground/80 font-semibold mb-2">Preview (5 baris pertama):</h4>
                   <div className="bg-background rounded-xl overflow-hidden">
-                    <table className="w-full text-left text-[11px]">
+                    <table className="w-full text-left text-xs">
                       <thead><tr className="bg-secondary text-muted-foreground uppercase font-semibold">
                         <th className="px-3 py-2">Nama</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Role</th>
                       </tr></thead>
@@ -314,7 +321,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
                             <td className="px-3 py-2">{row.name || '-'}</td>
                             <td className="px-3 py-2">{row.email || '-'}</td>
                             <td className="px-3 py-2">
-                              <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${row.role === 'admin' ? 'bg-red-500/10 text-red-500' : row.role === 'guru' ? 'bg-blue-500/10 text-blue-500' : 'bg-teal-500/10 text-teal-500'}`}>
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-2xs font-bold uppercase ${row.role === 'admin' ? 'bg-red-500/10 text-red-500' : row.role === 'guru' ? 'bg-blue-500/10 text-blue-500' : 'bg-teal-500/10 text-teal-500'}`}>
                                 {row.role || '-'}
                               </span>
                             </td>
@@ -323,7 +330,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
                       </tbody>
                     </table>
                   </div>
-                  <p className="text-muted-foreground text-[10px] mt-1">Kolom wajib: Name/Nama, Email, Role/Peran</p>
+                  <p className="text-muted-foreground text-xs mt-1">Kolom wajib: Name/Nama, Email, Role/Peran</p>
                 </div>
               )}
             </div>

@@ -95,30 +95,12 @@ async function seed() {
       console.log('Guru User already exists');
     }
 
-    // C. Seed Siswa User
-    let siswaUser = await db.select().from(user).where(eq(user.email, 'siswa@school.com')).limit(1);
-    let siswaUserId: string;
-    if (siswaUser.length === 0) {
-      const res = await auth.api.signUpEmail({
-        body: {
-          email: 'siswa@school.com',
-          password: 'siswaPassword123',
-          name: 'Siswa Demo'
-        }
-      });
-      siswaUserId = res.user.id;
-      console.log('Seeded Siswa User');
-    } else {
-      siswaUserId = siswaUser[0].id;
-      console.log('Siswa User already exists');
-    }
-
-    // 4. Demo Student mapped to Android Client default NIS and seeded user
+    // 4. Demo Student mapped to Android Client default NIS
     const existingStudents = await db.select().from(students).where(eq(students.nis, 'SISWA-BTG-025'));
     
     if (existingStudents.length === 0) {
       const [insertResult] = await db.insert(students).values({
-        userId: siswaUserId,
+        name: 'Siswa Demo',
         nis: 'SISWA-BTG-025',
         classId: classId,
       });
@@ -133,7 +115,7 @@ async function seed() {
       console.log('Inserted Student with NIS: SISWA-BTG-025');
     } else {
       const existing = existingStudents[0];
-      await db.update(students).set({ userId: siswaUserId }).where(eq(students.nis, 'SISWA-BTG-025'));
+      await db.update(students).set({ name: 'Siswa Demo' }).where(eq(students.nis, 'SISWA-BTG-025'));
       if (!existing.qrcode) {
         try {
           const qrPath = await generateQrCode('SISWA-BTG-025', existing.id);
@@ -143,7 +125,7 @@ async function seed() {
           console.error('Failed to generate QR for existing seed student:', err);
         }
       }
-      console.log('Student with NIS SISWA-BTG-025 already exists, updated userId reference');
+      console.log('Student with NIS SISWA-BTG-025 already exists, updated name');
     }
 
     // 5. Subjects
@@ -172,6 +154,7 @@ async function seed() {
           checkinStart: '06:00:00',
           lateAfter: '07:30:00',
           checkoutTime: '13:00:00',
+          isActive: true,
         });
         console.log(`Inserted Default Schedule for: ${day}`);
       } else {
@@ -202,25 +185,21 @@ async function seed() {
     const existingExtraStudents = await db.select().from(students).where(eq(students.nis, 'SISWA-BTG-026')).limit(1);
     if (existingExtraStudents.length === 0) {
       const extraStudents = [
-        { email: 'siswa2@school.com', name: 'Siti Rahmawati', nis: 'SISWA-BTG-026' },
-        { email: 'siswa3@school.com', name: 'Budi Santoso', nis: 'SISWA-BTG-027' },
-        { email: 'siswa4@school.com', name: 'Dewi Lestari', nis: 'SISWA-BTG-028' },
-        { email: 'siswa5@school.com', name: 'Ahmad Hidayat', nis: 'SISWA-BTG-029' },
+        { name: 'Siti Rahmawati', nis: 'SISWA-BTG-026' },
+        { name: 'Budi Santoso', nis: 'SISWA-BTG-027' },
+        { name: 'Dewi Lestari', nis: 'SISWA-BTG-028' },
+        { name: 'Ahmad Hidayat', nis: 'SISWA-BTG-029' },
       ];
       for (const s of extraStudents) {
         try {
-          const res = await auth.api.signUpEmail({
-            body: { email: s.email, password: 'siswaPassword123', name: s.name }
-          });
-          await db.update(user).set({ role: 'siswa' }).where(eq(user.id, res.user.id));
           await db.insert(students).values({
-            userId: res.user.id,
+            name: s.name,
             nis: s.nis,
             classId: classId,
           });
           console.log(`Inserted Student: ${s.name} (${s.nis})`);
         } catch (err) {
-          console.log(`Student ${s.email} already exists or error:`, err);
+          console.log(`Student ${s.nis} already exists or error:`, err);
         }
       }
     } else {

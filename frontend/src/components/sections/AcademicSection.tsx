@@ -4,10 +4,11 @@ import { ActiveBadge } from '../shared/StatusBadge';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ModalShell } from '../shared/ModalShell';
 import { FormInput, FormSelect } from '../shared/FormField';
+import { TimePicker } from '../shared/TimePicker';
 
 interface YearRecord { id: number; name: string; isActive: boolean; }
 interface SemesterRecord { id: number; academicYearId: number; name: string; isActive: boolean; }
-interface ScheduleRecord { id: number; dayName: string; checkinStart: string; lateAfter: string; checkoutTime: string; }
+interface ScheduleRecord { id: number; dayName: string; checkinStart: string; lateAfter: string; checkoutTime: string; isActive: boolean; }
 
 interface Props { token: string; }
 
@@ -108,14 +109,29 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
     } catch (err: any) { setErrorMsg(err.message); }
   };
 
+  const handleToggleActive = async (id: number, isActive: boolean) => {
+    try {
+      const res = await fetch(`/api/schedules/${id}/active`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ isActive: !isActive }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerToast(data.message);
+        fetchData();
+      } else throw new Error(data.error || 'Gagal.');
+    } catch (err: any) { setErrorMsg(err.message); }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
       {/* Left Column: Years + Semesters */}
       <div className="space-y-6">
         {/* Academic Years */}
-        <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl p-6 space-y-4">
+        <section className="bg-card border border-border rounded-xl overflow-hidden shadow-xl p-5 space-y-4">
           <div className="flex justify-between items-center">
-            <div><h2 className="text-md font-bold text-foreground">Tahun Ajaran</h2><p className="text-[10px] text-muted-foreground mt-1">Periode tahun ajaran aktif.</p></div>
+            <div><h2 className="text-base font-bold text-foreground">Tahun Ajaran</h2><p className="text-xs text-muted-foreground mt-1">Periode tahun ajaran aktif.</p></div>
             <button onClick={() => { setYearName(''); setShowAddYear(true); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
               <Plus className="w-3.5 h-3.5" /><span>Tambah</span>
@@ -132,7 +148,7 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
                   </div>
                   {!year.isActive && (
                     <button onClick={() => handleActivateYear(year.id)}
-                      className="px-2.5 py-1 rounded bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-[10px] font-semibold transition-colors">
+                      className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
                       Aktifkan
                     </button>
                   )}
@@ -143,9 +159,9 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
         </section>
 
         {/* Semesters */}
-        <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl p-6 space-y-4">
+        <section className="bg-card border border-border rounded-xl overflow-hidden shadow-xl p-5 space-y-4">
           <div className="flex justify-between items-center">
-            <div><h2 className="text-md font-bold text-foreground">Semester</h2><p className="text-[10px] text-muted-foreground mt-1">Pembagian semester dalam tahun ajaran.</p></div>
+            <div><h2 className="text-base font-bold text-foreground">Semester</h2><p className="text-xs text-muted-foreground mt-1">Pembagian semester dalam tahun ajaran.</p></div>
             <button onClick={() => { setSemName(''); setSemYearId(''); setShowAddSemester(true); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
               <Plus className="w-3.5 h-3.5" /><span>Tambah</span>
@@ -158,12 +174,12 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
                 <div key={sem.id} className="flex justify-between items-center p-3 rounded-xl bg-card/50 border border-border">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-foreground text-xs">{sem.name}</span>
-                    <span className="text-[10px] text-muted-foreground">{yearsList.find(y => y.id === sem.academicYearId)?.name || ''}</span>
+                    <span className="text-xs text-muted-foreground">{yearsList.find(y => y.id === sem.academicYearId)?.name || ''}</span>
                     <ActiveBadge isActive={sem.isActive} />
                   </div>
                   {!sem.isActive && (
                     <button onClick={() => handleActivateSemester(sem.id)}
-                      className="px-2.5 py-1 rounded bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-[10px] font-semibold transition-colors">
+                      className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
                       Aktifkan
                     </button>
                   )}
@@ -175,26 +191,38 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
       </div>
 
       {/* Right Column: Schedules */}
-      <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl p-6 space-y-4">
+      <section className="bg-card border border-border rounded-xl overflow-hidden shadow-xl p-5 space-y-4">
         <div>
-          <h2 className="text-md font-bold text-foreground">Jadwal Harian</h2>
-          <p className="text-[10px] text-muted-foreground mt-1">Atur jam masuk, batas toleransi, dan jam pulang.</p>
+          <h2 className="text-base font-bold text-foreground">Jadwal Harian</h2>
+          <p className="text-xs text-muted-foreground mt-1">Atur jam masuk, batas toleransi, dan jam pulang.</p>
         </div>
         {listLoading ? <LoadingSpinner /> : (
           <div className="space-y-2">
             {schedulesList.length === 0 && <p className="text-muted-foreground text-xs">Belum ada data.</p>}
             {schedulesList.map((sched) => (
-              <div key={sched.id} className="p-4 rounded-xl bg-card/50 border border-border flex justify-between items-center gap-4">
+              <div key={sched.id} className={`p-4 rounded-xl border flex justify-between items-center gap-4 ${sched.isActive ? 'bg-card/50 border-border' : 'bg-muted/30 border-muted-foreground/20 opacity-60'}`}>
                 <div>
-                  <div className="font-bold text-foreground text-sm">{sched.dayName}</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-foreground text-sm">{sched.dayName}</span>
+                    {!sched.isActive && <span className="text-xs px-1.5 py-0.5 rounded bg-muted-foreground/20 text-muted-foreground">Nonaktif</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
                     Mulai: {sched.checkinStart} | Toleransi: {sched.lateAfter} | Pulang: {sched.checkoutTime}
                   </div>
                 </div>
-                <button onClick={() => { setSchedStart(sched.checkinStart.slice(0, 5)); setSchedLate(sched.lateAfter.slice(0, 5)); setSchedCheckout(sched.checkoutTime.slice(0, 5)); setShowEditSchedule(sched); }}
-                  className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleToggleActive(sched.id, sched.isActive)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${sched.isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                    title={sched.isActive ? 'Nonaktifkan hari' : 'Aktifkan hari'}
+                  >
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${sched.isActive ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
+                  </button>
+                  <button onClick={() => { setSchedStart(sched.checkinStart.slice(0, 5)); setSchedLate(sched.lateAfter.slice(0, 5)); setSchedCheckout(sched.checkoutTime.slice(0, 5)); setShowEditSchedule(sched); }}
+                    className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -235,9 +263,9 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
           <form id="editSchedForm" onSubmit={handleEditSchedule}>
             <div className="space-y-4">
               <p className="text-primary font-semibold">{showEditSchedule.dayName}</p>
-              <FormInput label="Jam Mulai Absen" type="time" value={schedStart} onChange={(e) => setSchedStart(e.target.value)} required />
-              <FormInput label="Batas Toleransi Terlambat" type="time" value={schedLate} onChange={(e) => setSchedLate(e.target.value)} required />
-              <FormInput label="Jam Pulang (Checkout)" type="time" value={schedCheckout} onChange={(e) => setSchedCheckout(e.target.value)} required />
+              <TimePicker label="Jam Mulai Absen" value={schedStart} onChange={setSchedStart} required />
+              <TimePicker label="Batas Toleransi Terlambat" value={schedLate} onChange={setSchedLate} required />
+              <TimePicker label="Jam Pulang (Checkout)" value={schedCheckout} onChange={setSchedCheckout} required />
             </div>
           </form>
         </ModalShell>

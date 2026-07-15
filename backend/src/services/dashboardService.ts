@@ -33,7 +33,7 @@ export class DashboardService {
       }
       startDate = filters.date;
       endDate = filters.date;
-      daysCount = 1;
+      daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     } else if (filters.month || filters.year) {
       const year = filters.year ?? currentServerTime.getFullYear();
       const month = filters.month ?? (currentServerTime.getMonth() + 1);
@@ -45,7 +45,7 @@ export class DashboardService {
       const daysInMonth = new Date(year, month, 0).getDate();
       startDate = `${year}-${String(month).padStart(2, '0')}-01`;
       endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
-      daysCount = daysInMonth;
+      daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     } else {
       // Default to today in local server time
       const localYear = currentServerTime.getFullYear();
@@ -53,7 +53,7 @@ export class DashboardService {
       const localDay = String(currentServerTime.getDate()).padStart(2, '0');
       startDate = `${localYear}-${localMonth}-${localDay}`;
       endDate = startDate;
-      daysCount = 1;
+      daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     }
 
     const [totalStudents, presentCount, lateCount, schoolName] = await Promise.all([

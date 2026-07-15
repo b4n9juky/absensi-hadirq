@@ -159,3 +159,30 @@ teacherRouter.post('/mark-attendance-bulk', authMiddleware, requireRole(['guru']
     res.status(400).json({ success: false, error: err.message });
   }
 });
+
+teacherRouter.post('/mark-class-attendance', authMiddleware, requireRole(['guru']), async (req, res) => {
+  try {
+    const { classId, date, students: studentEntries } = req.body;
+
+    if (!classId || !date || !Array.isArray(studentEntries) || studentEntries.length === 0) {
+      return res.status(400).json({ success: false, error: 'classId, date, dan students (array) wajib diisi.' });
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return res.status(400).json({ success: false, error: 'Format tanggal harus YYYY-MM-DD.' });
+    }
+
+    for (const entry of studentEntries) {
+      if (!entry.studentId || (entry.status !== undefined && entry.status !== null && entry.status !== '' && !['PRESENT', 'SICK', 'EXCUSED', 'ABSENT'].includes(entry.status))) {
+        return res.status(400).json({ success: false, error: `Status tidak valid untuk siswa ID ${entry.studentId}. Gunakan: PRESENT, SICK, EXCUSED, ABSENT, atau null.` });
+      }
+    }
+
+    const teacherId = req.context!.user.id;
+    const result = await teacherService.markClassAttendance(teacherId, Number(classId), date, studentEntries);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});

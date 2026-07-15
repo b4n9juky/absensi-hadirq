@@ -6,7 +6,7 @@ export class StudentRepository {
   async findAll() {
     return db.select({
       id: students.id,
-      userId: students.userId,
+      name: students.name,
       nis: students.nis,
       classId: students.classId,
       deviceUuid: students.deviceUuid,
@@ -15,12 +15,10 @@ export class StudentRepository {
       photo: students.photo,
       createdAt: students.createdAt,
       updatedAt: students.updatedAt,
-      studentName: user.name,
-      studentEmail: user.email,
+      studentName: students.name,
       className: classes.name
     })
     .from(students)
-    .innerJoin(user, eq(students.userId, user.id))
     .innerJoin(classes, eq(students.classId, classes.id));
   }
 
@@ -34,14 +32,9 @@ export class StudentRepository {
     return results[0] || null;
   }
 
-  async findByUserId(userId: string) {
-    const results = await db.select().from(students).where(eq(students.userId, userId)).limit(1);
-    return results[0] || null;
-  }
-
-  async create(userId: string, nis: string, classId: number, qrcode?: string) {
+  async create(name: string, nis: string, classId: number, qrcode?: string) {
     const [result] = await db.insert(students).values({
-      userId,
+      name,
       nis,
       classId,
       qrcode
@@ -49,8 +42,8 @@ export class StudentRepository {
     return result.insertId;
   }
 
-  async update(id: number, userId: string, nis: string, classId: number, qrcode?: string) {
-    const values: Record<string, any> = { userId, nis, classId, updatedAt: new Date() };
+  async update(id: number, name: string, nis: string, classId: number, qrcode?: string) {
+    const values: Record<string, any> = { name, nis, classId, updatedAt: new Date() };
     if (qrcode !== undefined) values.qrcode = qrcode;
     await db.update(students)
       .set(values)
@@ -72,6 +65,12 @@ export class StudentRepository {
   async updateDeviceUuid(id: number, deviceUuid: string | null) {
     await db.update(students)
       .set({ deviceUuid, updatedAt: new Date() })
+      .where(eq(students.id, id));
+  }
+
+  async deleteFace(id: number) {
+    await db.update(students)
+      .set({ faceEmbedding: null, updatedAt: new Date() })
       .where(eq(students.id, id));
   }
 

@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { teachingSchedules, students, classes, attendances, subjectAttendances, user } from '../db/schema.js';
+import { teachingSchedules, students, classes, attendances, subjectAttendances, teachingSessionLogs, user } from '../db/schema.js';
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { getJakartaDate } from '../lib/timezone.js';
 
@@ -26,12 +26,11 @@ export class SubjectAttendanceService {
     const studentsRows = await db.select({
       studentId: students.id,
       nis: students.nis,
-      studentName: user.name,
+      studentName: students.name,
     })
     .from(students)
-    .innerJoin(user, eq(students.userId, user.id))
     .where(eq(students.classId, schedule[0].classId))
-    .orderBy(user.name);
+    .orderBy(students.name);
 
     const existingSubjectAttendances = await db.select({
       studentId: subjectAttendances.studentId,
@@ -76,6 +75,19 @@ export class SubjectAttendanceService {
     return {
       schedule: schedule[0],
       students: result,
+      sessionLog: await db.select({
+        materi: teachingSessionLogs.materi,
+        kegiatan: teachingSessionLogs.kegiatan,
+        catatanKendala: teachingSessionLogs.catatanKendala,
+        fotoPembelajaran: teachingSessionLogs.fotoPembelajaran,
+      })
+      .from(teachingSessionLogs)
+      .where(and(
+        eq(teachingSessionLogs.teachingScheduleId, scheduleId),
+        eq(teachingSessionLogs.attendanceDate, date),
+      ))
+      .limit(1)
+      .then(rows => rows[0] || null),
     };
   }
 
@@ -83,6 +95,7 @@ export class SubjectAttendanceService {
     scheduleId: number,
     date: string,
     entries: { studentId: number; status: string; notes?: string }[],
+    sessionMeta?: { materi?: string; kegiatan?: string; catatanKendala?: string; fotoPembelajaran?: string },
   ) {
     const validStatuses = ['PRESENT', 'SICK', 'EXCUSED', 'ABSENT', 'DISPEN', 'SKIPPED'];
 
@@ -105,6 +118,26 @@ export class SubjectAttendanceService {
           set: {
             status: entry.status as any,
             notes: entry.notes || null,
+          },
+        });
+    }
+
+    if (sessionMeta) {
+      await db.insert(teachingSessionLogs)
+        .values({
+          teachingScheduleId: scheduleId,
+          attendanceDate: date,
+          materi: sessionMeta.materi || null,
+          kegiatan: sessionMeta.kegiatan || null,
+          catatanKendala: sessionMeta.catatanKendala || null,
+          fotoPembelajaran: sessionMeta.fotoPembelajaran || null,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            materi: sessionMeta.materi || null,
+            kegiatan: sessionMeta.kegiatan || null,
+            catatanKendala: sessionMeta.catatanKendala || null,
+            fotoPembelajaran: sessionMeta.fotoPembelajaran || null,
           },
         });
     }

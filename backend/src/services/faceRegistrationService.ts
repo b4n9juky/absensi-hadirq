@@ -1,6 +1,7 @@
 import { db } from '../db/index.js';
 import { students } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
+import { studentService } from './studentService.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -53,16 +54,13 @@ export class FaceRegistrationService {
     }
 
     const embedding = Array.from(detections.descriptor);
-    const embeddingJson = JSON.stringify(embedding);
 
     const relativePhotoPath = photoPath.replace(/\\/g, '/').replace(/^.*?\/uploads\//, 'uploads/');
     const savedPath = relativePhotoPath.startsWith('uploads/') ? relativePhotoPath : `uploads/faces/${path.basename(photoPath)}`;
 
+    await studentService.appendFaceEmbedding(studentId, embedding);
     await db.update(students)
-      .set({
-        faceEmbedding: embeddingJson,
-        photo: savedPath,
-      })
+      .set({ photo: savedPath })
       .where(eq(students.id, studentId));
 
     return {

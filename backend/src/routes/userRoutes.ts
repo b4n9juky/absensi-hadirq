@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { userService } from '../services/userService.js';
-import { students } from '../db/schema.js';
 import { db } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 import { validate } from '../middlewares/validate.js';
@@ -43,14 +42,7 @@ usersRouter.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check references in students
-    const linked = await db.select().from(students).where(eq(students.userId, id)).limit(1);
-    if (linked.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'User tidak bisa dihapus karena terhubung dengan data profil Siswa. Silakan hapus data siswa terlebih dahulu.' 
-      });
-    }
+
 
     await userService.deleteUser(id);
     res.json({ success: true, message: 'User berhasil dihapus.' });

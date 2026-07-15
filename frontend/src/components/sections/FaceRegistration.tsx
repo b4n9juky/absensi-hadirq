@@ -194,7 +194,7 @@ export const FaceRegistration = () => {
                 className="p-3 rounded-xl border border-border bg-card hover:bg-accent transition-colors text-left"
               >
                 <div className="text-xs font-bold truncate">{s.studentName}</div>
-                <div className="text-[10px] text-muted-foreground">{s.nis}</div>
+                <div className="text-xs text-muted-foreground">{s.nis}</div>
               </button>
             ))}
           </div>

@@ -48,6 +48,10 @@ export class KioskService {
     }
 
     const schedule = scheduleRecord[0];
+
+    if (!schedule.isActive) {
+      return { success: false, message: 'Hari ini bukan hari sekolah. Presensi tidak tersedia.' };
+    }
     const attendanceDate = this.formatDate(serverTime);
     const currentTimeStr = this.formatTime(serverTime);
 

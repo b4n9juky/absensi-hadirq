@@ -53,11 +53,11 @@ export const DashboardLayout: React.FC<Props> = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex font-sans">
+    <div className="min-h-screen bg-background flex">
       <Sidebar activeSection={activeSection} onSectionChange={handleSectionChange} user={user} onLogout={onLogout} />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar activeSection={activeSection} onSectionChange={handleSectionChange} onRefresh={handleRefresh} isLoading={false} />
-        <main className="flex-1 p-6 overflow-y-auto max-w-7xl w-full mx-auto space-y-6">
+        <TopBar activeSection={activeSection} onSectionChange={handleSectionChange} onRefresh={handleRefresh} isLoading={false} user={user} />
+        <main className="flex-1 p-6 overflow-y-auto max-w-6xl w-full mx-auto space-y-6 animate-fade-in">
           <ErrorBanner message={errorMsg} />
           <Outlet />
         </main>

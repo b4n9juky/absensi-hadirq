@@ -12,6 +12,7 @@ export class AgendaAttendanceService {
       id: teacherAgendas.id,
       title: teacherAgendas.title,
       agendaType: teacherAgendas.agendaType,
+      subject: teacherAgendas.subject,
       date: teacherAgendas.date,
       startTime: teacherAgendas.startTime,
       endTime: teacherAgendas.endTime,
@@ -25,7 +26,7 @@ export class AgendaAttendanceService {
   }
 
   async createAgenda(teacherId: string, data: {
-    classId: number; title: string; agendaType?: string;
+    classId: number; title: string; agendaType?: string; subject?: string;
     date: string; startTime?: string; endTime?: string;
   }) {
     const activeAcademicYear = await db.select({ id: academicYears.id })
@@ -46,6 +47,7 @@ export class AgendaAttendanceService {
       classId: data.classId,
       title: data.title,
       agendaType: data.agendaType || null,
+      subject: data.subject || null,
       date: data.date,
       startTime: data.startTime || null,
       endTime: data.endTime || null,
@@ -57,7 +59,7 @@ export class AgendaAttendanceService {
   }
 
   async updateAgenda(teacherId: string, agendaId: number, data: {
-    title?: string; agendaType?: string;
+    title?: string; agendaType?: string; subject?: string;
     date?: string; startTime?: string; endTime?: string;
   }) {
     const existing = await db.select({ teacherId: teacherAgendas.teacherId })
@@ -72,6 +74,7 @@ export class AgendaAttendanceService {
       .set({
         ...(data.title !== undefined && { title: data.title }),
         ...(data.agendaType !== undefined && { agendaType: data.agendaType }),
+        ...(data.subject !== undefined && { subject: data.subject }),
         ...(data.date !== undefined && { date: data.date }),
         ...(data.startTime !== undefined && { startTime: data.startTime }),
         ...(data.endTime !== undefined && { endTime: data.endTime }),
@@ -99,6 +102,7 @@ export class AgendaAttendanceService {
       className: classes.name,
       title: teacherAgendas.title,
       agendaType: teacherAgendas.agendaType,
+      subject: teacherAgendas.subject,
       date: teacherAgendas.date,
       startTime: teacherAgendas.startTime,
       endTime: teacherAgendas.endTime,
@@ -113,12 +117,11 @@ export class AgendaAttendanceService {
     const studentsRows = await db.select({
       studentId: students.id,
       nis: students.nis,
-      studentName: user.name,
+      studentName: students.name,
     })
     .from(students)
-    .innerJoin(user, eq(students.userId, user.id))
     .where(eq(students.classId, agenda[0].classId))
-    .orderBy(user.name);
+    .orderBy(students.name);
 
     const existingAttendances = await db.select({
       studentId: agendaAttendances.studentId,
@@ -193,11 +196,10 @@ export class AgendaAttendanceService {
     const student = await db.select({
       id: students.id,
       nis: students.nis,
-      name: user.name,
+      name: students.name,
       classId: students.classId,
     })
     .from(students)
-    .innerJoin(user, eq(students.userId, user.id))
     .where(eq(students.nis, studentNis))
     .limit(1);
 

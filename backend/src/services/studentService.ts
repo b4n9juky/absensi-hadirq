@@ -7,7 +7,7 @@ import { students, user } from '../db/schema.js';
 import { eq, and, inArray } from 'drizzle-orm';
 
 export interface CreateStudentDto {
-  userId: string;
+  name: string;
   nis: string;
   classId: number;
 }
@@ -18,8 +18,8 @@ export class StudentService {
   }
 
   async createStudent(dto: CreateStudentDto) {
-    if (!dto.userId || dto.userId.trim() === '') {
-      throw new Error('User ID wajib diisi.');
+    if (!dto.name || dto.name.trim() === '') {
+      throw new Error('Nama wajib diisi.');
     }
     if (!dto.nis || dto.nis.trim() === '') {
       throw new Error('NIS wajib diisi.');
@@ -28,22 +28,10 @@ export class StudentService {
       throw new Error('Kelas wajib dipilih.');
     }
 
-    // Verify User Exists
-    const userRecord = await userRepo.findById(dto.userId);
-    if (!userRecord) {
-      throw new Error('Akun user tidak ditemukan.');
-    }
-
     // Verify Class Exists
     const classRecord = await classRepo.findById(dto.classId);
     if (!classRecord) {
       throw new Error('Kelas tidak ditemukan.');
-    }
-
-    // Verify User ID is not already linked to another student
-    const existingUserLink = await studentRepo.findByUserId(dto.userId);
-    if (existingUserLink) {
-      throw new Error('Akun user ini sudah terikat dengan profil siswa lain.');
     }
 
     // Verify NIS uniqueness
@@ -52,7 +40,7 @@ export class StudentService {
       throw new Error('NIS siswa sudah terdaftar.');
     }
 
-    const studentId = await studentRepo.create(dto.userId, dto.nis, dto.classId);
+    const studentId = await studentRepo.create(dto.name, dto.nis, dto.classId);
     try {
       const qrPath = await generateQrCode(dto.nis, studentId);
       await studentRepo.updateQrCode(studentId, qrPath);
@@ -68,8 +56,8 @@ export class StudentService {
       throw new Error('Siswa tidak ditemukan.');
     }
 
-    if (!dto.userId || dto.userId.trim() === '') {
-      throw new Error('User ID wajib diisi.');
+    if (!dto.name || dto.name.trim() === '') {
+      throw new Error('Nama wajib diisi.');
     }
     if (!dto.nis || dto.nis.trim() === '') {
       throw new Error('NIS wajib diisi.');
@@ -78,24 +66,10 @@ export class StudentService {
       throw new Error('Kelas wajib dipilih.');
     }
 
-    // Verify User Exists
-    const userRecord = await userRepo.findById(dto.userId);
-    if (!userRecord) {
-      throw new Error('Akun user tidak ditemukan.');
-    }
-
     // Verify Class Exists
     const classRecord = await classRepo.findById(dto.classId);
     if (!classRecord) {
       throw new Error('Kelas tidak ditemukan.');
-    }
-
-    // Verify User ID is not linked to another student
-    if (dto.userId !== existing.userId) {
-      const userLinkConflict = await studentRepo.findByUserId(dto.userId);
-      if (userLinkConflict) {
-        throw new Error('Akun user ini sudah terikat dengan profil siswa lain.');
-      }
     }
 
     // Verify NIS uniqueness if NIS changed
@@ -115,7 +89,7 @@ export class StudentService {
         console.error(`[QR] Gagal generate QR untuk NIS ${dto.nis}:`, err);
       }
     }
-    await studentRepo.update(id, dto.userId, dto.nis, dto.classId, qrcode || undefined);
+    await studentRepo.update(id, dto.name, dto.nis, dto.classId, qrcode || undefined);
   }
 
   async resetDevice(id: number) {
@@ -159,32 +133,132 @@ export class StudentService {
     return { success: true };
   }
 
-  async registerFace(id: number, faceEmbedding: number[]) {
+  async appendFaceEmbedding(id: number, newEmbedding: number[]) {
     const existing = await studentRepo.findById(id);
     if (!existing) {
       throw new Error('Siswa tidak ditemukan.');
     }
-    const embeddingString = JSON.stringify(faceEmbedding);
-    await db.update(students).set({ faceEmbedding: embeddingString, updatedAt: new Date() }).where(eq(students.id, id));
+
+    let embeddings: number[][] = [];
+
+    if (existing.faceEmbedding) {
+      try {
+        const parsed = JSON.parse(existing.faceEmbedding);
+        if (Array.isArray(parsed)) {
+          if (parsed.length > 0 && Array.isArray(parsed[0])) {
+            embeddings = parsed as number[][];
+          } else {
+            embeddings = [parsed as number[]];
+          }
+        }
+      } catch { }
+    }
+
+    embeddings.push(newEmbedding);
+
+    if (embeddings.length > 3) {
+      embeddings = embeddings.slice(-3);
+    }
+
+    await db.update(students)
+      .set({ faceEmbedding: JSON.stringify(embeddings), updatedAt: new Date() })
+      .where(eq(students.id, id));
+  }
+
+  async deleteFace(id: number) {
+    const existing = await studentRepo.findById(id);
+    if (!existing) {
+      throw new Error('Siswa tidak ditemukan.');
+    }
+    await studentRepo.deleteFace(id);
   }
 
   async getStudentEmbeddings() {
     const allStudents = await db.select({
       id: students.id,
       nis: students.nis,
-      studentName: user.name,
+      studentName: students.name,
       faceEmbedding: students.faceEmbedding,
       photo: students.photo,
-    }).from(students)
-      .leftJoin(user, eq(students.userId, user.id));
+    }).from(students);
 
-    return allStudents.filter(s => s.faceEmbedding).map(s => ({
-      id: s.id,
-      nis: s.nis,
-      studentName: s.studentName,
-      photo: s.photo,
-      faceEmbedding: JSON.parse(s.faceEmbedding!) as number[]
-    }));
+    return allStudents.filter(s => s.faceEmbedding).map(s => {
+      let embeddings: number[][] = [];
+      try {
+        const parsed = JSON.parse(s.faceEmbedding!);
+        if (Array.isArray(parsed)) {
+          if (parsed.length > 0 && Array.isArray(parsed[0])) {
+            embeddings = parsed as number[][];
+          } else {
+            embeddings = [parsed as number[]];
+          }
+        }
+      } catch { }
+      return {
+        id: s.id,
+        nis: s.nis,
+        studentName: s.studentName,
+        photo: s.photo,
+        faceEmbedding: embeddings,
+      };
+    });
+  }
+
+  async importStudents(filePath: string) {
+    const fs = await import('fs');
+    const { parseExcelStudentFile } = await import('../lib/excelParser.js');
+    const { rows, errors: parseErrors } = parseExcelStudentFile(filePath);
+    const { classes } = await import('../db/schema.js');
+
+    const results: { row: number; nis: string; status: string; error?: string }[] = [];
+    let imported = 0;
+    let failed = 0;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNum = i + 2;
+
+      try {
+        const classRecord = await db.select().from(classes).where(eq(classes.name, row.className)).limit(1);
+        if (classRecord.length === 0) {
+          results.push({ row: rowNum, nis: row.nis, status: 'failed', error: `Kelas "${row.className}" tidak ditemukan.` });
+          failed++;
+          continue;
+        }
+
+        const existingNis = await studentRepo.findByNis(row.nis);
+        if (existingNis) {
+          results.push({ row: rowNum, nis: row.nis, status: 'skipped', error: 'NIS sudah terdaftar.' });
+          failed++;
+          continue;
+        }
+
+        const studentId = await studentRepo.create(row.name, row.nis, classRecord[0].id);
+        try {
+          const qrPath = await generateQrCode(row.nis, studentId);
+          await studentRepo.updateQrCode(studentId, qrPath);
+        } catch (err) {
+          console.error(`[QR] Gagal generate QR untuk NIS ${row.nis}:`, err);
+        }
+
+        results.push({ row: rowNum, nis: row.nis, status: 'imported' });
+        imported++;
+      } catch (err: any) {
+        results.push({ row: rowNum, nis: row.nis, status: 'failed', error: err.message || 'Gagal menyimpan siswa.' });
+        failed++;
+      }
+    }
+
+    // Include parse-level errors
+    for (const pe of parseErrors) {
+      results.push({ row: pe.row, nis: pe.nis, status: 'failed', error: pe.error });
+      failed++;
+    }
+
+    // Clean up uploaded file
+    try { fs.default.unlinkSync(filePath); } catch { /* ignore */ }
+
+    return { imported, failed, results };
   }
 }
 export const studentService = new StudentService();

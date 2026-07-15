@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { students, attendances } from '../db/schema.js';
+import { students, attendances, schedules } from '../db/schema.js';
 import { eq, and, gte, lte, sql } from 'drizzle-orm';
 
 export class DashboardRepository {
@@ -36,6 +36,27 @@ export class DashboardRepository {
         .where(and(...conditions));
       return Number(result[0]?.count || 0);
     }
+  }
+
+  async getActiveSchoolDayCount(startDate: string, endDate: string): Promise<number> {
+    const activeDays = await db.select({ dayName: schedules.dayName })
+      .from(schedules)
+      .where(eq(schedules.isActive, true));
+
+    const activeDayNames = new Set(activeDays.map(d => d.dayName));
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    let count = 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dayName = dayNames[d.getDay()];
+      if (activeDayNames.has(dayName)) {
+        count++;
+      }
+    }
+
+    return count;
   }
 }
 

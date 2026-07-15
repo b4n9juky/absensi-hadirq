@@ -40,5 +40,13 @@ export class ScheduleService {
 
     await scheduleRepo.update(id, dto.checkinStart, dto.lateAfter, dto.checkoutTime);
   }
+
+  async toggleActive(id: number, isActive: boolean) {
+    const schedule = await scheduleRepo.findById(id);
+    if (!schedule) {
+      throw new Error(`Jadwal dengan ID ${id} tidak ditemukan.`);
+    }
+    await scheduleRepo.updateActive(id, isActive);
+  }
 }
 export const scheduleService = new ScheduleService();

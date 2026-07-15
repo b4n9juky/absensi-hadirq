@@ -7,16 +7,17 @@ export const ThemeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-950/50 border border-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-900/40 text-xs font-bold transition-all"
+      aria-label={theme === 'dark' ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'}
+      className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted text-sm font-medium transition-colors w-full"
     >
       {theme === 'dark' ? (
         <>
-          <Sun className="w-3.5 h-3.5" />
+          <Sun className="w-4 h-4" />
           <span>Mode Terang</span>
         </>
       ) : (
         <>
-          <Moon className="w-3.5 h-3.5" />
+          <Moon className="w-4 h-4" />
           <span>Mode Malam</span>
         </>
       )}

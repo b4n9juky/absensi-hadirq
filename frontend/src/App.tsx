@@ -14,6 +14,7 @@ import { SubjectsSection } from './components/sections/SubjectsSection';
 import { AgendaAttendanceSection } from './components/sections/AgendaAttendanceSection';
 import { FaceRegistration } from './components/sections/FaceRegistration';
 import { KioskAttendance } from './components/sections/KioskAttendance';
+import { QrKioskAttendance } from './components/sections/QrKioskAttendance';
 
 function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -26,7 +27,11 @@ function App() {
 
     if (savedToken && savedUser) {
       setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem('absen_admin_user');
+      }
     }
     setLoading(false);
   }, []);
@@ -57,6 +62,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/kiosk-absensi" element={<KioskAttendance />} />
+        <Route path="/kiosk-qr" element={<QrKioskAttendance />} />
         <Route path="/registrasi-wajah" element={<FaceRegistration />} />
         <Route
           path="/login"

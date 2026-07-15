@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Vibrate } from 'lucide-react';
+import { RefreshCw, CheckCircle } from 'lucide-react';
 
 const sectionMap: Record<string, string> = {
   dashboard: '/dashboard/ringkasan',
@@ -9,18 +9,20 @@ const sectionMap: Record<string, string> = {
   academic: '/dashboard/akademik',
   'teaching-schedule': '/dashboard/jadwal-mengajar',
   subjects: '/dashboard/mata-pelajaran',
+  'agenda-attendance': '/dashboard/agenda-absensi',
   settings: '/dashboard/pengaturan',
 };
 
-const options = [
-  { value: 'dashboard', label: 'Dashboard' },
-  { value: 'users', label: 'Pengguna' },
-  { value: 'classes', label: 'Kelas' },
-  { value: 'students', label: 'Siswa' },
-  { value: 'academic', label: 'Jadwal & Periode' },
-  { value: 'teaching-schedule', label: 'Jadwal Mengajar' },
-  { value: 'subjects', label: 'Mata Pelajaran' },
-  { value: 'settings', label: 'Pengaturan' },
+const allOptions = [
+  { value: 'dashboard', label: 'Dashboard', roles: ['admin', 'guru'] },
+  { value: 'users', label: 'Pengguna', roles: ['admin'] },
+  { value: 'classes', label: 'Kelas', roles: ['admin'] },
+  { value: 'students', label: 'Siswa', roles: ['admin'] },
+  { value: 'academic', label: 'Jadwal & Periode', roles: ['admin'] },
+  { value: 'teaching-schedule', label: 'Jadwal Mengajar', roles: ['admin', 'guru'] },
+  { value: 'subjects', label: 'Mata Pelajaran', roles: ['admin'] },
+  { value: 'agenda-attendance', label: 'Agenda Absensi', roles: ['guru'] },
+  { value: 'settings', label: 'Pengaturan', roles: ['admin'] },
 ];
 
 interface Props {
@@ -28,22 +30,24 @@ interface Props {
   onSectionChange: (s: string) => void;
   onRefresh: () => void;
   isLoading: boolean;
+  user: { name: string; role: string };
 }
 
-export const TopBar: React.FC<Props> = ({ activeSection, onSectionChange, onRefresh, isLoading }) => {
+export const TopBar: React.FC<Props> = ({ activeSection, onSectionChange, onRefresh, isLoading, user }) => {
   const navigate = useNavigate();
+  const options = allOptions.filter(item => item.roles.includes(user.role));
 
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-md px-6 py-4 flex items-center justify-between md:justify-end">
       <div className="flex items-center gap-2 md:hidden">
-        <Vibrate className="w-5 h-5 text-teal-400 animate-pulse" />
-        <span className="font-black text-foreground text-sm">ShakeAbsen Panel</span>
+        <CheckCircle className="w-5 h-5 text-primary animate-pulse-soft" />
+        <span className="font-black text-foreground text-sm">HadirQ Panel</span>
       </div>
       <div className="flex items-center gap-2.5">
         <button
           onClick={onRefresh}
-          className="p-2.5 rounded-xl bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border transition-colors"
-          title="Refresh Data"
+          className="p-2 rounded-lg bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border border-border transition-colors"
+          aria-label="Muat ulang data"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
         </button>
@@ -55,7 +59,8 @@ export const TopBar: React.FC<Props> = ({ activeSection, onSectionChange, onRefr
               onSectionChange(section);
               navigate(sectionMap[section] || '/dashboard/ringkasan');
             }}
-            className="bg-secondary border border-border rounded-xl px-2 py-2 text-xs font-bold text-foreground focus:outline-none"
+            className="bg-muted/50 border border-border rounded-lg px-2.5 py-2 text-sm font-medium text-foreground focus:border-primary/50 transition-colors"
+            aria-label="Navigasi menu"
           >
             {options.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

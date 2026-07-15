@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Save, MapPin, Crosshair, Ruler, Wifi, AlertCircle, CheckCircle, School } from 'lucide-react';
-import { FormInput } from '../shared/FormField';
+import { Save, MapPin, Crosshair, Ruler, Wifi, AlertCircle, CheckCircle, School, Calendar } from 'lucide-react';
+import { FormInput, FormSelect } from '../shared/FormField';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
 interface Props {
@@ -16,6 +16,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
   const [accuracy, setAccuracy] = useState('');
   const [apiBaseUrl, setApiBaseUrl] = useState('');
   const [schoolName, setSchoolName] = useState('');
+  const [schoolDays, setSchoolDays] = useState('5');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -38,6 +39,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
         setAccuracy(data.data.max_accuracy_meters || '');
         setApiBaseUrl(data.data.api_base_url || '');
         setSchoolName(data.data.school_name || '');
+        setSchoolDays(data.data.school_days || '5');
       }
     } catch (err: any) {
       setError('Gagal memuat pengaturan.');
@@ -59,6 +61,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
     if (accuracy.trim()) payload.max_accuracy_meters = accuracy.trim();
     if (apiBaseUrl.trim()) payload.api_base_url = apiBaseUrl.trim();
     if (schoolName.trim()) payload.school_name = schoolName.trim();
+    payload.school_days = schoolDays;
 
     try {
       const res = await fetch('/api/settings', {
@@ -68,6 +71,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
       });
       const data = await res.json();
       if (data.success) {
+        await applySchoolDays(schoolDays);
         setSuccess('Pengaturan berhasil disimpan.');
         setTimeout(() => setSuccess(''), 4000);
       } else {
@@ -77,6 +81,26 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
       setError('Gagal menyimpan pengaturan.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const applySchoolDays = async (days: string) => {
+    const scheduleRes = await fetch('/api/schedules', { headers: authHeader });
+    const scheduleData = await scheduleRes.json();
+    if (!scheduleData.success) return;
+
+    const schedules = scheduleData.data as { id: number; dayName: string }[];
+    const activeDays = days === '6'
+      ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+      : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    for (const sched of schedules) {
+      const shouldBeActive = activeDays.includes(sched.dayName);
+      await fetch(`/api/schedules/${sched.id}/active`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ isActive: shouldBeActive }),
+      });
     }
   };
 
@@ -100,21 +124,21 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-3">
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-start gap-3">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-start gap-3">
+        <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-start gap-3">
           <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <span>{success}</span>
         </div>
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <MapPin className="w-4 h-4 text-teal-400" />
             Lokasi Sekolah (Geofence)
@@ -139,7 +163,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <Crosshair className="w-4 h-4 text-teal-400" />
             Batasan Presensi
@@ -169,7 +193,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <Wifi className="w-4 h-4 text-teal-400" />
             Koneksi Aplikasi Android
@@ -187,7 +211,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <School className="w-4 h-4 text-teal-400" />
             Identitas Sekolah
@@ -201,11 +225,30 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
           />
         </div>
 
+        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-teal-400" />
+            Hari Sekolah
+          </h3>
+          <FormSelect
+            label="Jumlah Hari Sekolah"
+            value={schoolDays}
+            onChange={(e) => setSchoolDays(e.target.value)}
+            options={[
+              { value: '5', label: '5 Hari (Senin - Jumat)' },
+              { value: '6', label: '6 Hari (Senin - Sabtu)' },
+            ]}
+          />
+          <p className="text-xs text-muted-foreground">
+            Menentukan hari aktif sekolah untuk presensi. Perubahan akan otomatis menyesuaikan jadwal harian.
+          </p>
+        </div>
+
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm tracking-wide transition-all disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}

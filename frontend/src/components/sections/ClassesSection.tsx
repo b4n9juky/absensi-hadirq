@@ -82,11 +82,11 @@ export const ClassesSection: React.FC<Props> = ({ token }) => {
       render: (row: ClassRecord) => (
         <div className="space-x-2 inline-flex">
           <button onClick={() => { setClassName(row.name); setShowEditClass(row); }}
-            className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex">
+            className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex" aria-label="Edit kelas">
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => handleDelete(row.id)}
-            className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive/80 transition-colors inline-flex border border-destructive/10">
+            className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive hover:text-destructive/80 transition-colors inline-flex border border-destructive/10" aria-label="Hapus kelas">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -95,14 +95,14 @@ export const ClassesSection: React.FC<Props> = ({ token }) => {
   ];
 
   return (
-    <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl animate-fadeIn">
+    <section className="bg-card border border-border rounded-xl overflow-hidden shadow-xl animate-fadeIn">
       <div className="px-6 py-5 border-b border-border flex justify-between items-center gap-4">
         <div>
-          <h2 className="text-md font-bold text-foreground">Kelola Kelas Yayasan</h2>
-          <p className="text-[10px] text-muted-foreground mt-1">Daftar kelas pembelajaran untuk absensi harian.</p>
+          <h2 className="text-base font-bold text-foreground">Kelola Kelas Yayasan</h2>
+          <p className="text-xs text-muted-foreground mt-1">Daftar kelas pembelajaran untuk absensi harian.</p>
         </div>
         <button onClick={() => { setClassName(''); setShowAddClass(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
           <Plus className="w-4 h-4" /><span>Tambah Kelas</span>
         </button>
       </div>
@@ -120,7 +120,7 @@ export const ClassesSection: React.FC<Props> = ({ token }) => {
 
       {showAddClass && (
         <ModalShell title="Tambah Kelas Baru" onClose={() => setShowAddClass(false)} maxWidth="sm"
-          footer={<><button type="button" onClick={() => setShowAddClass(false)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="addClassForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan</button></>}>
+          footer={<><button type="button" onClick={() => setShowAddClass(false)} className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="addClassForm" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan</button></>}>
           <form id="addClassForm" onSubmit={handleAdd}>
             <FormInput label="Nama Kelas" value={className} onChange={(e) => setClassName(e.target.value)} placeholder="Contoh: XII IPA 1, XI IPS 2" required />
           </form>
@@ -129,7 +129,7 @@ export const ClassesSection: React.FC<Props> = ({ token }) => {
 
       {showEditClass && (
         <ModalShell title="Edit Nama Kelas" onClose={() => setShowEditClass(null)} maxWidth="sm"
-          footer={<><button type="button" onClick={() => setShowEditClass(null)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="editClassForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan Perubahan</button></>}>
+          footer={<><button type="button" onClick={() => setShowEditClass(null)} className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="editClassForm" className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan Perubahan</button></>}>
           <form id="editClassForm" onSubmit={handleEdit}>
             <FormInput label="Nama Kelas" value={className} onChange={(e) => setClassName(e.target.value)} required />
           </form>

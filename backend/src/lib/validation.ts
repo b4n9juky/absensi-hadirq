@@ -3,24 +3,27 @@ import { z } from 'zod';
 export const createUserSchema = z.object({
   name: z.string().min(1, 'Nama tidak boleh kosong'),
   email: z.string().email('Format email tidak valid'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
-  role: z.enum(['admin', 'guru', 'siswa'], { message: 'Role tidak valid' }),
+  password: z.string().min(8, 'Password minimal 8 karakter').regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    'Password harus mengandung huruf kecil, huruf besar, dan angka'
+  ),
+  role: z.enum(['admin', 'guru'], { message: 'Role tidak valid' }),
 });
 
 export const updateUserSchema = z.object({
   name: z.string().min(1, 'Nama tidak boleh kosong'),
   email: z.string().email('Format email tidak valid'),
-  role: z.enum(['admin', 'guru', 'siswa'], { message: 'Role tidak valid' }),
+  role: z.enum(['admin', 'guru'], { message: 'Role tidak valid' }),
 });
 
 export const createStudentSchema = z.object({
-  userId: z.string().min(1, 'User ID wajib diisi'),
+  name: z.string().min(1, 'Nama siswa wajib diisi'),
   nis: z.string().min(1, 'NIS wajib diisi'),
   classId: z.coerce.number().int().positive('Kelas wajib dipilih'),
 });
 
 export const updateStudentSchema = z.object({
-  userId: z.string().min(1, 'User ID wajib diisi'),
+  name: z.string().min(1, 'Nama siswa wajib diisi'),
   nis: z.string().min(1, 'NIS wajib diisi'),
   classId: z.coerce.number().int().positive('Kelas wajib dipilih'),
 });

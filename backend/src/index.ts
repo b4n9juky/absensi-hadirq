@@ -56,17 +56,17 @@ app.use('/api', rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
   message: { success: false, error: 'Terlalu banyak permintaan. Silakan coba lagi nanti.' },
 }));
 
 // Stricter rate limiting on authentication routes (15 attempts per 15 minutes)
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
   message: { success: false, error: 'Terlalu banyak percobaan masuk. Silakan coba lagi setelah 15 menit.' },
 });
 app.use('/api/auth/', authRateLimiter);

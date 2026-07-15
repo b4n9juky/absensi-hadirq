@@ -3,7 +3,9 @@ import { userRepo } from '../repositories/userRepository.js';
 import { classRepo } from '../repositories/classRepository.js';
 import { generateQrCode, deleteQrCodeFile } from '../lib/qrGenerator.js';
 import { db } from '../db/index.js';
-import { students, user } from '../db/schema.js';
+import { students, user, attendances, subjectAttendances, agendaAttendances } from '../db/schema.js';
+import fs from 'fs';
+import path from 'path';
 import { eq, and, inArray } from 'drizzle-orm';
 
 export interface CreateStudentDto {
@@ -105,6 +107,18 @@ export class StudentService {
     if (!existing) {
       throw new Error('Siswa tidak ditemukan.');
     }
+
+    // Cascade delete all related records
+    await db.delete(attendances).where(eq(attendances.studentId, id));
+    await db.delete(subjectAttendances).where(eq(subjectAttendances.studentId, id));
+    await db.delete(agendaAttendances).where(eq(agendaAttendances.studentId, id));
+
+    // Delete photo file
+    if (existing.photo) {
+      const photoPath = path.join(__dirname, '../../', existing.photo.replace(/^\//, ''));
+      try { if (fs.existsSync(photoPath)) fs.unlinkSync(photoPath); } catch { /* ignore */ }
+    }
+
     await deleteQrCodeFile(existing.qrcode);
     await studentRepo.delete(id);
   }

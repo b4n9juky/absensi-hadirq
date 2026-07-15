@@ -2,9 +2,6 @@ import { Router } from 'express';
 import multer from 'multer';
 import { studentService } from '../services/studentService.js';
 import { studentRepo } from '../repositories/studentRepository.js';
-import { attendances } from '../db/schema.js';
-import { db } from '../db/index.js';
-import { eq } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';
 import { validate } from '../middlewares/validate.js';
@@ -69,21 +66,12 @@ studentsRouter.put('/:id', validate(updateStudentSchema), async (req, res) => {
   }
 });
 
-// DELETE student
+// DELETE student (cascade removes all related records)
 studentsRouter.delete('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ success: false, error: 'ID tidak valid.' });
-    }
-
-    // Check referenced attendances
-    const linked = await db.select().from(attendances).where(eq(attendances.studentId, id)).limit(1);
-    if (linked.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Data siswa tidak bisa dihapus karena telah memiliki riwayat kehadiran di database.' 
-      });
     }
 
     await studentService.deleteStudent(id);

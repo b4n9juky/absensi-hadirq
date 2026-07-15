@@ -224,6 +224,8 @@ export class StudentService {
     const { rows, errors: parseErrors } = parseExcelStudentFile(filePath);
     const { classes } = await import('../db/schema.js');
 
+    console.log(`[Import] Parsed ${rows.length} rows from Excel, ${parseErrors.length} parse errors`);
+
     const results: { row: number; nis: string; status: string; error?: string }[] = [];
     let imported = 0;
     let failed = 0;
@@ -232,22 +234,30 @@ export class StudentService {
       const row = rows[i];
       const rowNum = i + 2;
 
+      console.log(`[Import] Processing row ${rowNum}: NIS=${row.nis}, Name=${row.name}, Class=${row.className}, NIS type=${typeof row.nis}`);
+
       try {
+        console.log(`[Import] Row ${rowNum}: Looking up class "${row.className}"`);
         const classRecord = await db.select().from(classes).where(eq(classes.name, row.className)).limit(1);
+        console.log(`[Import] Row ${rowNum}: Class lookup returned ${classRecord.length} rows`);
         if (classRecord.length === 0) {
           results.push({ row: rowNum, nis: row.nis, status: 'failed', error: `Kelas "${row.className}" tidak ditemukan.` });
           failed++;
           continue;
         }
 
+        console.log(`[Import] Row ${rowNum}: Checking NIS "${row.nis}" (type=${typeof row.nis})`);
         const existingNis = await studentRepo.findByNis(row.nis);
+        console.log(`[Import] Row ${rowNum}: NIS check returned ${existingNis ? 'FOUND' : 'not found'}`);
         if (existingNis) {
           results.push({ row: rowNum, nis: row.nis, status: 'skipped', error: 'NIS sudah terdaftar.' });
           failed++;
           continue;
         }
 
+        console.log(`[Import] Row ${rowNum}: Creating student name="${row.name}", nis="${row.nis}", classId=${classRecord[0].id}`);
         const studentId = await studentRepo.create(row.name, row.nis, classRecord[0].id);
+        console.log(`[Import] Row ${rowNum}: Created student with id=${studentId}`);
         try {
           const qrPath = await generateQrCode(row.nis, studentId);
           await studentRepo.updateQrCode(studentId, qrPath);
@@ -266,6 +276,7 @@ export class StudentService {
           sqlMessage: cause.sqlMessage,
           sqlState: cause.sqlState,
           sql: cause.sql,
+          stack: cause.stack || err.stack,
         });
         results.push({ row: rowNum, nis: row.nis, status: 'failed', error: cause.sqlMessage || err.message || 'Gagal menyimpan siswa.' });
         failed++;
@@ -274,6 +285,7 @@ export class StudentService {
 
     // Include parse-level errors
     for (const pe of parseErrors) {
+      console.log(`[Import] Parse error row ${pe.row}: ${pe.error}`);
       results.push({ row: pe.row, nis: pe.nis, status: 'failed', error: pe.error });
       failed++;
     }
@@ -281,6 +293,7 @@ export class StudentService {
     // Clean up uploaded file
     try { fs.default.unlinkSync(filePath); } catch { /* ignore */ }
 
+    console.log(`[Import] Done: ${imported} imported, ${failed} failed`);
     return { imported, failed, results };
   }
 }

@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "53d567af-ae22-4474-949c-58a241018779",
+  "id": "4a2c7eb5-11d3-43db-b2b7-432985c967c2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "academic_years": {
@@ -567,6 +567,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -826,11 +834,11 @@
           "notNull": true,
           "autoincrement": true
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(36)",
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "nis": {
@@ -895,19 +903,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "students_user_id_user_id_fk": {
-          "name": "students_user_id_user_id_fk",
-          "tableFrom": "students",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "students_class_id_classes_id_fk": {
           "name": "students_class_id_classes_id_fk",
           "tableFrom": "students",
@@ -1137,6 +1132,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "subject": {
+          "name": "subject",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "date": {
           "name": "date",
           "type": "date",
@@ -1358,6 +1360,112 @@
       "compositePrimaryKeys": {
         "teaching_schedules_id": {
           "name": "teaching_schedules_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "teaching_session_logs": {
+      "name": "teaching_session_logs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "teaching_schedule_id": {
+          "name": "teaching_schedule_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attendance_date": {
+          "name": "attendance_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "materi": {
+          "name": "materi",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "kegiatan": {
+          "name": "kegiatan",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "catatan_kendala": {
+          "name": "catatan_kendala",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "foto_pembelajaran": {
+          "name": "foto_pembelajaran",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "unique_teaching_session": {
+          "name": "unique_teaching_session",
+          "columns": [
+            "teaching_schedule_id",
+            "attendance_date"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "teaching_session_logs_teaching_schedule_id_teaching_schedules_id_fk": {
+          "name": "teaching_session_logs_teaching_schedule_id_teaching_schedules_id_fk",
+          "tableFrom": "teaching_session_logs",
+          "tableTo": "teaching_schedules",
+          "columnsFrom": [
+            "teaching_schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "teaching_session_logs_id": {
+          "name": "teaching_session_logs_id",
           "columns": [
             "id"
           ]

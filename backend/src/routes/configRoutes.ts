@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db/index.js';
-import { students, classes, schedules } from '../db/schema.js';
+import { students, classes, schedules, user } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { settingService } from '../services/settingService.js';
@@ -54,5 +54,65 @@ configRouter.get('/', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('[Config] Error fetching config:', error);
     res.status(500).json({ success: false, error: 'Gagal memuat konfigurasi server.' });
+  }
+});
+
+configRouter.get('/debug', async (_req, res) => {
+  const results: Record<string, any> = {};
+  try {
+    // Test 1: DB connection
+    results.dbConnection = 'Connecting...';
+    await db.execute('SELECT 1 as test');
+    results.dbConnection = 'OK';
+
+    // Test 2: students table query (exact import query)
+    try {
+      const r = await db.select({ id: students.id, name: students.name, nis: students.nis })
+        .from(students)
+        .where(eq(students.nis, '999999'))
+        .limit(1);
+      results.studentsQuery = `OK (${r.length} rows)`;
+    } catch (e: any) {
+      results.studentsQuery = `FAILED: ${e.sqlMessage || e.message}`;
+      results.studentsQueryCode = e.code;
+      results.studentsQueryErrno = e.errno;
+    }
+
+    // Test 3: Full import query (all columns)
+    try {
+      const r = await db.select({
+        id: students.id,
+        name: students.name,
+        nis: students.nis,
+        classId: students.classId,
+        deviceUuid: students.deviceUuid,
+        qrcode: students.qrcode,
+        faceEmbedding: students.faceEmbedding,
+        photo: students.photo,
+        createdAt: students.createdAt,
+        updatedAt: students.updatedAt,
+      }).from(students).where(eq(students.nis, '999999')).limit(1);
+      results.fullStudentsQuery = `OK (${r.length} rows)`;
+    } catch (e: any) {
+      results.fullStudentsQuery = `FAILED: ${e.sqlMessage || e.message}`;
+    }
+
+    // Test 4: Schedules table (is_active column)
+    try {
+      const s = await db.select({ dayName: schedules.dayName })
+        .from(schedules)
+        .where(eq(schedules.isActive, true));
+      results.schedulesQuery = `OK (${s.length} rows)`;
+    } catch (e: any) {
+      results.schedulesQuery = `FAILED: ${e.sqlMessage || e.message}`;
+    }
+
+    // Test 5: Tables list
+    const [tablesRaw] = await db.execute('SHOW TABLES');
+    results.tables = (tablesRaw as unknown as any[]).map((t: any) => Object.values(t)[0]);
+
+    res.json({ success: true, data: results });
+  } catch (e: any) {
+    res.json({ success: true, data: { ...results, fatal: e.sqlMessage || e.message } });
   }
 });

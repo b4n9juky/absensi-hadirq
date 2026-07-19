@@ -21,6 +21,12 @@ export class SemesterRepository {
     return result.insertId;
   }
 
+  async update(id: number, name: string, academicYearId?: number) {
+    const values: any = { name };
+    if (academicYearId !== undefined) values.academicYearId = academicYearId;
+    await db.update(semesters).set(values).where(eq(semesters.id, id));
+  }
+
   async deactivateAllInYear(academicYearId: number) {
     await db.update(semesters)
       .set({ isActive: false })

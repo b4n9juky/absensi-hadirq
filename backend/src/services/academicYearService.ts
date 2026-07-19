@@ -6,6 +6,10 @@ export interface CreateAcademicYearDto {
   isActive?: boolean;
 }
 
+export interface UpdateAcademicYearDto {
+  name: string;
+}
+
 export class AcademicYearService {
   async getYears() {
     return academicYearRepo.findAll();
@@ -19,7 +23,6 @@ export class AcademicYearService {
     const isActive = dto.isActive ?? false;
 
     if (isActive) {
-      // Transaction context to ensure single active academic year
       return db.transaction(async (tx) => {
         await academicYearRepo.deactivateAll();
         return academicYearRepo.create(dto.name, true);
@@ -27,6 +30,19 @@ export class AcademicYearService {
     }
 
     return academicYearRepo.create(dto.name, false);
+  }
+
+  async updateYear(id: number, dto: UpdateAcademicYearDto) {
+    if (!dto.name || dto.name.trim() === '') {
+      throw new Error('Nama tahun ajaran tidak boleh kosong.');
+    }
+
+    const existing = await academicYearRepo.findById(id);
+    if (!existing) {
+      throw new Error(`Tahun ajaran dengan ID ${id} tidak ditemukan.`);
+    }
+
+    await academicYearRepo.update(id, dto.name);
   }
 
   async activateYear(id: number) {

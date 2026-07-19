@@ -26,11 +26,16 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
   // Year state
   const [showAddYear, setShowAddYear] = useState(false);
   const [yearName, setYearName] = useState('');
+  const [showEditYear, setShowEditYear] = useState<YearRecord | null>(null);
+  const [editYearName, setEditYearName] = useState('');
 
   // Semester state
   const [showAddSemester, setShowAddSemester] = useState(false);
   const [semName, setSemName] = useState('');
   const [semYearId, setSemYearId] = useState('');
+  const [showEditSemester, setShowEditSemester] = useState<SemesterRecord | null>(null);
+  const [editSemName, setEditSemName] = useState('');
+  const [editSemYearId, setEditSemYearId] = useState('');
 
   // Schedule state
   const [showEditSchedule, setShowEditSchedule] = useState<ScheduleRecord | null>(null);
@@ -65,6 +70,17 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
     } catch (err: any) { setErrorMsg(err.message); }
   };
 
+  const handleEditYear = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showEditYear) return;
+    try {
+      const res = await fetch(`/api/academic-years/${showEditYear.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ name: editYearName }) });
+      const data = await res.json();
+      if (res.ok && data.success) { triggerToast('Tahun ajaran diperbarui!'); setShowEditYear(null); fetchData(); }
+      else throw new Error(data.error || 'Gagal.');
+    } catch (err: any) { setErrorMsg(err.message); }
+  };
+
   const handleActivateYear = async (id: number) => {
     try {
       const res = await fetch(`/api/academic-years/${id}/activate`, { method: 'PUT', headers: authHeader });
@@ -80,6 +96,19 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
       const res = await fetch('/api/semesters', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ name: semName, academicYearId: parseInt(semYearId) }) });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Semester berhasil dibuat!'); setShowAddSemester(false); setSemName(''); setSemYearId(''); fetchData(); }
+      else throw new Error(data.error || 'Gagal.');
+    } catch (err: any) { setErrorMsg(err.message); }
+  };
+
+  const handleEditSemester = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showEditSemester) return;
+    try {
+      const body: any = { name: editSemName };
+      if (editSemYearId) body.academicYearId = parseInt(editSemYearId);
+      const res = await fetch(`/api/semesters/${showEditSemester.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (res.ok && data.success) { triggerToast('Semester diperbarui!'); setShowEditSemester(null); fetchData(); }
       else throw new Error(data.error || 'Gagal.');
     } catch (err: any) { setErrorMsg(err.message); }
   };
@@ -146,12 +175,18 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
                     <span className="font-bold text-foreground text-xs">{year.name}</span>
                     <ActiveBadge isActive={year.isActive} />
                   </div>
-                  {!year.isActive && (
-                    <button onClick={() => handleActivateYear(year.id)}
-                      className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
-                      Aktifkan
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { setEditYearName(year.name); setShowEditYear(year); }}
+                      className="p-1.5 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                      <Pencil className="w-3 h-3" />
                     </button>
-                  )}
+                    {!year.isActive && (
+                      <button onClick={() => handleActivateYear(year.id)}
+                        className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
+                        Aktifkan
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -177,12 +212,18 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
                     <span className="text-xs text-muted-foreground">{yearsList.find(y => y.id === sem.academicYearId)?.name || ''}</span>
                     <ActiveBadge isActive={sem.isActive} />
                   </div>
-                  {!sem.isActive && (
-                    <button onClick={() => handleActivateSemester(sem.id)}
-                      className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
-                      Aktifkan
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { setEditSemName(sem.name); setEditSemYearId(String(sem.academicYearId)); setShowEditSemester(sem); }}
+                      className="p-1.5 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                      <Pencil className="w-3 h-3" />
                     </button>
-                  )}
+                    {!sem.isActive && (
+                      <button onClick={() => handleActivateSemester(sem.id)}
+                        className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
+                        Aktifkan
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -250,6 +291,30 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
             <div className="space-y-4">
               <FormInput label="Nama Semester" value={semName} onChange={(e) => setSemName(e.target.value)} placeholder="Contoh: Ganjil 2025" required />
               <FormSelect label="Tahun Ajaran" value={semYearId} onChange={(e) => setSemYearId(e.target.value)}
+                options={yearsList.map(y => ({ value: String(y.id), label: y.name }))} placeholder="-- Pilih Tahun Ajaran --" />
+            </div>
+          </form>
+        </ModalShell>
+      )}
+
+      {/* Edit Year Modal */}
+      {showEditYear && (
+        <ModalShell title="Edit Tahun Ajaran" onClose={() => setShowEditYear(null)} maxWidth="sm"
+          footer={<><button type="button" onClick={() => setShowEditYear(null)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="editYearForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan Perubahan</button></>}>
+          <form id="editYearForm" onSubmit={handleEditYear}>
+            <FormInput label="Nama Tahun Ajaran" value={editYearName} onChange={(e) => setEditYearName(e.target.value)} placeholder="Contoh: 2025/2026" required />
+          </form>
+        </ModalShell>
+      )}
+
+      {/* Edit Semester Modal */}
+      {showEditSemester && (
+        <ModalShell title="Edit Semester" onClose={() => setShowEditSemester(null)} maxWidth="sm"
+          footer={<><button type="button" onClick={() => setShowEditSemester(null)} className="px-4 py-2 rounded-xl border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button><button type="submit" form="editSemForm" className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Simpan Perubahan</button></>}>
+          <form id="editSemForm" onSubmit={handleEditSemester}>
+            <div className="space-y-4">
+              <FormInput label="Nama Semester" value={editSemName} onChange={(e) => setEditSemName(e.target.value)} placeholder="Contoh: Ganjil 2025" required />
+              <FormSelect label="Tahun Ajaran" value={editSemYearId} onChange={(e) => setEditSemYearId(e.target.value)}
                 options={yearsList.map(y => ({ value: String(y.id), label: y.name }))} placeholder="-- Pilih Tahun Ajaran --" />
             </div>
           </form>

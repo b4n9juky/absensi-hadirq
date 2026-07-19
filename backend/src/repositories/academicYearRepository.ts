@@ -20,6 +20,10 @@ export class AcademicYearRepository {
     return result.insertId;
   }
 
+  async update(id: number, name: string) {
+    await db.update(academicYears).set({ name }).where(eq(academicYears.id, id));
+  }
+
   async deactivateAll() {
     await db.update(academicYears).set({ isActive: false });
   }

@@ -8,6 +8,11 @@ export interface CreateSemesterDto {
   isActive?: boolean;
 }
 
+export interface UpdateSemesterDto {
+  name: string;
+  academicYearId?: number;
+}
+
 export class SemesterService {
   async getSemesters() {
     return semesterRepo.findAll();
@@ -33,6 +38,26 @@ export class SemesterService {
     }
 
     return semesterRepo.create(dto.academicYearId, dto.name, false);
+  }
+
+  async updateSemester(id: number, dto: UpdateSemesterDto) {
+    if (!dto.name || dto.name.trim() === '') {
+      throw new Error('Nama semester tidak boleh kosong.');
+    }
+
+    const existing = await semesterRepo.findById(id);
+    if (!existing) {
+      throw new Error(`Semester dengan ID ${id} tidak ditemukan.`);
+    }
+
+    if (dto.academicYearId !== undefined) {
+      const year = await academicYearRepo.findById(dto.academicYearId);
+      if (!year) {
+        throw new Error(`Tahun ajaran dengan ID ${dto.academicYearId} tidak ditemukan.`);
+      }
+    }
+
+    await semesterRepo.update(id, dto.name, dto.academicYearId);
   }
 
   async activateSemester(id: number) {

@@ -59,8 +59,6 @@ debug.keystore
 /metadata.json
 /agent-skills/
 
-# Large AI Models
-/frontend/public/models/
 /frontend/design
 DEPLOY.md
 DEPLOY_CYBERPANEL.md

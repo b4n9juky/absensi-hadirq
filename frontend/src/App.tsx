@@ -12,6 +12,7 @@ import { TeachingScheduleSection } from './components/sections/TeachingScheduleS
 import { TeacherScheduleSection } from './components/sections/TeacherScheduleSection';
 import { SubjectsSection } from './components/sections/SubjectsSection';
 import { AgendaAttendanceSection } from './components/sections/AgendaAttendanceSection';
+import { ParentSection } from './components/sections/ParentSection';
 import { FaceRegistration } from './components/sections/FaceRegistration';
 import { KioskAttendance } from './components/sections/KioskAttendance';
 import { QrKioskAttendance } from './components/sections/QrKioskAttendance';
@@ -84,8 +85,9 @@ function App() {
             )
           }
         >
-          <Route index element={<Navigate to="ringkasan" replace />} />
-          <Route path="ringkasan" element={<DashboardSection token={token!} user={user!} />} />
+          <Route index element={<Navigate to={user?.role === 'parent' ? 'orang-tua' : 'ringkasan'} replace />} />
+          <Route path="ringkasan" element={user?.role === 'parent' ? <Navigate to="orang-tua" replace /> : <DashboardSection token={token!} user={user!} />} />
+          <Route path="orang-tua" element={user?.role === 'parent' ? <ParentSection token={token!} user={user!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
           <Route path="pengguna" element={<UsersSection token={token!} />} />
           <Route path="kelas" element={<ClassesSection token={token!} />} />
           <Route path="siswa" element={<StudentsSection token={token!} />} />

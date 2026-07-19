@@ -14,6 +14,7 @@ const sectionMap: Record<string, string> = {
   'mata-pelajaran': 'subjects',
   'agenda-absensi': 'agenda-attendance',
   pengaturan: 'settings',
+  'orang-tua': 'parent',
 };
 
 const pathToSection: Record<string, string> = {
@@ -26,6 +27,7 @@ const pathToSection: Record<string, string> = {
   subjects: 'mata-pelajaran',
   'agenda-attendance': 'agenda-absensi',
   settings: 'pengaturan',
+  parent: 'orang-tua',
 };
 
 interface Props {

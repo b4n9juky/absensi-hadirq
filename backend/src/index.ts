@@ -27,6 +27,7 @@ import { teacherRouter } from './routes/teacherRoutes.js';
 import { teachingSchedulesRouter } from './routes/teachingScheduleRoutes.js';
 import { kioskRouter } from './routes/kioskRoutes.js';
 import { subjectAttendanceRouter } from './routes/subjectAttendanceRoutes.js';
+import { parentAdminRouter, parentDashboardRouter } from './routes/parentRoutes.js';
 import { subjectRouter } from './routes/subjectRoutes.js';
 import { agendaAttendanceRouter } from './routes/agendaAttendanceRoutes.js';
 import { faceRegistrationRouter } from './routes/faceRegistrationRoutes.js';
@@ -162,6 +163,8 @@ app.use('/api/subjects', authMiddleware, subjectRouter);
 app.use('/api/teacher', teacherRouter);
 app.use('/api/teacher', agendaAttendanceRouter);
 app.use('/api/subject-attendances', subjectAttendanceRouter);
+app.use('/api/parents', authMiddleware, requireRole(['admin']), parentAdminRouter);
+app.use('/api/parent', authMiddleware, requireRole(['parent']), parentDashboardRouter);
 
 // Serve uploaded images statically
 const uploadDir = path.join(__dirname, '../uploads');
@@ -176,6 +179,7 @@ const TEMPLATE_MAP: Record<string, string> = {
   user: 'template-import-user.xlsx',
   mapel: 'template-import-mapel.xlsx',
   jadwal: 'template-import-jadwal.xlsx',
+  parent: 'template-import-parent.xlsx',
 };
 app.get('/api/templates/download/:type', (req, res) => {
   const filename = TEMPLATE_MAP[req.params.type];

@@ -7,13 +7,13 @@ export const createUserSchema = z.object({
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
     'Password harus mengandung huruf kecil, huruf besar, dan angka'
   ),
-  role: z.enum(['admin', 'guru'], { message: 'Role tidak valid' }),
+  role: z.enum(['admin', 'guru', 'parent'], { message: 'Role tidak valid' }),
 });
 
 export const updateUserSchema = z.object({
   name: z.string().min(1, 'Nama tidak boleh kosong'),
   email: z.string().email('Format email tidak valid'),
-  role: z.enum(['admin', 'guru'], { message: 'Role tidak valid' }),
+  role: z.enum(['admin', 'guru', 'parent'], { message: 'Role tidak valid' }),
   password: z.string().min(6, 'Password minimal 6 karakter').optional(),
 });
 

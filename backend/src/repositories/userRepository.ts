@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import { user, session, account, teachingSchedules, teacherAgendas } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, like } from 'drizzle-orm';
 
 export class UserRepository {
   async findAll() {
@@ -27,6 +27,22 @@ export class UserRepository {
     await db.update(account)
       .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(account.userId, id));
+  }
+
+  async updateRole(id: string, role: string) {
+    await db.update(user).set({ role, updatedAt: new Date() }).where(eq(user.id, id));
+  }
+
+  async searchByRole(role: string, query: string) {
+    return db.select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    })
+    .from(user)
+    .where(
+      eq(user.role, role)
+    );
   }
 
   async delete(id: string) {

@@ -40,6 +40,7 @@ export const students = mysqlTable('students', {
   name: varchar('name', { length: 255 }).notNull(),
   nis: varchar('nis', { length: 50 }).notNull().unique(),
   classId: int('class_id').references(() => classes.id).notNull(),
+  parentId: varchar('parent_id', { length: 36 }).references(() => user.id),
   deviceUuid: varchar('device_uuid', { length: 255 }),
   qrcode: varchar('qrcode', { length: 255 }),
   faceEmbedding: text('face_embedding'),

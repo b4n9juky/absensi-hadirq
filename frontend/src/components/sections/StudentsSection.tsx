@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, QrCode, Download, Camera, Upload, FileSpreadsheet, Monitor } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, QrCode, Download, Camera, Upload, FileSpreadsheet, Monitor, Users } from 'lucide-react';
 import * as faceapi from '@vladmandic/face-api';
 import { DeviceBadge } from '../shared/StatusBadge';
 import { DataTable } from '../shared/DataTable';
@@ -14,6 +14,8 @@ interface StudentRecord {
   qrcode?: string | null;
   faceEmbedding?: string | null;
   photo?: string | null;
+  parentId?: string | null;
+  parentName?: string | null;
 }
 interface ClassRecord { id: number; name: string; }
 
@@ -43,12 +45,24 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
   const [promoteSelectedStudents, setPromoteSelectedStudents] = useState<number[]>([]);
   const [promoteLoading, setPromoteLoading] = useState(false);
 
+  // Parent link state
+  const [showLinkParentModal, setShowLinkParentModal] = useState<StudentRecord | null>(null);
+  const [parentUsers, setParentUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [selectedParentId, setSelectedParentId] = useState('');
+
   // Import Excel state
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<{ nis: string; name: string; className: string }[]>([]);
   const [importResult, setImportResult] = useState<{ imported: number; failed: number; results: any[] } | null>(null);
   const [importLoading, setImportLoading] = useState(false);
+
+  // Import Parent Excel state
+  const [showImportParentModal, setShowImportParentModal] = useState(false);
+  const [importParentFile, setImportParentFile] = useState<File | null>(null);
+  const [importParentPreview, setImportParentPreview] = useState<{ nis: string; name: string; email: string; password: string }[]>([]);
+  const [importParentResult, setImportParentResult] = useState<{ imported: number; failed: number; results: any[] } | null>(null);
+  const [importParentLoading, setImportParentLoading] = useState(false);
 
   // Photo Upload
   const [showPhotoUpload, setShowPhotoUpload] = useState<StudentRecord | null>(null);
@@ -178,6 +192,69 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
     } finally {
       setFaceLoading(false);
     }
+  };
+
+  const handleUnlinkParent = async (studentId: number) => {
+    try {
+      const res = await fetch(`/api/parents/unlink/${studentId}`, { method: 'DELETE', headers: authHeader });
+      const data = await res.json();
+      if (res.ok && data.success) { triggerToast('Tautan orang tua dihapus!'); setShowLinkParentModal(null); fetchData(); }
+      else throw new Error(data.error || 'Gagal.');
+    } catch (err: any) { setErrorMsg(err.message); }
+  };
+
+  const handleLinkParent = async () => {
+    if (!showLinkParentModal || !selectedParentId) return;
+    try {
+      const res = await fetch('/api/parents/link', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ studentId: showLinkParentModal.id, parentId: selectedParentId }) });
+      const data = await res.json();
+      if (res.ok && data.success) { triggerToast('Orang tua berhasil ditautkan!'); setShowLinkParentModal(null); fetchData(); }
+      else throw new Error(data.error || 'Gagal.');
+    } catch (err: any) { setErrorMsg(err.message); }
+  };
+
+  const handleImportParentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) { setImportParentFile(null); setImportParentPreview([]); return; }
+    setImportParentFile(file);
+    setImportParentResult(null);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+        const XLSX = (window as any).XLSX;
+        if (!XLSX) { setImportParentPreview([{ nis: '(muat ulang untuk preview)', name: '', email: '', password: '' }]); return; }
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const keys = json.length > 0 ? Object.keys(json[0]) : [];
+        const nisKey = keys.find(k => k.toLowerCase().trim() === 'nis' || k.toLowerCase().trim() === 'nomor induk') || '';
+        const nameKey = keys.find(k => k.toLowerCase().trim() === 'name' || k.toLowerCase().trim() === 'nama' || k.toLowerCase().trim() === 'nama orang tua') || '';
+        const emailKey = keys.find(k => k.toLowerCase().trim() === 'email') || '';
+        const passwordKey = keys.find(k => k.toLowerCase().trim() === 'password' || k.toLowerCase().trim() === 'kata sandi') || '';
+        setImportParentPreview(json.slice(0, 5).map((r: any) => ({
+          nis: String(r[nisKey] || '').trim(),
+          name: String(r[nameKey] || '').trim(),
+          email: String(r[emailKey] || '').trim(),
+          password: String(r[passwordKey] || '').trim(),
+        })));
+      } catch { setImportParentPreview([{ nis: '(gagal baca file)', name: '', email: '', password: '' }]); }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleImportParentSubmit = async () => {
+    if (!importParentFile) return;
+    setImportParentLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', importParentFile);
+      const res = await fetch('/api/parents/import', { method: 'POST', headers: authHeader, body: formData });
+      const data = await res.json();
+      if (res.ok && data.success) { setImportParentResult(data.data); fetchData(); }
+      else throw new Error(data.error || 'Gagal import.');
+    } catch (err: any) { setErrorMsg(err.message); }
+    finally { setImportParentLoading(false); }
   };
 
   const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -469,6 +546,23 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
       )
     },
     {
+      key: 'parentName',
+      header: 'Orang Tua',
+      render: (row: StudentRecord) => (
+        <div className="flex items-center gap-2">
+          {row.parentName ? (
+            <span className="text-xs text-muted-foreground">{row.parentName}</span>
+          ) : (
+            <span className="text-xs text-muted-foreground/50">—</span>
+          )}
+          <button onClick={() => { setSelectedParentId(row.parentId || ''); setShowLinkParentModal(row); }}
+            className="p-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title={row.parentId ? 'Ganti Orang Tua' : 'Tautkan Orang Tua'}>
+            <Users className="w-3 h-3" />
+          </button>
+        </div>
+      )
+    },
+    {
       key: 'actions',
       header: 'Aksi',
       align: 'right' as const,
@@ -508,6 +602,10 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
       <div className="px-6 py-5 border-b border-border flex justify-between items-center gap-4">
         <div><h2 className="text-base font-bold text-foreground">Kelola Profil Siswa</h2><p className="text-xs text-muted-foreground mt-1">Daftar siswa beserta NIS, kelas, dan data biometrik.</p></div>
         <div className="flex gap-2">
+          <button onClick={() => { setImportParentFile(null); setImportParentPreview([]); setImportParentResult(null); setShowImportParentModal(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary hover:bg-accent border border-border text-muted-foreground hover:text-foreground text-xs font-bold transition-all">
+            <Upload className="w-4 h-4" /><span>Import Orang Tua</span>
+          </button>
           <button onClick={() => { setPromoteFromClass(''); setPromoteToClass(''); setShowPromoteModal(true); }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary hover:bg-accent border border-border text-muted-foreground hover:text-foreground text-xs font-bold transition-all">
             <span>Kenaikan Kelas</span>
@@ -713,6 +811,146 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
           </div>
         </ModalShell>
       )}
+      {/* Link Parent Modal */}
+      {showLinkParentModal && (
+        <ModalShell title={`Tautkan Orang Tua - ${showLinkParentModal.studentName}`} onClose={() => setShowLinkParentModal(null)} maxWidth="sm"
+          footer={<><button type="button" onClick={() => setShowLinkParentModal(null)} className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button>
+            <button onClick={() => { if (!showLinkParentModal.parentId) { handleUnlinkParent(showLinkParentModal.id); } else { handleLinkParent(); } }}
+              className="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">{showLinkParentModal.parentId ? 'Simpan Perubahan' : 'Tautkan'}</button></>}>
+          <div className="space-y-4">
+            {showLinkParentModal.parentId && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <p className="text-xs text-amber-600 font-semibold">Sudah memiliki tautan orang tua</p>
+                <p className="text-xs text-muted-foreground mt-1">{showLinkParentModal.parentName}</p>
+                <button onClick={() => handleUnlinkParent(showLinkParentModal.id)}
+                  className="mt-2 px-3 py-1.5 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors">
+                  Lepaskan Tautan
+                </button>
+              </div>
+            )}
+            <label className="block text-muted-foreground mb-1.5 uppercase font-semibold">Cari Orang Tua</label>
+            <input type="text" placeholder="Ketik nama atau email orang tua..."
+              onChange={async (e) => {
+                const q = e.target.value;
+                if (q.length < 2) { setParentUsers([]); return; }
+                try {
+                  const res = await fetch(`/api/parents/search?q=${encodeURIComponent(q)}`, { headers: authHeader });
+                  const data = await res.json();
+                  if (data.success) setParentUsers(data.data);
+                } catch {}
+              }}
+              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all outline-none" />
+            {parentUsers.length > 0 && (
+              <div className="max-h-40 overflow-y-auto space-y-1 border border-border rounded-xl p-2 bg-muted/5">
+                {parentUsers.map(p => (
+                  <label key={p.id} className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedParentId === p.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/10 border border-transparent'}`}>
+                    <input type="radio" name="parent" value={p.id} checked={selectedParentId === p.id}
+                      onChange={() => setSelectedParentId(p.id)} className="text-primary focus:ring-primary/30" />
+                    <div className="text-xs">
+                      <span className="font-bold text-foreground">{p.name}</span>
+                      <span className="text-muted-foreground ml-2">({p.email})</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+            {parentUsers.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Ketik minimal 2 karakter untuk mencari orang tua.</p>}
+          </div>
+        </ModalShell>
+      )}
+
+      {/* Import Parent Excel Modal */}
+      {showImportParentModal && (
+        <ModalShell title="Import Orang Tua dari Excel" onClose={() => { setShowImportParentModal(false); setImportParentResult(null); setImportParentFile(null); setImportParentPreview([]); }} maxWidth="lg"
+          footer={!importParentResult ? <><button type="button" onClick={() => setShowImportParentModal(false)} className="px-4 py-2 rounded-lg border border-border text-muted-foreground font-bold hover:text-foreground text-xs">Batal</button>
+            <button onClick={handleImportParentSubmit} disabled={!importParentFile || importParentLoading}
+              className={`px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 ${!importParentFile || importParentLoading ? 'bg-secondary text-muted-foreground cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}>
+              {importParentLoading ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Mengimport...</> : <><Upload className="w-3.5 h-3.5" /> Import</>}
+            </button></> : undefined}>
+          {importParentResult ? (
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-emerald-500">{importParentResult.imported}</div>
+                  <div className="text-muted-foreground mt-1">Berhasil</div>
+                </div>
+                <div className="flex-1 bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-destructive">{importParentResult.failed}</div>
+                  <div className="text-muted-foreground mt-1">Gagal</div>
+                </div>
+              </div>
+              {importParentResult.results.filter((r: any) => r.status === 'gagal').length > 0 && (
+                <div>
+                  <h4 className="text-foreground/80 font-semibold mb-2">Detail Error:</h4>
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {importParentResult.results.filter((r: any) => r.status === 'gagal').map((r: any, i: number) => (
+                      <div key={i} className="bg-destructive/5 border border-destructive/10 rounded-lg px-3 py-2 text-foreground/80">
+                        <span className="text-muted-foreground">Baris {r.row}:</span> NIS: {r.nis} — <span className="text-destructive">{r.error}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button onClick={() => { setShowImportParentModal(false); setImportParentResult(null); setImportParentFile(null); setImportParentPreview([]); }}
+                className="w-full px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs">Tutup</button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10">
+                <span className="text-xs text-muted-foreground">Butuh template? Download file contoh Excel:</span>
+                <a href="/api/templates/download/parent"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
+                  <Download className="w-3.5 h-3.5" /> Download Template
+                </a>
+              </div>
+              <div>
+                <label className="block text-muted-foreground mb-1.5 uppercase font-semibold">File Excel</label>
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                  onClick={() => document.getElementById('parent-excel-file-input')?.click()}>
+                  {importParentFile ? (
+                    <div className="text-foreground">
+                      <FileSpreadsheet className="w-8 h-8 mx-auto text-primary mb-2" />
+                      <p className="font-semibold">{importParentFile.name}</p>
+                      <p className="text-muted-foreground text-xs mt-1">{(importParentFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground">
+                      <Upload className="w-8 h-8 mx-auto mb-2" />
+                      <p className="font-semibold">Klik untuk pilih file Excel</p>
+                      <p className="text-muted-foreground/60 text-xs mt-1">Format .xlsx atau .xls</p>
+                    </div>
+                  )}
+                  <input id="parent-excel-file-input" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportParentFileChange} />
+                </div>
+              </div>
+              {importParentPreview.length > 0 && (
+                <div>
+                  <h4 className="text-foreground/80 font-semibold mb-2">Preview (5 baris pertama):</h4>
+                  <div className="bg-background rounded-xl overflow-hidden">
+                    <table className="w-full text-left text-xs">
+                      <thead><tr className="bg-secondary text-muted-foreground uppercase font-semibold">
+                        <th className="px-3 py-2">NIS</th><th className="px-3 py-2">Nama</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Password</th>
+                      </tr></thead>
+                      <tbody className="divide-y divide-border">
+                        {importParentPreview.map((row, i) => (
+                          <tr key={i} className="text-foreground">
+                            <td className="px-3 py-2">{row.nis || '-'}</td>
+                            <td className="px-3 py-2">{row.name || '-'}</td>
+                            <td className="px-3 py-2">{row.email || '-'}</td>
+                            <td className="px-3 py-2">{row.password ? '••••••' : '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-muted-foreground text-xs mt-1">Kolom wajib: NIS, Nama/Nama Orang Tua, Email, Password</p>
+                </div>
+              )}
+            </div>
+          )}
+        </ModalShell>
+      )}
+
       {/* Import Excel Modal */}
       {showImportModal && (
         <ModalShell title="Import Siswa dari Excel" onClose={() => { setShowImportModal(false); setImportResult(null); setImportFile(null); setImportPreview([]); }} maxWidth="lg"

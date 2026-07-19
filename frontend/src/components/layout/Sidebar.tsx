@@ -12,6 +12,7 @@ const allNavItems = [
   { path: '/dashboard/mata-pelajaran', key: 'subjects', icon: Book, label: 'Mata Pelajaran', roles: ['admin'] },
   { path: '/dashboard/agenda-absensi', key: 'agenda-attendance', icon: ClipboardCheck, label: 'Agenda Absensi', roles: ['guru'] },
   { path: '/dashboard/pengaturan', key: 'settings', icon: Settings, label: 'Pengaturan', roles: ['admin'] },
+  { path: '/dashboard/orang-tua', key: 'parent', icon: Users, label: 'Dashboard', roles: ['parent'] },
 ];
 
 interface Props {

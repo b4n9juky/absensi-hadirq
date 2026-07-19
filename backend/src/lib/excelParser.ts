@@ -11,7 +11,7 @@ export interface ParseResult {
   errors: { row: number; email: string; error: string }[];
 }
 
-const VALID_ROLES = ['admin', 'guru', 'siswa'];
+const VALID_ROLES = ['admin', 'guru', 'parent', 'siswa'];
 
 export function parseExcelUserFile(filePath: string): ParseResult {
   const workbook = XLSX.readFile(filePath);
@@ -189,6 +189,86 @@ export function parseExcelSubjectFile(filePath: string): SubjectParseResult {
       continue;
     }
     rows.push({ name });
+  }
+
+  return { rows, errors };
+}
+
+export interface ExcelParentRow {
+  nis: string;
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface ParentParseResult {
+  rows: ExcelParentRow[];
+  errors: { row: number; nis: string; email: string; error: string }[];
+}
+
+export function parseExcelParentFile(filePath: string): ParentParseResult {
+  const workbook = XLSX.readFile(filePath);
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) {
+    throw new Error('File Excel tidak memiliki sheet.');
+  }
+
+  const sheet = workbook.Sheets[sheetName];
+  const rawData = XLSX.utils.sheet_to_json<any>(sheet, { defval: '' });
+
+  if (rawData.length === 0) {
+    throw new Error('File Excel kosong.');
+  }
+
+  const keys = Object.keys(rawData[0]);
+  const nisKey = keys.find(k => k.toLowerCase().trim() === 'nis' || k.toLowerCase().trim() === 'nomor induk');
+  const nameKey = keys.find(k => k.toLowerCase().trim() === 'name' || k.toLowerCase().trim() === 'nama' || k.toLowerCase().trim() === 'nama orang tua');
+  const emailKey = keys.find(k => k.toLowerCase().trim() === 'email');
+  const passwordKey = keys.find(k => k.toLowerCase().trim() === 'password' || k.toLowerCase().trim() === 'kata sandi');
+
+  if (!nisKey || !nameKey || !emailKey || !passwordKey) {
+    throw new Error(
+      'Format kolom tidak sesuai. File harus memiliki kolom: NIS, Nama/Nama Orang Tua, Email, Password.'
+    );
+  }
+
+  const rows: ExcelParentRow[] = [];
+  const errors: { row: number; nis: string; email: string; error: string }[] = [];
+
+  for (let i = 0; i < rawData.length; i++) {
+    const item = rawData[i];
+    const nis = String(item[nisKey] || '').trim();
+    const name = String(item[nameKey] || '').trim();
+    const email = String(item[emailKey] || '').trim();
+    const password = String(item[passwordKey] || '').trim();
+    const rowNum = i + 2;
+
+    if (!nis) {
+      errors.push({ row: rowNum, nis, email, error: 'NIS tidak boleh kosong.' });
+      continue;
+    }
+    if (!name) {
+      errors.push({ row: rowNum, nis, email, error: 'Nama tidak boleh kosong.' });
+      continue;
+    }
+    if (!email) {
+      errors.push({ row: rowNum, nis, email, error: 'Email tidak boleh kosong.' });
+      continue;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push({ row: rowNum, nis, email, error: 'Format email tidak valid.' });
+      continue;
+    }
+    if (!password) {
+      errors.push({ row: rowNum, nis, email, error: 'Password tidak boleh kosong.' });
+      continue;
+    }
+    if (password.length < 6) {
+      errors.push({ row: rowNum, nis, email, error: 'Password minimal 6 karakter.' });
+      continue;
+    }
+
+    rows.push({ nis, name, email, password });
   }
 
   return { rows, errors };

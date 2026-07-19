@@ -13,13 +13,16 @@ export class StudentRepository {
       qrcode: students.qrcode,
       faceEmbedding: students.faceEmbedding,
       photo: students.photo,
+      parentId: students.parentId,
+      parentName: user.name,
       createdAt: students.createdAt,
       updatedAt: students.updatedAt,
       studentName: students.name,
       className: classes.name
     })
     .from(students)
-    .innerJoin(classes, eq(students.classId, classes.id));
+    .innerJoin(classes, eq(students.classId, classes.id))
+    .leftJoin(user, eq(students.parentId, user.id));
   }
 
   async findById(id: number) {

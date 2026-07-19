@@ -23,6 +23,7 @@ const allOptions = [
   { value: 'subjects', label: 'Mata Pelajaran', roles: ['admin'] },
   { value: 'agenda-attendance', label: 'Agenda Absensi', roles: ['guru'] },
   { value: 'settings', label: 'Pengaturan', roles: ['admin'] },
+  { value: 'parent', label: 'Dashboard', roles: ['parent'] },
 ];
 
 interface Props {

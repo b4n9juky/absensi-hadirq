@@ -38,7 +38,7 @@ export class UserService {
       throw new Error('Password minimal harus 6 karakter.');
     }
 
-    const validRoles = ['admin', 'guru', 'siswa'];
+    const validRoles = ['admin', 'guru', 'parent', 'siswa'];
     if (!validRoles.includes(dto.role)) {
       throw new Error('Role tidak valid.');
     }
@@ -79,7 +79,7 @@ export class UserService {
       throw new Error('Email tidak boleh kosong.');
     }
 
-    const validRoles = ['admin', 'guru', 'siswa'];
+    const validRoles = ['admin', 'guru', 'parent', 'siswa'];
     if (!validRoles.includes(dto.role)) {
       throw new Error('Role tidak valid.');
     }

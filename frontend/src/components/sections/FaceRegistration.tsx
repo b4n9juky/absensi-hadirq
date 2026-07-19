@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import * as faceapi from '@vladmandic/face-api';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Camera, RefreshCw } from 'lucide-react';
+import { getVideoDevices, getDefaultDeviceId, getCameraConstraints } from '../../utils/camera';
 
 interface StudentRecord {
   id: number;
@@ -29,6 +30,16 @@ export const FaceRegistration = () => {
   const [recording, setRecording] = useState(false);
   const [resultMsg, setResultMsg] = useState<{ ok: boolean; msg: string } | null>(null);
   const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
+  const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedCameraId, setSelectedCameraId] = useState<string | undefined>(undefined);
+  const [showCameraPicker, setShowCameraPicker] = useState(false);
+
+  useEffect(() => {
+    getVideoDevices().then(devices => {
+      setCameraDevices(devices);
+      setSelectedCameraId(getDefaultDeviceId(devices));
+    });
+  }, []);
 
   useEffect(() => {
     if (!token) { setStatusMsg('Token tidak ditemukan.'); return; }
@@ -75,10 +86,10 @@ export const FaceRegistration = () => {
       .catch(() => setStatusMsg('Gagal memuat siswa.'));
   }, [selectedClassId]);
 
-  const startCamera = async () => {
+  const startCamera = async (deviceId?: string) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+        video: getCameraConstraints(deviceId ?? selectedCameraId)
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -90,6 +101,15 @@ export const FaceRegistration = () => {
       }
     } catch {
       setStatusMsg('Kamera tidak tersedia.');
+    }
+  };
+
+  const switchCamera = async (deviceId: string) => {
+    setSelectedCameraId(deviceId);
+    setShowCameraPicker(false);
+    if (recording) {
+      stopCamera();
+      setTimeout(() => startCamera(deviceId), 100);
     }
   };
 
@@ -177,14 +197,40 @@ export const FaceRegistration = () => {
 
       {!recording && (
         <>
-          <select
-            value={selectedClassId || ''}
-            onChange={e => setSelectedClassId(e.target.value ? Number(e.target.value) : null)}
-            className="w-full bg-card border border-border rounded-xl px-3 py-2.5 text-foreground text-xs mb-4"
-          >
-            <option value="">-- Pilih Kelas --</option>
-            {classesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <div className="flex items-center gap-2 mb-4">
+            <select
+              value={selectedClassId || ''}
+              onChange={e => setSelectedClassId(e.target.value ? Number(e.target.value) : null)}
+              className="flex-1 bg-card border border-border rounded-xl px-3 py-2.5 text-foreground text-xs"
+            >
+              <option value="">-- Pilih Kelas --</option>
+              {classesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            {cameraDevices.length > 1 && (
+              <div className="relative">
+                <button onClick={() => setShowCameraPicker(v => !v)}
+                  className="p-2.5 rounded-xl bg-card border border-border text-foreground hover:bg-accent transition-colors"
+                  title="Ganti Kamera">
+                  <Camera className="w-4 h-4" />
+                </button>
+                {showCameraPicker && (
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+                    {cameraDevices.map(d => (
+                      <button key={d.deviceId}
+                        onClick={() => switchCamera(d.deviceId)}
+                        className={`w-full text-left px-3 py-2.5 text-xs border-b border-border last:border-b-0 transition-colors ${
+                          d.deviceId === selectedCameraId
+                            ? 'bg-primary/10 text-primary font-bold'
+                            : 'hover:bg-accent'
+                        }`}>
+                        {d.label || `Kamera ${d.deviceId.slice(0, 8)}...`}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {students.map(s => (

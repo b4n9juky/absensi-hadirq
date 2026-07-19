@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Pencil, Trash2, RefreshCw, QrCode, Download, Camera, Upload, FileSpreadsheet } from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, QrCode, Download, Camera, Upload, FileSpreadsheet, Monitor } from 'lucide-react';
 import * as faceapi from '@vladmandic/face-api';
 import { DeviceBadge } from '../shared/StatusBadge';
 import { DataTable } from '../shared/DataTable';
 import { ModalShell } from '../shared/ModalShell';
 import { FormInput, FormSelect } from '../shared/FormField';
+import { getVideoDevices, getDefaultDeviceId, getCameraConstraints } from '../../utils/camera';
 
 interface StudentRecord {
   id: number; nis: string; classId: number;
@@ -60,12 +61,20 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
   const [faceLoading, setFaceLoading] = useState(false);
   const [faceStatus, setFaceStatus] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [faceCameraDevices, setFaceCameraDevices] = useState<MediaDeviceInfo[]>([]);
+  const [faceSelectedCameraId, setFaceSelectedCameraId] = useState<string | undefined>(undefined);
+  const [faceShowCameraPicker, setFaceShowCameraPicker] = useState(false);
 
   const startFaceRegistration = async (student: StudentRecord) => {
     setShowFaceRegister(student);
     setFaceLoading(true);
     setFaceStatus('Memuat model AI...');
     try {
+      const devices = await getVideoDevices();
+      setFaceCameraDevices(devices);
+      const deviceId = getDefaultDeviceId(devices);
+      setFaceSelectedCameraId(deviceId);
+
       await Promise.all([
         faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
         faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
@@ -74,11 +83,7 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
       ]);
       setFaceStatus('Membuka kamera...');
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 }, 
-          height: { ideal: 480 },
-          facingMode: 'user'
-        } 
+        video: getCameraConstraints(deviceId)
       });
       
       let attempts = 0;
@@ -96,6 +101,22 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
       setFaceStatus('Error: ' + err.message);
     } finally {
       setFaceLoading(false);
+    }
+  };
+
+  const faceSwitchCamera = async (deviceId: string) => {
+    setFaceSelectedCameraId(deviceId);
+    setFaceShowCameraPicker(false);
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: getCameraConstraints(deviceId) });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch {
+      setFaceStatus('Gagal mengganti kamera.');
     }
   };
 
@@ -574,6 +595,32 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
             <div className="relative w-full max-w-[320px] aspect-[4/3] bg-black rounded-xl overflow-hidden border-2 border-border shadow-inner">
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100"></video>
               <div className="absolute inset-0 border-2 border-teal-500/50 rounded-xl pointer-events-none border-dashed m-4"></div>
+              {faceCameraDevices.length > 1 && (
+                <div className="absolute top-2 right-2 z-10">
+                  <div className="relative">
+                    <button onClick={() => setFaceShowCameraPicker(v => !v)}
+                      className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white transition-colors"
+                      title="Ganti Kamera">
+                      <Monitor className="w-3.5 h-3.5" />
+                    </button>
+                    {faceShowCameraPicker && (
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-card border border-border rounded-lg shadow-2xl z-50 overflow-hidden">
+                        {faceCameraDevices.map(d => (
+                          <button key={d.deviceId}
+                            onClick={() => faceSwitchCamera(d.deviceId)}
+                            className={`w-full text-left px-3 py-2 text-xs border-b border-border last:border-b-0 transition-colors ${
+                              d.deviceId === faceSelectedCameraId
+                                ? 'bg-primary/10 text-primary font-bold'
+                                : 'hover:bg-accent'
+                            }`}>
+                            {d.label || `Kamera ${d.deviceId.slice(0, 8)}...`}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             {faceStatus && <p className="text-sm text-center text-muted-foreground font-medium animate-pulse">{faceStatus}</p>}
             <p className="text-xs text-center text-muted-foreground/70 px-4">Posisikan wajah Anda tepat di tengah kamera dengan pencahayaan yang cukup. Pastikan Anda tidak memakai kacamata hitam atau masker.</p>

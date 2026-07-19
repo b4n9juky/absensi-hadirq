@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import * as faceapi from '@vladmandic/face-api';
-import { Camera, CheckCircle2, UserCircle, Maximize2, Minimize2, Clock, Users } from 'lucide-react';
+import { Camera, CheckCircle2, UserCircle, Maximize2, Minimize2, Clock, Users, RefreshCw } from 'lucide-react';
 import { useAttendanceSound } from '../../hooks/useAttendanceSound';
+import { getVideoDevices, getDefaultDeviceId, getCameraConstraints } from '../../utils/camera';
 
 interface StudentEmbedding {
   id: number;
@@ -145,6 +146,9 @@ export const KioskAttendance = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [recentArrivals, setRecentArrivals] = useState<RecentArrival[]>([]);
   const [authLoading, setAuthLoading] = useState(false);
+  const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedCameraId, setSelectedCameraId] = useState<string | undefined>(undefined);
+  const [showCameraPicker, setShowCameraPicker] = useState(false);
 
   const isScanningRef = useRef(true);
   const studentsDataRef = useRef<StudentEmbedding[]>([]);
@@ -181,15 +185,37 @@ export const KioskAttendance = () => {
     } catch { /* ignore */ }
   }, [kioskKey]);
 
-  const startVideo = useCallback(() => {
+  const startVideo = useCallback((deviceId?: string) => {
+    setStatusMsg('Mengakses kamera...');
     navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+      video: getCameraConstraints(deviceId ?? selectedCameraId)
     }).then(async stream => {
       let attempts = 0;
       while (!videoRef.current && attempts < 10) { await new Promise(r => setTimeout(r, 50)); attempts++; }
-      if (videoRef.current) videoRef.current.srcObject = stream;
+      if (videoRef.current) {
+        if (videoRef.current.srcObject) {
+          (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+        }
+        videoRef.current.srcObject = stream;
+      }
+      setStatusMsg('Sistem siap. Silakan berdiri di depan kamera.');
     }).catch(() => { setStatusMsg('Kamera tidak ditemukan atau ditolak.'); });
-  }, []);
+  }, [selectedCameraId]);
+
+  const switchCamera = useCallback(async (deviceId: string) => {
+    setSelectedCameraId(deviceId);
+    startVideo(deviceId);
+    setShowCameraPicker(false);
+  }, [startVideo]);
+
+  const refreshCameras = useCallback(async () => {
+    const devices = await getVideoDevices();
+    setCameraDevices(devices);
+    if (!selectedCameraId && devices.length > 0) {
+      const defaultId = getDefaultDeviceId(devices);
+      setSelectedCameraId(defaultId);
+    }
+  }, [selectedCameraId]);
 
   useEffect(() => {
     if (!kioskKey) return;
@@ -212,7 +238,7 @@ export const KioskAttendance = () => {
           faceapi.nets.faceRecognitionNet.loadFromUri('/models')
         ]);
         setModelsLoaded(true);
-        setStatusMsg('Sistem siap. Silakan berdiri di depan kamera.');
+        await refreshCameras();
         startVideo();
       } catch { setStatusMsg('Gagal memuat AI Models.'); }
     };
@@ -229,7 +255,7 @@ export const KioskAttendance = () => {
         (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
       }
     };
-  }, [kioskKey, startVideo, fetchRecentArrivals]);
+  }, [kioskKey, startVideo, fetchRecentArrivals, refreshCameras]);
 
   const handleVideoPlay = useCallback(() => {
     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
@@ -397,6 +423,30 @@ export const KioskAttendance = () => {
         </div>
         <div className="flex items-center gap-3">
           <p className="text-sm text-zinc-400" role="status">{statusMsg}</p>
+          {cameraDevices.length > 1 && (
+            <div className="relative">
+              <button onClick={() => setShowCameraPicker(v => !v)}
+                className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-primary hover:text-primary/70 transition-colors"
+                title="Ganti Kamera" aria-label="Ganti Kamera">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              {showCameraPicker && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+                  {cameraDevices.map(d => (
+                    <button key={d.deviceId}
+                      onClick={() => switchCamera(d.deviceId)}
+                      className={`w-full text-left px-4 py-3 text-sm border-b border-zinc-800 last:border-b-0 transition-colors ${
+                        d.deviceId === selectedCameraId
+                          ? 'bg-primary/10 text-primary font-bold'
+                          : 'text-zinc-300 hover:bg-zinc-800'
+                      }`}>
+                      {d.label || `Kamera ${d.deviceId.slice(0, 8)}...`}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <button onClick={handleToggleFullscreen} className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-primary hover:text-primary/70 transition-colors" title="Layar Penuh" aria-label="Layar Penuh">
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>

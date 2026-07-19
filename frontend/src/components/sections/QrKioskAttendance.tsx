@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { ScanBarcode, CheckCircle2, UserCircle, Maximize2, Minimize2, Clock } from 'lucide-react';
+import { ScanBarcode, CheckCircle2, UserCircle, Maximize2, Minimize2, Clock, RefreshCw } from 'lucide-react';
 import { useAttendanceSound } from '../../hooks/useAttendanceSound';
+import { getVideoDevices, getDefaultDeviceId } from '../../utils/camera';
 
 interface RecentArrival {
   id: number;
@@ -30,6 +31,9 @@ export const QrKioskAttendance = () => {
   const [qrActive, setQrActive] = useState(false);
   const [matchResult, setMatchResult] = useState<{ name: string; isSuccess: boolean; message: string; photo?: string } | null>(null);
   const [statusMsg, setStatusMsg] = useState('Memuat sistem QR kiosk...');
+  const [qrCameraDevices, setQrCameraDevices] = useState<MediaDeviceInfo[]>([]);
+  const [qrSelectedDeviceId, setQrSelectedDeviceId] = useState<string | undefined>(undefined);
+  const [qrShowCameraPicker, setQrShowCameraPicker] = useState(false);
 
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -93,18 +97,18 @@ export const QrKioskAttendance = () => {
     setTimeout(() => { setMatchResult(null); isProcessingRef.current = false; }, 4000);
   }, [kioskKey, fetchRecentArrivals, playAttendanceSound]);
 
-  // Initialize QR scanner
-  useEffect(() => {
-    if (!kioskKey) return;
+  const startQrScanner = useCallback(async (deviceId?: string) => {
+    if (!qrScannerRef.current) {
+      qrScannerRef.current = new Html5Qrcode('qr-kiosk-scanner');
+    }
+    if (qrScannerRef.current.isScanning) {
+      await qrScannerRef.current.stop().catch(() => {});
+    }
 
-    fetchRecentArrivals();
-    const arrivalInterval = setInterval(fetchRecentArrivals, 10000);
+    const config = deviceId ? deviceId : { facingMode: 'user' };
 
-    const scanner = new Html5Qrcode('qr-kiosk-scanner');
-    qrScannerRef.current = scanner;
-
-    scanner.start(
-      { facingMode: 'user' },
+    return qrScannerRef.current.start(
+      config,
       { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
       (decodedText: string) => {
         if (!isProcessingRef.current) {
@@ -112,13 +116,46 @@ export const QrKioskAttendance = () => {
         }
       },
       () => {}
-    ).then(() => {
+    );
+  }, [processQrCheckin]);
+
+  const switchQrCamera = useCallback(async (deviceId: string) => {
+    setQrSelectedDeviceId(deviceId);
+    setQrShowCameraPicker(false);
+    setStatusMsg('Mengganti kamera...');
+    try {
+      await startQrScanner(deviceId);
       setQrActive(true);
       setStatusMsg('Sistem siap. Arahkan QR Code ke kamera.');
-    }).catch(() => {
+    } catch {
       setQrActive(false);
       setStatusMsg('Kamera tidak tersedia atau ditolak.');
-    });
+    }
+  }, [startQrScanner]);
+
+  // Initialize QR scanner
+  useEffect(() => {
+    if (!kioskKey) return;
+
+    const init = async () => {
+      fetchRecentArrivals();
+      const devices = await getVideoDevices();
+      setQrCameraDevices(devices);
+      const defaultId = getDefaultDeviceId(devices);
+      setQrSelectedDeviceId(defaultId);
+
+      try {
+        await startQrScanner(defaultId);
+        setQrActive(true);
+        setStatusMsg('Sistem siap. Arahkan QR Code ke kamera.');
+      } catch {
+        setQrActive(false);
+        setStatusMsg('Kamera tidak tersedia atau ditolak.');
+      }
+    };
+    init();
+
+    const arrivalInterval = setInterval(fetchRecentArrivals, 10000);
 
     return () => {
       clearInterval(arrivalInterval);
@@ -126,7 +163,7 @@ export const QrKioskAttendance = () => {
         qrScannerRef.current.stop().then(() => qrScannerRef.current?.clear()).catch(() => {});
       }
     };
-  }, [kioskKey, fetchRecentArrivals, processQrCheckin]);
+  }, [kioskKey, fetchRecentArrivals, startQrScanner]);
 
   // Auth screen
   if (!kioskKey) {
@@ -214,6 +251,30 @@ export const QrKioskAttendance = () => {
         </div>
         <div className="flex items-center gap-3">
           <p className="text-sm text-zinc-400" role="status">{statusMsg}</p>
+          {qrCameraDevices.length > 1 && (
+            <div className="relative">
+              <button onClick={() => setQrShowCameraPicker(v => !v)}
+                className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-primary hover:text-primary/70 transition-colors"
+                title="Ganti Kamera" aria-label="Ganti Kamera">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              {qrShowCameraPicker && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden">
+                  {qrCameraDevices.map(d => (
+                    <button key={d.deviceId}
+                      onClick={() => switchQrCamera(d.deviceId)}
+                      className={`w-full text-left px-4 py-3 text-sm border-b border-zinc-800 last:border-b-0 transition-colors ${
+                        d.deviceId === qrSelectedDeviceId
+                          ? 'bg-primary/10 text-primary font-bold'
+                          : 'text-zinc-300 hover:bg-zinc-800'
+                      }`}>
+                      {d.label || `Kamera ${d.deviceId.slice(0, 8)}...`}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <button onClick={handleToggleFullscreen} className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-primary hover:text-primary/70 transition-colors" title="Layar Penuh" aria-label="Layar Penuh">
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>

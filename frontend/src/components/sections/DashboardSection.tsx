@@ -355,11 +355,11 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
             {statsData?.schoolName || 'Sistem Absensi Kehadiran Siswa'}
           </p>
           <div className="pt-2 flex items-center gap-3">
-            <a href="/kiosk-absensi" target="_blank" rel="noopener noreferrer" className="btn-primary">
+            <a href="/#/kiosk-absensi" target="_blank" rel="noopener noreferrer" className="btn-primary">
               <Camera className="w-4 h-4" />
               <span>Buka Kiosk Absensi Wajah</span>
             </a>
-            <a href="/kiosk-qr" target="_blank" rel="noopener noreferrer" className="btn-secondary">
+            <a href="/#/kiosk-qr" target="_blank" rel="noopener noreferrer" className="btn-secondary">
               <ScanBarcode className="w-4 h-4" />
               <span>Buka Kiosk QR Code</span>
             </a>

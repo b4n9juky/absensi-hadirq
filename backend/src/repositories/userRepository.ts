@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { user, session, account } from '../db/schema.js';
+import { user, session, account, teachingSchedules, teacherAgendas } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
 export class UserRepository {
@@ -24,7 +24,8 @@ export class UserRepository {
   }
 
   async delete(id: string) {
-    // Delete sessions, credentials, and user row
+    await db.delete(teachingSchedules).where(eq(teachingSchedules.teacherId, id));
+    await db.delete(teacherAgendas).where(eq(teacherAgendas.teacherId, id));
     await db.delete(session).where(eq(session.userId, id));
     await db.delete(account).where(eq(account.userId, id));
     await db.delete(user).where(eq(user.id, id));

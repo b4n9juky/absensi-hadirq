@@ -170,6 +170,25 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use('/uploads', express.static(uploadDir));
 
+// Template download endpoint (reliable, with proper Content-Disposition headers)
+const TEMPLATE_MAP: Record<string, string> = {
+  siswa: 'template-import-siswa.xlsx',
+  user: 'template-import-user.xlsx',
+  mapel: 'template-import-mapel.xlsx',
+  jadwal: 'template-import-jadwal.xlsx',
+};
+app.get('/api/templates/download/:type', (req, res) => {
+  const filename = TEMPLATE_MAP[req.params.type];
+  if (!filename) {
+    return res.status(404).json({ success: false, error: 'Jenis template tidak valid.' });
+  }
+  const filePath = path.join(uploadDir, 'templates', filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: 'File template tidak ditemukan.' });
+  }
+  res.download(filePath, filename);
+});
+
 // SPA fallback — semua non-API route arahkan ke index.html
 app.get('*', (req, res, next) => {
   if (!req.path.startsWith('/api')) {

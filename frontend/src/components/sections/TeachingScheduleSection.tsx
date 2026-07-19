@@ -308,7 +308,7 @@ export const TeachingScheduleSection: React.FC<Props> = ({ token }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10">
                 <span className="text-xs text-muted-foreground">Butuh template? Download file contoh Excel:</span>
-                <a href="/uploads/templates/template-import-jadwal.xlsx" download
+                <a href="/api/templates/download/jadwal"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all">
                   <Download className="w-3.5 h-3.5" /> Download Template
                 </a>

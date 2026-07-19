@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginScreen } from './components/LoginScreen';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { DashboardSection } from './components/sections/DashboardSection';
@@ -59,7 +59,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/kiosk-absensi" element={<KioskAttendance />} />
         <Route path="/kiosk-qr" element={<QrKioskAttendance />} />
@@ -97,7 +97,7 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

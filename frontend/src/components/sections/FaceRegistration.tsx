@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as faceapi from '@vladmandic/face-api';
-import { CheckCircle2, XCircle, Camera, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, Camera } from 'lucide-react';
 import { getVideoDevices, getDefaultDeviceId, getCameraConstraints } from '../../utils/camera';
 
 interface StudentRecord {

@@ -2,6 +2,8 @@ import { db } from '../db/index.js';
 import { students, attendances, academicYears, semesters, schedules } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getJakartaDate } from '../lib/timezone.js';
+import { settingService } from './settingService.js';
+import { getDistance } from 'geolib';
 
 function toDatabaseLocalTime(date: Date): Date {
   const localDate = new Date(date);
@@ -25,7 +27,13 @@ function getLocalEpoch(date: Date): number {
 }
 
 export class KioskService {
-  async processKioskAttendance(studentId: number, status?: 'PRESENT' | 'LATE' | 'SICK' | 'EXCUSED' | 'ABSENT') {
+  async processKioskAttendance(
+    studentId: number,
+    status?: 'PRESENT' | 'LATE' | 'SICK' | 'EXCUSED' | 'ABSENT',
+    latitude?: number,
+    longitude?: number,
+    accuracy?: number
+  ) {
     const studentRecord = await db.select().from(students).where(eq(students.id, studentId)).limit(1);
     if (studentRecord.length === 0) {
       return { success: false, message: `Siswa tidak ditemukan di database.` };
@@ -37,6 +45,26 @@ export class KioskService {
 
     if (activeYear.length === 0 || activeSemester.length === 0) {
       return { success: false, message: 'Tahun ajaran atau semester aktif belum diatur di server.' };
+    }
+
+    // Geofence validation per-checkin
+    if (latitude !== undefined && longitude !== undefined) {
+      const geofence = await settingService.getGeofenceConfig();
+
+      if (geofence.max_accuracy_meters > 0 && accuracy !== undefined && accuracy > geofence.max_accuracy_meters) {
+        return { success: false, message: `Akurasi GPS terlalu rendah (${Math.round(accuracy)}m). Maksimal ${geofence.max_accuracy_meters}m.` };
+      }
+
+      if (geofence.school_latitude !== 0 || geofence.school_longitude !== 0) {
+        const distanceM = getDistance(
+          { latitude: latitude, longitude: longitude },
+          { latitude: geofence.school_latitude, longitude: geofence.school_longitude }
+        );
+
+        if (distanceM > geofence.school_radius_meters) {
+          return { success: false, message: `Berada di luar area sekolah (${distanceM}m). Maksimal ${geofence.school_radius_meters}m.` };
+        }
+      }
     }
 
     const serverTime = getJakartaDate();
@@ -98,6 +126,8 @@ export class KioskService {
       await db.update(attendances)
         .set({
           checkoutTime: toDatabaseLocalTime(serverTime),
+          checkoutLatitude: latitude ?? null,
+          checkoutLongitude: longitude ?? null,
           updatedAt: toDatabaseLocalTime(serverTime),
         })
         .where(eq(attendances.id, record.id));
@@ -123,6 +153,9 @@ export class KioskService {
       status: targetStatus,
       isVerified: true,
       checkinTime: toDatabaseLocalTime(serverTime),
+      checkinLatitude: latitude ?? null,
+      checkinLongitude: longitude ?? null,
+      checkinAccuracy: accuracy ?? null,
     });
 
     let statusMsg = 'Hadir';

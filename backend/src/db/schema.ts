@@ -86,6 +86,7 @@ export const attendances = mysqlTable('attendances', {
   checkinPhoto: varchar('checkin_photo', { length: 255 }),
   checkinLatitude: double('checkin_latitude'),
   checkinLongitude: double('checkin_longitude'),
+  checkinAccuracy: double('checkin_accuracy'),
   
   // Check-out details
   checkoutTime: timestamp('checkout_time'),

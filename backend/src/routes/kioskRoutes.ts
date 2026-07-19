@@ -39,7 +39,7 @@ kioskRouter.post('/checkin', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
     }
 
-    let { studentId, studentNis, status } = req.body;
+    let { studentId, studentNis, status, latitude, longitude, accuracy } = req.body;
 
     // If studentNis provided (QR scan), look up student by NIS
     if (studentNis && !studentId) {
@@ -57,7 +57,11 @@ kioskRouter.post('/checkin', async (req, res) => {
       return res.status(400).json({ success: false, error: 'ID Siswa tidak valid.' });
     }
 
-    const result = await kioskService.processKioskAttendance(parseInt(studentId), status);
+    const lat = latitude !== undefined ? parseFloat(latitude) : undefined;
+    const lng = longitude !== undefined ? parseFloat(longitude) : undefined;
+    const acc = accuracy !== undefined ? parseFloat(accuracy) : undefined;
+
+    const result = await kioskService.processKioskAttendance(parseInt(studentId), status, lat, lng, acc);
     
     if (result.success) {
       const studentRec = await db.select({

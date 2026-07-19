@@ -60,10 +60,22 @@ export const QrKioskAttendance = () => {
     if (!kioskKey || isProcessingRef.current) return;
     isProcessingRef.current = true;
     try {
+      let lat: number | undefined, lng: number | undefined, acc: number | undefined;
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+        });
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+        acc = pos.coords.accuracy;
+      } catch {
+        /* GPS unavailable — proceed without location */
+      }
+
       const res = await fetch('/api/kiosk/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-kiosk-token': kioskKey },
-        body: JSON.stringify({ studentNis: nis })
+        body: JSON.stringify({ studentNis: nis, latitude: lat, longitude: lng, accuracy: acc })
       });
       const data = await res.json();
       if (res.ok && data.success) {

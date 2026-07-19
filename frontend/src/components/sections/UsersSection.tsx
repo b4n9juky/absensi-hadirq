@@ -39,7 +39,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       align: 'right' as const,
       render: (row: UserRecord) => (
         <div className="space-x-2 inline-flex">
-          <button onClick={() => { setUserName(row.name); setUserEmail(row.email); setUserRole(row.role); setShowEditUser(row); }}
+          <button onClick={() => { setUserName(row.name); setUserEmail(row.email); setUserRole(row.role); setUserNewPassword(''); setShowEditUser(row); }}
             className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex" aria-label="Edit pengguna">
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -67,6 +67,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
+  const [userNewPassword, setUserNewPassword] = useState('');
   const [userRole, setUserRole] = useState('guru');
 
   // Import Excel state
@@ -109,16 +110,18 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
     e.preventDefault();
     if (!showEditUser) return;
     try {
+      const body: any = { name: userName, email: userEmail, role: userRole };
+      if (userNewPassword) body.password = userNewPassword;
       const res = await fetch(`/api/users/${showEditUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({ name: userName, email: userEmail, role: userRole })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (res.ok && data.success) {
         triggerToast('Akun Pengguna berhasil diperbarui!');
         setShowEditUser(null);
-        setUserName(''); setUserEmail('');
+        setUserName(''); setUserEmail(''); setUserNewPassword('');
         fetchUsers();
       } else throw new Error(data.error || 'Gagal memperbarui user.');
     } catch (err: any) { setErrorMsg(err.message); }
@@ -236,6 +239,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
             <div className="space-y-4">
               <FormInput label="Nama Lengkap" value={userName} onChange={(e) => setUserName(e.target.value)} required />
               <FormInput label="Alamat Email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} required />
+              <FormInput label="Kata Sandi Baru" type="password" value={userNewPassword} onChange={(e) => setUserNewPassword(e.target.value)} placeholder="Kosongkan jika tidak diubah" />
               <FormSelect label="Peran (Role)" value={userRole} onChange={(e) => setUserRole(e.target.value)}
                 options={[{ value: 'guru', label: 'Guru' }, { value: 'admin', label: 'Administrator' }]} />
             </div>

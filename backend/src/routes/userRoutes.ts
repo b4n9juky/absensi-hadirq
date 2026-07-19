@@ -29,8 +29,8 @@ usersRouter.post('/', validate(createUserSchema), async (req, res) => {
 usersRouter.put('/:id', validate(updateUserSchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role } = req.body;
-    await userService.updateUser(id, { name, email, role });
+    const { name, email, role, password } = req.body;
+    await userService.updateUser(id, { name, email, role, password });
     res.json({ success: true, message: 'User berhasil diperbarui.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });

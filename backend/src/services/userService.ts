@@ -6,12 +6,20 @@ import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { parseExcelUserFile } from '../lib/excelParser.js';
 import fs from 'fs';
+import { hashPassword } from '@better-auth/utils/password';
 
 export interface CreateUserDto {
   name: string;
   email: string;
   password?: string;
   role: string;
+}
+
+export interface UpdateUserDto {
+  name: string;
+  email: string;
+  role: string;
+  password?: string;
 }
 
 export class UserService {
@@ -58,7 +66,7 @@ export class UserService {
     return signUpResult.user.id;
   }
 
-  async updateUser(id: string, dto: CreateUserDto) {
+  async updateUser(id: string, dto: UpdateUserDto) {
     const existingUser = await userRepo.findById(id);
     if (!existingUser) {
       throw new Error('User tidak ditemukan.');
@@ -85,6 +93,12 @@ export class UserService {
     }
 
     await userRepo.update(id, dto.name, dto.email, dto.role);
+
+    // Update password if provided
+    if (dto.password) {
+      const hashed = await hashPassword(dto.password);
+      await userRepo.updatePassword(id, hashed);
+    }
   }
 
   async deleteUser(id: string) {

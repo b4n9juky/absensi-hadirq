@@ -23,6 +23,12 @@ export class UserRepository {
       .where(eq(user.id, id));
   }
 
+  async updatePassword(id: string, hashedPassword: string) {
+    await db.update(account)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(account.userId, id));
+  }
+
   async delete(id: string) {
     await db.delete(teachingSchedules).where(eq(teachingSchedules.teacherId, id));
     await db.delete(teacherAgendas).where(eq(teacherAgendas.teacherId, id));

@@ -8,6 +8,13 @@
       "when": 1784097404197,
       "tag": "0000_clever_jubilee",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1784463731620,
+      "tag": "0001_bored_wrecking_crew",
+      "breakpoints": true
     }
   ]
 }

@@ -71,5 +71,14 @@ export class SemesterService {
       await semesterRepo.setActive(id);
     });
   }
+
+  async deactivateSemester(id: number) {
+    const semester = await semesterRepo.findById(id);
+    if (!semester) {
+      throw new Error(`Semester dengan ID ${id} tidak ditemukan.`);
+    }
+
+    await semesterRepo.setInactive(id);
+  }
 }
 export const semesterService = new SemesterService();

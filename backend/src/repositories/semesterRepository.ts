@@ -36,5 +36,9 @@ export class SemesterRepository {
   async setActive(id: number) {
     await db.update(semesters).set({ isActive: true }).where(eq(semesters.id, id));
   }
+
+  async setInactive(id: number) {
+    await db.update(semesters).set({ isActive: false }).where(eq(semesters.id, id));
+  }
 }
 export const semesterRepo = new SemesterRepository();

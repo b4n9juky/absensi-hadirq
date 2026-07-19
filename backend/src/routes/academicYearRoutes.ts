@@ -39,6 +39,20 @@ academicYearRouter.put('/:id', async (req, res) => {
   }
 });
 
+// PUT to deactivate a specific academic year
+academicYearRouter.put('/:id/deactivate', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    }
+    await academicYearService.deactivateYear(id);
+    res.json({ success: true, message: 'Tahun ajaran berhasil dinonaktifkan.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // PUT to activate a specific academic year (sets others as inactive)
 academicYearRouter.put('/:id/activate', async (req, res) => {
   try {

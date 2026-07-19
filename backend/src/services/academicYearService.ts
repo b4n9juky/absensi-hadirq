@@ -56,5 +56,14 @@ export class AcademicYearService {
       await academicYearRepo.setActive(id);
     });
   }
+
+  async deactivateYear(id: number) {
+    const year = await academicYearRepo.findById(id);
+    if (!year) {
+      throw new Error(`Tahun ajaran dengan ID ${id} tidak ditemukan.`);
+    }
+
+    await academicYearRepo.setInactive(id);
+  }
 }
 export const academicYearService = new AcademicYearService();

@@ -81,6 +81,15 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
     } catch (err: any) { setErrorMsg(err.message); }
   };
 
+  const handleDeactivateYear = async (id: number) => {
+    try {
+      const res = await fetch(`/api/academic-years/${id}/deactivate`, { method: 'PUT', headers: { ...authHeader, 'Content-Type': 'application/json' } });
+      const data = await res.json();
+      if (res.ok && data.success) { triggerToast('Tahun ajaran dinonaktifkan!'); fetchData(); }
+      else throw new Error(data.error || 'Gagal.');
+    } catch (err: any) { setErrorMsg(err.message); }
+  };
+
   const handleActivateYear = async (id: number) => {
     try {
       const res = await fetch(`/api/academic-years/${id}/activate`, { method: 'PUT', headers: authHeader });
@@ -109,6 +118,15 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
       const res = await fetch(`/api/semesters/${showEditSemester.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify(body) });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Semester diperbarui!'); setShowEditSemester(null); fetchData(); }
+      else throw new Error(data.error || 'Gagal.');
+    } catch (err: any) { setErrorMsg(err.message); }
+  };
+
+  const handleDeactivateSemester = async (id: number) => {
+    try {
+      const res = await fetch(`/api/semesters/${id}/deactivate`, { method: 'PUT', headers: { ...authHeader, 'Content-Type': 'application/json' } });
+      const data = await res.json();
+      if (res.ok && data.success) { triggerToast('Semester dinonaktifkan!'); fetchData(); }
       else throw new Error(data.error || 'Gagal.');
     } catch (err: any) { setErrorMsg(err.message); }
   };
@@ -180,7 +198,12 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
                       className="p-1.5 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
                       <Pencil className="w-3 h-3" />
                     </button>
-                    {!year.isActive && (
+                    {year.isActive ? (
+                      <button onClick={() => handleDeactivateYear(year.id)}
+                        className="px-2.5 py-1 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/30 text-xs font-semibold transition-colors">
+                        Nonaktifkan
+                      </button>
+                    ) : (
                       <button onClick={() => handleActivateYear(year.id)}
                         className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
                         Aktifkan
@@ -217,7 +240,12 @@ export const AcademicSection: React.FC<Props> = ({ token }) => {
                       className="p-1.5 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
                       <Pencil className="w-3 h-3" />
                     </button>
-                    {!sem.isActive && (
+                    {sem.isActive ? (
+                      <button onClick={() => handleDeactivateSemester(sem.id)}
+                        className="px-2.5 py-1 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/30 text-xs font-semibold transition-colors">
+                        Nonaktifkan
+                      </button>
+                    ) : (
                       <button onClick={() => handleActivateSemester(sem.id)}
                         className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground border border-border text-xs font-semibold transition-colors">
                         Aktifkan

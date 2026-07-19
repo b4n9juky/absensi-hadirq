@@ -39,6 +39,20 @@ semesterRouter.put('/:id', async (req, res) => {
   }
 });
 
+// PUT to deactivate a specific semester
+semesterRouter.put('/:id/deactivate', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID tidak valid.' });
+    }
+    await semesterService.deactivateSemester(id);
+    res.json({ success: true, message: 'Semester berhasil dinonaktifkan.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // PUT to activate a specific semester (deactivates others in the same academic year)
 semesterRouter.put('/:id/activate', async (req, res) => {
   try {

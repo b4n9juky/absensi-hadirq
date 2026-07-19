@@ -47,7 +47,9 @@ debug.keystore
 /backend/backend.log
 /backend/server_err.log
 /backend/server_out.log
-/backend/uploads/
+/backend/uploads/*
+!/backend/uploads/templates/
+!/backend/uploads/templates/*
 /backend/*.log
 /backend/*.cjs
 /backend/*.mjs

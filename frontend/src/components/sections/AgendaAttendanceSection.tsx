@@ -13,8 +13,9 @@ interface AgendaRecord {
   date: string;
   startTime: string | null;
   endTime: string | null;
-  className: string;
-  classId: number;
+  className: string | null;
+  classId: number | null;
+  notes: string | null;
 }
 
 interface ClassRecord { id: number; name: string; }
@@ -55,12 +56,14 @@ export const AgendaAttendanceSection: React.FC<Props> = ({ token }) => {
 
   const [showModal, setShowModal] = useState(false);
   const [editAgenda, setEditAgenda] = useState<AgendaRecord | null>(null);
+  const [formWithClass, setFormWithClass] = useState(true);
   const [formClassId, setFormClassId] = useState('');
   const [formTitle, setFormTitle] = useState('');
   const [formAgendaType, setFormAgendaType] = useState('');
   const [formDate, setFormDate] = useState('');
   const [formStart, setFormStart] = useState('');
   const [formEnd, setFormEnd] = useState('');
+  const [formNotes, setFormNotes] = useState('');
   const [formError, setFormError] = useState('');
 
   const [selectedAgenda, setSelectedAgenda] = useState<AgendaRecord | null>(null);
@@ -90,24 +93,28 @@ export const AgendaAttendanceSection: React.FC<Props> = ({ token }) => {
 
   const openAdd = () => {
     setEditAgenda(null);
+    setFormWithClass(true);
     setFormClassId(classesList.length > 0 ? String(classesList[0].id) : '');
     setFormTitle('');
     setFormAgendaType('');
     setFormDate(todayStr);
     setFormStart('');
     setFormEnd('');
+    setFormNotes('');
     setFormError('');
     setShowModal(true);
   };
 
   const openEdit = (item: AgendaRecord) => {
     setEditAgenda(item);
-    setFormClassId(String(item.classId));
+    setFormWithClass(!!item.classId);
+    setFormClassId(item.classId ? String(item.classId) : '');
     setFormTitle(item.title);
     setFormAgendaType(item.agendaType || '');
     setFormDate(item.date);
     setFormStart(item.startTime || '');
     setFormEnd(item.endTime || '');
+    setFormNotes(item.notes || '');
     setFormError('');
     setShowModal(true);
   };
@@ -115,15 +122,21 @@ export const AgendaAttendanceSection: React.FC<Props> = ({ token }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (!formClassId || !formTitle || !formDate) {
-      setFormError('Judul, kelas, dan tanggal wajib diisi.');
+    if (!formTitle || !formDate) {
+      setFormError('Judul dan tanggal wajib diisi.');
+      return;
+    }
+    if (formWithClass && !formClassId) {
+      setFormError('Kelas wajib dipilih saat menggunakan mode "Dengan Kelas".');
       return;
     }
     try {
-      const body: any = { classId: Number(formClassId), title: formTitle, date: formDate };
+      const body: any = { title: formTitle, date: formDate };
+      if (formWithClass) body.classId = Number(formClassId);
       if (formAgendaType) body.agendaType = formAgendaType;
       if (formStart) body.startTime = formStart;
       if (formEnd) body.endTime = formEnd;
+      if (formNotes) body.notes = formNotes;
 
       const url = editAgenda ? `/api/teacher/agendas/${editAgenda.id}` : '/api/teacher/agendas';
       const method = editAgenda ? 'PUT' : 'POST';
@@ -232,7 +245,7 @@ export const AgendaAttendanceSection: React.FC<Props> = ({ token }) => {
             <h2 className="text-base font-bold text-foreground truncate">{selectedAgenda.title}</h2>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
               <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{selectedAgenda.date}</span>
-              <span className="flex items-center gap-1"><Users className="w-3 h-3" />{selectedAgenda.className}</span>
+              <span className="flex items-center gap-1"><Users className="w-3 h-3" />{selectedAgenda.className || 'Tanpa Kelas'}</span>
               {selectedAgenda.agendaType && <span className="text-teal-400">{selectedAgenda.agendaType}</span>}
               {(selectedAgenda.startTime || selectedAgenda.endTime) && (
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{selectedAgenda.startTime?.slice(0, 5) || '--'}-{selectedAgenda.endTime?.slice(0, 5) || '--'}</span>
@@ -360,7 +373,7 @@ export const AgendaAttendanceSection: React.FC<Props> = ({ token }) => {
                       <button onClick={() => openAttendance(a)} className="w-full text-left p-4 space-y-2 hover:bg-muted/10 transition-colors">
                         <div className="font-bold text-sm text-foreground truncate">{a.title}</div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{a.className}</span>
+                          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{a.className || 'Tanpa Kelas'}</span>
                           {a.agendaType && <><span>|</span><span className="text-teal-400">{a.agendaType}</span></>}
                         </div>
                         {(a.startTime || a.endTime) && (
@@ -402,8 +415,50 @@ export const AgendaAttendanceSection: React.FC<Props> = ({ token }) => {
           </>}>
           <form id="agendaForm" onSubmit={handleSubmit} className="space-y-4">
             <FormInput label="Judul Agenda" value={formTitle} onChange={e => setFormTitle(e.target.value)} placeholder="Contoh: UTS Matematika" required />
-            <FormSelect label="Kelas" value={formClassId} onChange={e => setFormClassId(e.target.value)} placeholder="-- Pilih Kelas --" options={classesList.map(c => ({ value: String(c.id), label: c.name }))} />
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground">Mode Kelas</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="classMode"
+                    checked={formWithClass}
+                    onChange={() => setFormWithClass(true)}
+                    className="w-4 h-4 text-primary border-border focus:ring-primary"
+                  />
+                  <span className="text-sm text-foreground">Dengan Kelas</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="classMode"
+                    checked={!formWithClass}
+                    onChange={() => setFormWithClass(false)}
+                    className="w-4 h-4 text-primary border-border focus:ring-primary"
+                  />
+                  <span className="text-sm text-foreground">Tanpa Kelas</span>
+                </label>
+              </div>
+            </div>
+
+            {formWithClass && (
+              <FormSelect label="Kelas" value={formClassId} onChange={e => setFormClassId(e.target.value)} placeholder="-- Pilih Kelas --" options={classesList.map(c => ({ value: String(c.id), label: c.name }))} />
+            )}
+
             <FormInput label="Tipe Agenda (opsional)" value={formAgendaType} onChange={e => setFormAgendaType(e.target.value)} placeholder="Contoh: UTS, Quiz, Kegiatan" />
+
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1">Catatan / Notes</label>
+              <textarea
+                value={formNotes}
+                onChange={e => setFormNotes(e.target.value)}
+                placeholder="Catatan tambahan untuk agenda..."
+                rows={3}
+                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary resize-y"
+              />
+            </div>
+
             <FormInput label="Tanggal" type="date" value={formDate} onChange={e => setFormDate(e.target.value)} required />
             <div className="grid grid-cols-2 gap-4">
               <TimePicker label="Jam Mulai (opsional)" value={formStart} onChange={setFormStart} />

@@ -18,16 +18,17 @@ export class AgendaAttendanceService {
       endTime: teacherAgendas.endTime,
       className: classes.name,
       classId: classes.id,
+      notes: teacherAgendas.notes,
     })
     .from(teacherAgendas)
-    .innerJoin(classes, eq(teacherAgendas.classId, classes.id))
+    .leftJoin(classes, eq(teacherAgendas.classId, classes.id))
     .where(and(...conditions))
     .orderBy(desc(teacherAgendas.date));
   }
 
   async createAgenda(teacherId: string, data: {
-    classId: number; title: string; agendaType?: string; subject?: string;
-    date: string; startTime?: string; endTime?: string;
+    classId?: number; title: string; agendaType?: string; subject?: string;
+    date: string; startTime?: string; endTime?: string; notes?: string;
   }) {
     const activeAcademicYear = await db.select({ id: academicYears.id })
       .from(academicYears)
@@ -44,10 +45,11 @@ export class AgendaAttendanceService {
 
     const [result] = await db.insert(teacherAgendas).values({
       teacherId,
-      classId: data.classId,
+      classId: data.classId ?? null,
       title: data.title,
       agendaType: data.agendaType || null,
       subject: data.subject || null,
+      notes: data.notes || null,
       date: data.date,
       startTime: data.startTime || null,
       endTime: data.endTime || null,
@@ -61,6 +63,7 @@ export class AgendaAttendanceService {
   async updateAgenda(teacherId: string, agendaId: number, data: {
     title?: string; agendaType?: string; subject?: string;
     date?: string; startTime?: string; endTime?: string;
+    classId?: number | null; notes?: string;
   }) {
     const existing = await db.select({ teacherId: teacherAgendas.teacherId })
       .from(teacherAgendas)
@@ -78,6 +81,8 @@ export class AgendaAttendanceService {
         ...(data.date !== undefined && { date: data.date }),
         ...(data.startTime !== undefined && { startTime: data.startTime }),
         ...(data.endTime !== undefined && { endTime: data.endTime }),
+        ...(data.classId !== undefined && { classId: data.classId }),
+        ...(data.notes !== undefined && { notes: data.notes }),
       })
       .where(eq(teacherAgendas.id, agendaId));
   }
@@ -103,25 +108,29 @@ export class AgendaAttendanceService {
       title: teacherAgendas.title,
       agendaType: teacherAgendas.agendaType,
       subject: teacherAgendas.subject,
+      notes: teacherAgendas.notes,
       date: teacherAgendas.date,
       startTime: teacherAgendas.startTime,
       endTime: teacherAgendas.endTime,
     })
     .from(teacherAgendas)
-    .innerJoin(classes, eq(teacherAgendas.classId, classes.id))
+    .leftJoin(classes, eq(teacherAgendas.classId, classes.id))
     .where(eq(teacherAgendas.id, agendaId))
     .limit(1);
 
     if (agenda.length === 0) throw new Error('Agenda tidak ditemukan.');
 
-    const studentsRows = await db.select({
-      studentId: students.id,
-      nis: students.nis,
-      studentName: students.name,
-    })
-    .from(students)
-    .where(eq(students.classId, agenda[0].classId))
-    .orderBy(students.name);
+    let studentsRows: { studentId: number; nis: string; studentName: string }[] = [];
+    if (agenda[0].classId) {
+      studentsRows = await db.select({
+        studentId: students.id,
+        nis: students.nis,
+        studentName: students.name,
+      })
+      .from(students)
+      .where(eq(students.classId, agenda[0].classId))
+      .orderBy(students.name);
+    }
 
     const existingAttendances = await db.select({
       studentId: agendaAttendances.studentId,
@@ -204,7 +213,7 @@ export class AgendaAttendanceService {
     .limit(1);
 
     if (student.length === 0) throw new Error('Siswa dengan NIS tersebut tidak ditemukan.');
-    if (student[0].classId !== agenda[0].classId) throw new Error('Siswa tidak terdaftar di kelas agenda ini.');
+    if (agenda[0].classId && student[0].classId !== agenda[0].classId) throw new Error('Siswa tidak terdaftar di kelas agenda ini.');
 
     await db.insert(agendaAttendances)
       .values({

@@ -21,10 +21,10 @@ agendaAttendanceRouter.get('/agendas', authMiddleware, requireRole(['guru']), as
 agendaAttendanceRouter.post('/agendas', authMiddleware, requireRole(['guru']), async (req, res) => {
   try {
     const teacherId = req.context!.user.id;
-    const { classId, title, agendaType, subject, date, startTime, endTime } = req.body;
+    const { classId, title, agendaType, subject, date, startTime, endTime, notes } = req.body;
 
-    if (!classId || !title || !date) {
-      return res.status(400).json({ success: false, error: 'Data tidak lengkap. Dibutuhkan classId, title, dan date.' });
+    if (!title || !date) {
+      return res.status(400).json({ success: false, error: 'Data tidak lengkap. Dibutuhkan title dan date.' });
     }
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -33,7 +33,7 @@ agendaAttendanceRouter.post('/agendas', authMiddleware, requireRole(['guru']), a
     }
 
     const agendaId = await agendaAttendanceService.createAgenda(teacherId, {
-      classId: Number(classId), title, agendaType, subject, date, startTime, endTime,
+      classId: classId ? Number(classId) : undefined, title, agendaType, subject, date, startTime, endTime, notes,
     });
     res.status(201).json({ success: true, message: 'Agenda berhasil dibuat.', data: { id: agendaId } });
   } catch (err: any) {
@@ -47,8 +47,12 @@ agendaAttendanceRouter.put('/agendas/:id', authMiddleware, requireRole(['guru'])
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, error: 'ID tidak valid.' });
 
-    const { title, agendaType, subject, date, startTime, endTime } = req.body;
-    await agendaAttendanceService.updateAgenda(teacherId, id, { title, agendaType, subject, date, startTime, endTime });
+    const { title, agendaType, subject, date, startTime, endTime, classId, notes } = req.body;
+    await agendaAttendanceService.updateAgenda(teacherId, id, {
+      title, agendaType, subject, date, startTime, endTime,
+      classId: classId !== undefined ? (classId ? Number(classId) : null) : undefined,
+      notes,
+    });
     res.json({ success: true, message: 'Agenda berhasil diperbarui.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });

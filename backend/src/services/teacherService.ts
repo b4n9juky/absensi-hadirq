@@ -402,7 +402,7 @@ export class TeacherService {
     .groupBy(agendaAttendances.agendaId, agendaAttendances.status) : [];
 
     // Batch query student counts per class for agendas
-    const agendaClassIds = [...new Set(agendasList.map(a => a.classId))];
+    const agendaClassIds = [...new Set(agendasList.map(a => a.classId).filter((id): id is number => id != null))];
     const agendaClassStudentCounts = agendaClassIds.length > 0 ? await db.select({
       classId: students.classId,
       count: sql<number>`COUNT(*)`.as('count'),
@@ -420,7 +420,7 @@ export class TeacherService {
         title: ag.title,
         agendaType: ag.agendaType,
         className: ag.className,
-        totalStudents: agendaStudentCountMap.get(ag.classId) || 0,
+        totalStudents: ag.classId ? (agendaStudentCountMap.get(ag.classId) || 0) : 0,
         presentCount: Number(statusCounts.find(c => c.status === 'PRESENT')?.count || 0),
         sickCount: Number(statusCounts.find(c => c.status === 'SICK')?.count || 0),
         excusedCount: Number(statusCounts.find(c => c.status === 'EXCUSED')?.count || 0),

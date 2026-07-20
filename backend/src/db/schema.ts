@@ -168,10 +168,11 @@ export const subjects = mysqlTable('subjects', {
 export const teacherAgendas = mysqlTable('teacher_agendas', {
   id: int('id').autoincrement().primaryKey(),
   teacherId: varchar('teacher_id', { length: 36 }).references(() => user.id).notNull(),
-  classId: int('class_id').references(() => classes.id).notNull(),
+  classId: int('class_id').references(() => classes.id),
   title: varchar('title', { length: 200 }).notNull(),
   agendaType: varchar('agenda_type', { length: 50 }),
   subject: varchar('subject', { length: 100 }),
+  notes: text('notes'),
   date: date('date', { mode: 'string' }).notNull(),
   startTime: time('start_time'),
   endTime: time('end_time'),

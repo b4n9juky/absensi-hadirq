@@ -444,6 +444,128 @@ export class TeacherService {
       },
     };
   }
+  async getSemesterJournal(teacherId: string, startDate: string, endDate: string) {
+    const schedulesList = await db.select({
+      scheduleId: teachingSchedules.id,
+      classId: teachingSchedules.classId,
+      className: classes.name,
+      subject: teachingSchedules.subject,
+      startTime: teachingSchedules.startTime,
+      endTime: teachingSchedules.endTime,
+      dayName: teachingSchedules.dayName,
+    })
+    .from(teachingSchedules)
+    .innerJoin(classes, eq(teachingSchedules.classId, classes.id))
+    .where(eq(teachingSchedules.teacherId, teacherId))
+    .orderBy(teachingSchedules.dayName, teachingSchedules.startTime);
+
+    const scheduleIds = schedulesList.map(s => s.scheduleId);
+    if (scheduleIds.length === 0) {
+      return { teacher: null, entries: [], stats: {} };
+    }
+
+    const teacherData = await db.select({ name: user.name, email: user.email })
+      .from(user).where(eq(user.id, teacherId)).limit(1);
+    const teacher = teacherData.length > 0 ? teacherData[0] : null;
+
+    const sessionLogs = scheduleIds.length > 0 ? await db.select({
+      teachingScheduleId: teachingSessionLogs.teachingScheduleId,
+      attendanceDate: teachingSessionLogs.attendanceDate,
+      materi: teachingSessionLogs.materi,
+      kegiatan: teachingSessionLogs.kegiatan,
+      catatanKendala: teachingSessionLogs.catatanKendala,
+    })
+    .from(teachingSessionLogs)
+    .where(and(
+      inArray(teachingSessionLogs.teachingScheduleId, scheduleIds),
+      gte(teachingSessionLogs.attendanceDate, startDate),
+      lte(teachingSessionLogs.attendanceDate, endDate),
+    ))
+    .orderBy(teachingSessionLogs.attendanceDate) : [];
+
+    const dateScheduleIds = [...new Set(sessionLogs.map(l => l.teachingScheduleId))];
+    const attendanceCounts = dateScheduleIds.length > 0 ? await db.select({
+      teachingScheduleId: subjectAttendances.teachingScheduleId,
+      attendanceDate: subjectAttendances.attendanceDate,
+      status: subjectAttendances.status,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(subjectAttendances)
+    .where(and(
+      inArray(subjectAttendances.teachingScheduleId, dateScheduleIds),
+      gte(subjectAttendances.attendanceDate, startDate),
+      lte(subjectAttendances.attendanceDate, endDate),
+    ))
+    .groupBy(subjectAttendances.teachingScheduleId, subjectAttendances.attendanceDate, subjectAttendances.status) : [];
+
+    const scheduleMap = new Map(schedulesList.map(s => [s.scheduleId, s]));
+
+    const entryMap = new Map<string, {
+      date: string;
+      schedules: any[];
+    }>();
+
+    for (const log of sessionLogs) {
+      const sched = scheduleMap.get(log.teachingScheduleId);
+      if (!sched) continue;
+
+      const key = log.attendanceDate;
+      if (!entryMap.has(key)) {
+        entryMap.set(key, { date: key, schedules: [] });
+      }
+
+      const statusCounts = attendanceCounts.filter(c =>
+        c.teachingScheduleId === log.teachingScheduleId &&
+        c.attendanceDate === log.attendanceDate
+      );
+
+      entryMap.get(key)!.schedules.push({
+        scheduleId: log.teachingScheduleId,
+        className: sched.className,
+        subject: sched.subject || '',
+        startTime: sched.startTime,
+        endTime: sched.endTime,
+        dayName: sched.dayName,
+        materi: log.materi || '',
+        kegiatan: log.kegiatan || '',
+        catatanKendala: log.catatanKendala || '',
+        presentCount: Number(statusCounts.find(c => c.status === 'PRESENT')?.count || 0),
+        sickCount: Number(statusCounts.find(c => c.status === 'SICK')?.count || 0),
+        excusedCount: Number(statusCounts.find(c => c.status === 'EXCUSED')?.count || 0),
+        absentCount: Number(statusCounts.find(c => c.status === 'ABSENT')?.count || 0),
+        dispensationCount: Number(statusCounts.find(c => c.status === 'DISPEN')?.count || 0),
+        skippedCount: Number(statusCounts.find(c => c.status === 'SKIPPED')?.count || 0),
+      });
+    }
+
+    const entries = Array.from(entryMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+    let totalSessions = 0, totalPresent = 0, totalSick = 0, totalExcused = 0, totalAbsent = 0;
+    for (const entry of entries) {
+      for (const s of entry.schedules) {
+        totalSessions++;
+        totalPresent += s.presentCount;
+        totalSick += s.sickCount;
+        totalExcused += s.excusedCount;
+        totalAbsent += s.absentCount;
+      }
+    }
+
+    return {
+      teacher,
+      startDate,
+      endDate,
+      entries,
+      stats: {
+        totalDays: entries.length,
+        totalSessions,
+        totalPresent,
+        totalSick,
+        totalExcused,
+        totalAbsent,
+      },
+    };
+  }
 }
 
 export const teacherService = new TeacherService();

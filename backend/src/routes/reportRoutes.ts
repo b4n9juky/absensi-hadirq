@@ -62,4 +62,46 @@ reportRouter.get('/attendance', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+reportRouter.get('/recap', async (req, res) => {
+  try {
+    const user = (req as any).context?.user;
+    const type = req.query.type as string;
+    const classIdStr = req.query.classId as string | undefined;
+    const date = req.query.date as string | undefined;
+    const startDate = req.query.startDate as string | undefined;
+    const endDate = req.query.endDate as string | undefined;
+    const monthStr = req.query.month as string | undefined;
+    const yearStr = req.query.year as string | undefined;
+
+    if (!['daily', 'weekly', 'monthly', 'semester'].includes(type)) {
+      return res.status(400).json({ success: false, error: 'Tipe rekap tidak valid. Gunakan: daily, weekly, monthly, atau semester.' });
+    }
+
+    const classId = classIdStr ? parseInt(classIdStr) : undefined;
+    const month = monthStr ? parseInt(monthStr) : undefined;
+    const year = yearStr ? parseInt(yearStr) : undefined;
+
+    if (classIdStr && isNaN(classId!)) return res.status(400).json({ success: false, error: 'ID Kelas tidak valid.' });
+    if (monthStr && isNaN(month!)) return res.status(400).json({ success: false, error: 'Bulan tidak valid.' });
+    if (yearStr && isNaN(year!)) return res.status(400).json({ success: false, error: 'Tahun tidak valid.' });
+
+    const teacherId = user?.role === 'guru' ? user.id : undefined;
+
+    const data = await reportService.getRecap({
+      type: type as any,
+      classId,
+      date,
+      startDate,
+      endDate,
+      month,
+      year,
+      teacherId,
+    });
+
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[ReportRoutes /recap] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 export const reportsRouter = reportRouter;

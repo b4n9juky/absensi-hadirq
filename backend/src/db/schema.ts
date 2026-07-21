@@ -195,6 +195,21 @@ export const agendaAttendances = mysqlTable('agenda_attendances', {
   uniqueAttendance: uniqueIndex('unique_agenda_attendance').on(table.agendaId, table.studentId),
 }));
 
+export const teacherAttendances = mysqlTable('teacher_attendances', {
+  id: int('id').autoincrement().primaryKey(),
+  teacherId: varchar('teacher_id', { length: 36 }).references(() => user.id).notNull(),
+  attendanceDate: date('attendance_date', { mode: 'string' }).notNull(),
+  checkinTime: timestamp('checkin_time'),
+  checkoutTime: timestamp('checkout_time'),
+  status: mysqlEnum('status', ['PRESENT', 'LATE', 'SICK', 'EXCUSED', 'ABSENT']).notNull(),
+  note: text('note'),
+  isVerified: boolean('is_verified').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+  uniqueAttendance: uniqueIndex('unique_teacher_attendance').on(table.teacherId, table.attendanceDate),
+}));
+
 export const verification = mysqlTable('verification', {
   id: varchar('id', { length: 36 }).primaryKey(),
   identifier: varchar('identifier', { length: 255 }).notNull(),

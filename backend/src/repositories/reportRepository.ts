@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
-import { attendances, students, classes, academicYears, semesters } from '../db/schema.js';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { attendances, students, classes, academicYears, semesters, teachingSchedules } from '../db/schema.js';
+import { eq, and, gte, lte, inArray } from 'drizzle-orm';
 
 export interface ReportFilters {
   studentId?: number;
@@ -83,6 +83,49 @@ export class ReportRepository {
     query = query.orderBy(attendances.attendanceDate, attendances.checkinTime);
 
     // Execute the query and return rows
+    return await query;
+  }
+  async getRecapReport(filters: {
+    classId?: number;
+    startDate: string;
+    endDate: string;
+    teacherId?: string;
+  }) {
+    let query = db
+      .select({
+        id: attendances.id,
+        attendanceDate: attendances.attendanceDate,
+        status: attendances.status,
+        checkinTime: attendances.checkinTime,
+        checkoutTime: attendances.checkoutTime,
+        studentId: students.id,
+        studentNis: students.nis,
+        studentName: students.name,
+        classId: classes.id,
+        className: classes.name,
+      })
+      .from(attendances)
+      .innerJoin(students, eq(attendances.studentId, students.id))
+      .innerJoin(classes, eq(attendances.classId, classes.id))
+      .where(and(
+        gte(attendances.attendanceDate, filters.startDate),
+        lte(attendances.attendanceDate, filters.endDate),
+      ))
+      .$dynamic();
+
+    if (filters.classId) {
+      query = query.where(eq(attendances.classId, filters.classId));
+    }
+
+    if (filters.teacherId) {
+      const teacherClassIds = db.select({ id: classes.id })
+        .from(classes)
+        .innerJoin(teachingSchedules, eq(teachingSchedules.classId, classes.id))
+        .where(eq(teachingSchedules.teacherId, filters.teacherId));
+      query = query.where(inArray(attendances.classId, teacherClassIds));
+    }
+
+    query = query.orderBy(students.name, attendances.attendanceDate);
     return await query;
   }
 }

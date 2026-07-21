@@ -197,3 +197,24 @@ teacherRouter.post('/mark-class-attendance', authMiddleware, requireRole(['guru'
     res.status(500).json({ success: false, error: err.message });
   }  
 });
+
+teacherRouter.get('/semester-journal', authMiddleware, requireRole(['admin', 'guru']), async (req, res) => {
+  try {
+    const user = req.context!.user;
+    const teacherIdParam = req.query.teacherId as string | undefined;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ success: false, error: 'startDate dan endDate wajib diisi (YYYY-MM-DD).' });
+    }
+
+    const teacherId = user.role === 'guru' ? user.id : (teacherIdParam || user.id);
+
+    const data = await teacherService.getSemesterJournal(teacherId, startDate, endDate);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[TeacherRoutes /semester-journal] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});

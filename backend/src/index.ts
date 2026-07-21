@@ -31,6 +31,7 @@ import { parentAdminRouter, parentDashboardRouter } from './routes/parentRoutes.
 import { subjectRouter } from './routes/subjectRoutes.js';
 import { agendaAttendanceRouter } from './routes/agendaAttendanceRoutes.js';
 import { faceRegistrationRouter } from './routes/faceRegistrationRoutes.js';
+import { teacherAttendanceRouter } from './routes/teacherAttendanceRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -165,6 +166,7 @@ app.use('/api/teacher', agendaAttendanceRouter);
 app.use('/api/subject-attendances', subjectAttendanceRouter);
 app.use('/api/parents', authMiddleware, requireRole(['admin']), parentAdminRouter);
 app.use('/api/parent', authMiddleware, requireRole(['parent']), parentDashboardRouter);
+app.use('/api/teacher-attendance', teacherAttendanceRouter);
 
 // Serve uploaded images statically
 const uploadDir = path.join(__dirname, '../uploads');

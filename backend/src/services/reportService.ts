@@ -122,6 +122,119 @@ export class ReportService {
       };
     });
   }
+
+  async getRecap(filters: {
+    type: 'daily' | 'weekly' | 'monthly' | 'semester';
+    classId?: number;
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+    month?: number;
+    year?: number;
+    semesterId?: number;
+    academicYearId?: number;
+    teacherId?: string;
+  }) {
+    const currentServerTime = getJakartaDate();
+    let startDate: string;
+    let endDate: string;
+
+    if (filters.type === 'daily') {
+      startDate = filters.date || currentServerTime.toISOString().slice(0, 10);
+      endDate = startDate;
+    } else if (filters.type === 'weekly') {
+      const baseDate = filters.date ? new Date(filters.date) : currentServerTime;
+      const day = baseDate.getDay();
+      const mon = new Date(baseDate);
+      mon.setDate(baseDate.getDate() - ((day + 6) % 7));
+      const sat = new Date(mon);
+      sat.setDate(mon.getDate() + 5);
+      startDate = mon.toISOString().slice(0, 10);
+      endDate = sat.toISOString().slice(0, 10);
+    } else if (filters.type === 'monthly') {
+      const year = filters.year ?? currentServerTime.getFullYear();
+      const month = filters.month ?? (currentServerTime.getMonth() + 1);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
+    } else {
+      startDate = filters.startDate || currentServerTime.toISOString().slice(0, 10);
+      endDate = filters.endDate || startDate;
+    }
+
+    const formatTime = (t: any): string | null => {
+      if (!t) return null;
+      if (t instanceof Date) {
+        if (isNaN(t.getTime())) return null;
+        return t.toTimeString().slice(0, 8);
+      }
+      const s = String(t);
+      if (s.includes('T')) return s.slice(11, 19);
+      return s;
+    };
+
+    const rows = await reportRepo.getRecapReport({
+      classId: filters.classId,
+      startDate,
+      endDate,
+      teacherId: filters.teacherId,
+    });
+
+    const studentMap = new Map<number, any>();
+    const dailyRecap: Record<string, any> = {};
+    let totalPresent = 0, totalLate = 0, totalSick = 0, totalExcused = 0, totalAbsent = 0;
+
+    for (const row of rows) {
+      const dStr = String(row.attendanceDate);
+      if (!dailyRecap[dStr]) {
+        dailyRecap[dStr] = { present: 0, late: 0, sick: 0, excused: 0, absent: 0 };
+      }
+      if (row.status === 'PRESENT') dailyRecap[dStr].present++;
+      else if (row.status === 'LATE') dailyRecap[dStr].late++;
+      else if (row.status === 'SICK') dailyRecap[dStr].sick++;
+      else if (row.status === 'EXCUSED') dailyRecap[dStr].excused++;
+      else if (row.status === 'ABSENT') dailyRecap[dStr].absent++;
+
+      if (row.status === 'PRESENT') totalPresent++;
+      else if (row.status === 'LATE') totalLate++;
+      else if (row.status === 'SICK') totalSick++;
+      else if (row.status === 'EXCUSED') totalExcused++;
+      else if (row.status === 'ABSENT') totalAbsent++;
+
+      if (!studentMap.has(row.studentId)) {
+        studentMap.set(row.studentId, {
+          studentId: row.studentId,
+          nis: row.studentNis,
+          name: row.studentName,
+          className: row.className,
+          records: [],
+        });
+      }
+      studentMap.get(row.studentId).records.push({
+        date: dStr,
+        status: row.status,
+        checkinTime: formatTime(row.checkinTime),
+        checkoutTime: formatTime(row.checkoutTime),
+      });
+    }
+
+    const students = Array.from(studentMap.values());
+
+    return {
+      startDate,
+      endDate,
+      summary: {
+        totalStudents: students.length,
+        presentCount: totalPresent,
+        lateCount: totalLate,
+        sickCount: totalSick,
+        excusedCount: totalExcused,
+        absentCount: totalAbsent,
+      },
+      dailyRecap,
+      students,
+    };
+  }
 }
 
 export const reportService = new ReportService();

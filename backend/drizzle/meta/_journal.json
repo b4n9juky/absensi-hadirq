@@ -29,6 +29,13 @@
       "when": 1787753600000,
       "tag": "0003_add_checkin_accuracy",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1784627340575,
+      "tag": "0004_married_lady_mastermind",
+      "breakpoints": true
     }
   ]
 }

@@ -70,11 +70,12 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Copy compiled backend from stage 2
 COPY --from=backend-builder /app/backend/dist ./backend/dist
+COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
 COPY --from=backend-builder /app/backend/package*.json ./backend/
 
-# Install production dependencies only
+# Remove dev dependencies (keep only production deps)
 WORKDIR /app/backend
-RUN npm ci --only=production
+RUN npm prune --production --ignore-scripts
 
 # Create uploads directory with proper permissions
 RUN mkdir -p /app/uploads && \

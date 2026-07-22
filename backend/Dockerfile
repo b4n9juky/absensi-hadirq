@@ -82,8 +82,9 @@ RUN mkdir -p /app/uploads && \
 
 WORKDIR /app
 
-# Copy templates if they exist
-COPY --from=backend-builder /app/backend/uploads/templates ./backend/uploads/templates 2>/dev/null || true
+# Copy templates if they exist (directory may be absent)
+RUN mkdir -p /app/backend/uploads/templates
+COPY --from=backend-builder /app/backend/uploads/templates/ /app/backend/uploads/templates/
 
 # Set ownership
 RUN chown -R hadirq:nodejs /app

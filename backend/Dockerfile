@@ -19,6 +19,16 @@ FROM node:20-alpine AS backend-builder
 
 WORKDIR /app
 
+# Install build dependencies for native modules (canvas, tfjs-node)
+RUN apk add --no-cache \
+    build-base \
+    python3 \
+    cairo-dev \
+    pango-dev \
+    jpeg-dev \
+    giflib-dev \
+    pixman-dev
+
 # Install backend dependencies
 COPY backend/package*.json ./backend/
 RUN cd backend && npm ci

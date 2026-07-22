@@ -111,6 +111,7 @@ export const JournalPrintSection: React.FC<Props> = ({ token, user }) => {
   };
 
   const generateContentPages = (doc: any) => {
+    let pageNum = 0;
     for (const [monthKey, monthEntries] of monthGroups) {
       doc.addPage();
 

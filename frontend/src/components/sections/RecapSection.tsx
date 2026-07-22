@@ -199,7 +199,7 @@ export const RecapSection: React.FC<Props> = ({ token }) => {
       const recordMap = new Map((s.records || []).map((r: any) => [r.date, r]));
       const row: string[] = [s.nis, s.name, s.className];
       for (const d of dayKeys) {
-        const rec = recordMap.get(d);
+        const rec: any = recordMap.get(d);
         row.push(rec ? statusLabels[rec.status] || rec.status : '-');
       }
       return row;

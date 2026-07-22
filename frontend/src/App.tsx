@@ -12,10 +12,13 @@ import { TeachingScheduleSection } from './components/sections/TeachingScheduleS
 import { TeacherScheduleSection } from './components/sections/TeacherScheduleSection';
 import { SubjectsSection } from './components/sections/SubjectsSection';
 import { AgendaAttendanceSection } from './components/sections/AgendaAttendanceSection';
+import { RecapSection } from './components/sections/RecapSection';
+import { JournalPrintSection } from './components/sections/JournalPrintSection';
 import { ParentSection } from './components/sections/ParentSection';
 import { FaceRegistration } from './components/sections/FaceRegistration';
 import { KioskAttendance } from './components/sections/KioskAttendance';
 import { QrKioskAttendance } from './components/sections/QrKioskAttendance';
+import { TeacherAttendanceSection } from './components/sections/TeacherAttendanceSection';
 
 function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -93,9 +96,12 @@ function App() {
           <Route path="siswa" element={<StudentsSection token={token!} />} />
           <Route path="akademik" element={<AcademicSection token={token!} />} />
           <Route path="pengaturan" element={<SettingsSection token={token!} />} />
+          <Route path="absensi-guru" element={user?.role === 'admin' ? <TeacherAttendanceSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
           <Route path="jadwal-mengajar" element={user?.role === 'guru' ? <TeacherScheduleSection token={token!} /> : <TeachingScheduleSection token={token!} />} />
           <Route path="mata-pelajaran" element={user?.role === 'admin' ? <SubjectsSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
           <Route path="agenda-absensi" element={user?.role === 'guru' ? <AgendaAttendanceSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
+          <Route path="rekap" element={<RecapSection token={token!} />} />
+          <Route path="cetak-jurnal" element={<JournalPrintSection token={token!} user={user!} />} />
         </Route>
         <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
       </Routes>

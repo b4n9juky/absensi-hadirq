@@ -1,14 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon, FileText, UserCheck, Printer } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 
 const allNavItems = [
   { path: '/dashboard/ringkasan', key: 'dashboard', icon: LayoutDashboard, label: 'Ringkasan', roles: ['admin', 'guru'] },
   { path: '/dashboard/pengguna', key: 'users', icon: Users, label: 'Pengguna', roles: ['admin'] },
+  { path: '/dashboard/absensi-guru', key: 'teacher-attendance', icon: UserCheck, label: 'Absensi Guru', roles: ['admin'] },
   { path: '/dashboard/kelas', key: 'classes', icon: BookOpen, label: 'Kelas', roles: ['admin'] },
   { path: '/dashboard/siswa', key: 'students', icon: GraduationCap, label: 'Siswa', roles: ['admin'] },
   { path: '/dashboard/akademik', key: 'academic', icon: Calendar, label: 'Akademik', roles: ['admin'] },
   { path: '/dashboard/jadwal-mengajar', key: 'teaching-schedule', icon: Clock, label: 'Jadwal Mengajar', roles: ['admin', 'guru'] },
+  { path: '/dashboard/rekap', key: 'recap', icon: FileText, label: 'Rekap Jurnal', roles: ['admin', 'guru'] },
+  { path: '/dashboard/cetak-jurnal', key: 'print-journal', icon: Printer, label: 'Cetak Buku Jurnal', roles: ['admin', 'guru'] },
   { path: '/dashboard/mata-pelajaran', key: 'subjects', icon: Book, label: 'Mata Pelajaran', roles: ['admin'] },
   { path: '/dashboard/agenda-absensi', key: 'agenda-attendance', icon: ClipboardCheck, label: 'Agenda Absensi', roles: ['guru'] },
   { path: '/dashboard/pengaturan', key: 'settings', icon: Settings, label: 'Pengaturan', roles: ['admin'] },

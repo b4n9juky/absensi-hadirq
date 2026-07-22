@@ -66,3 +66,6 @@ DEPLOY_TROUBLESHOOT.md
 plan.md
 deploy.sh
 Hadirq_IOs.md
+
+# MySQL Data Directory
+/mysql/

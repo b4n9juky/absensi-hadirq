@@ -225,6 +225,17 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
     enabled: user.role === 'guru',
   });
 
+  const { data: myAttendanceStatus, refetch: refetchAttendance } = useQuery({
+    queryKey: ['myTeacherAttendance'],
+    queryFn: async () => {
+      const res = await fetch('/api/teacher-attendance/my-status', { headers: authHeader });
+      const result = await res.json();
+      if (!res.ok || !result.success) throw new Error(result.error || 'Gagal mengambil status.');
+      return result.data;
+    },
+    enabled: user.role === 'guru',
+  });
+
   const { data: classesData } = useQuery({
     queryKey: ['classesList'],
     queryFn: async () => {
@@ -303,10 +314,17 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
   };
 
   const handleExportCsv = () => {
-    const csvContent = ['Tanggal,NIS,Status',
-      ...reports.map((r: any) => `${r.attendanceDate},${r.student?.nis || ''},${r.status}`)
-    ].join('\n');
-    downloadCsv(csvContent, `rekap-absensi-${new Date().toISOString().slice(0, 10)}.csv`);
+    const statusLabels: Record<string, string> = {
+      PRESENT: 'Tepat Waktu', LATE: 'Terlambat',
+      SICK: 'Sakit', EXCUSED: 'Izin', ABSENT: 'Alfa',
+    };
+    const header = 'Tanggal,NIS,Nama,Kelas,Jam Datang,Jam Pulang,Status';
+    const rows = reports.map((r: any) => {
+      const datang = r.checkinTime ? new Date(r.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-';
+      const pulang = r.checkoutTime ? new Date(r.checkoutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-';
+      return `${r.attendanceDate},${r.student?.nis || ''},${r.student?.name || ''},${r.class?.name || ''},${datang},${pulang},${statusLabels[r.status] || r.status}`;
+    }).join('\n');
+    downloadCsv(`${header}\n${rows}`, `rekap-absensi-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   const handleExportTeacherCsv = () => {
@@ -402,6 +420,82 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
 
       {user.role === 'guru' ? (
         <>
+          {/* Teacher Check-in / Check-out Card */}
+          {myAttendanceStatus && (
+            <section className="bg-card border border-border rounded-2xl p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    myAttendanceStatus.checkedOut ? 'bg-emerald-500/10' :
+                    myAttendanceStatus.checkedIn ? 'bg-amber-500/10' : 'bg-muted'
+                  }`}>
+                    <Clock className={`w-6 h-6 ${
+                      myAttendanceStatus.checkedOut ? 'text-emerald-500' :
+                      myAttendanceStatus.checkedIn ? 'text-amber-500' : 'text-muted-foreground'
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                      {myAttendanceStatus.checkedOut ? 'Sudah Absen Pulang' :
+                       myAttendanceStatus.checkedIn ? 'Sudah Absen Masuk' : 'Belum Absen'}
+                    </p>
+                    {myAttendanceStatus.record && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {myAttendanceStatus.record.checkinTime && (
+                          <span>Masuk: {new Date(myAttendanceStatus.record.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                        )}
+                        {myAttendanceStatus.record.checkoutTime && (
+                          <span className="ml-3">Pulang: {new Date(myAttendanceStatus.record.checkoutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                        )}
+                        <span className={`ml-3 inline-flex px-2 py-0.5 rounded-full text-2xs font-bold border ${
+                          myAttendanceStatus.record.status === 'PRESENT' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                          myAttendanceStatus.record.status === 'LATE' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {myAttendanceStatus.record.status === 'PRESENT' ? 'Tepat Waktu' :
+                           myAttendanceStatus.record.status === 'LATE' ? 'Terlambat' :
+                           myAttendanceStatus.record.status}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {!myAttendanceStatus.checkedIn && (
+                    <button onClick={async () => {
+                      try {
+                        const res = await fetch('/api/teacher-attendance/checkin', { method: 'POST', headers: authHeader });
+                        const result = await res.json();
+                        if (!res.ok || !result.success) throw new Error(result.error);
+                        refetchAttendance();
+                        queryClient.invalidateQueries({ queryKey: ['myTeacherAttendance'] });
+                      } catch (err: any) { alert(err.message); }
+                    }}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20 text-xs font-bold transition-all">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Absen Masuk</span>
+                    </button>
+                  )}
+                  {myAttendanceStatus.checkedIn && !myAttendanceStatus.checkedOut && (
+                    <button onClick={async () => {
+                      try {
+                        const res = await fetch('/api/teacher-attendance/checkout', { method: 'POST', headers: authHeader });
+                        const result = await res.json();
+                        if (!res.ok || !result.success) throw new Error(result.error);
+                        refetchAttendance();
+                        queryClient.invalidateQueries({ queryKey: ['myTeacherAttendance'] });
+                      } catch (err: any) { alert(err.message); }
+                    }}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 text-xs font-bold transition-all">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Absen Pulang</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Teacher Report: Date Range Filter */}
           <section className="bg-card/50 border border-border rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2 mb-2">

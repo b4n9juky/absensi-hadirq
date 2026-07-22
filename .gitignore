@@ -69,3 +69,7 @@ Hadirq_IOs.md
 
 # MySQL Data Directory
 /mysql/
+
+# SSL Certificates
+/certs/
+/certbot/

@@ -35,10 +35,13 @@ RUN apk add --no-cache \
     curl \
     dumb-init \
     libc6-compat \
-    ttf-freefont \
     fontconfig \
-    mesa-gl \
-    mesa-glu
+    font-freefont \
+    cairo \
+    pango \
+    jpeg \
+    giflib \
+    pixman
 
 WORKDIR /app
 

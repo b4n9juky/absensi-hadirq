@@ -19,15 +19,21 @@ FROM node:20-alpine AS backend-builder
 
 WORKDIR /app
 
-# Install build dependencies for native modules (canvas, tfjs-node)
+# Install build dependencies for native modules (canvas)
 RUN apk add --no-cache \
     build-base \
     python3 \
+    pkgconfig \
     cairo-dev \
     pango-dev \
     jpeg-dev \
     giflib-dev \
-    pixman-dev
+    pixman-dev \
+    freetype-dev \
+    libpng-dev
+
+# Set Python for node-gyp
+ENV PYTHON=/usr/bin/python3
 
 # Install backend dependencies
 COPY backend/package*.json ./backend/

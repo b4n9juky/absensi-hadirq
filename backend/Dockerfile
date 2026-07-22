@@ -72,6 +72,8 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
 COPY --from=backend-builder /app/backend/package*.json ./backend/
+COPY --from=backend-builder /app/backend/drizzle.config.ts ./backend/
+COPY --from=backend-builder /app/backend/drizzle ./backend/drizzle
 
 # Remove dev dependencies (keep only production deps)
 WORKDIR /app/backend

@@ -12,7 +12,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-hadirq123}
     volumes:
       - db_data:/var/lib/mysql
-      - ./backend/drizzle:/docker-entrypoint-initdb.d
     networks:
       - hadirq-network
     healthcheck:

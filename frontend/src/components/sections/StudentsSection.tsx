@@ -164,7 +164,7 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
       if (!detection) {
         detection = await faceapi.detectSingleFace(
           videoRef.current,
-          new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.3 })
+          new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })
         ).withFaceLandmarks().withFaceDescriptor();
       }
 
@@ -173,6 +173,14 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
         setFaceLoading(false);
         return;
       }
+
+      // Face quality check: must have all 68 landmarks
+      if (!detection.landmarks || detection.landmarks.positions.length < 50) {
+        setFaceStatus('Kualitas wajah kurang baik. Pastikan seluruh wajah terlihat, tidak tertutup masker/kacamata hitam, dan pencahayaan cukup.');
+        setFaceLoading(false);
+        return;
+      }
+
       setFaceStatus('Menyimpan ke database...');
       const descriptor = Array.from(detection.descriptor);
       const res = await fetch(`/api/students/${showFaceRegister.id}/register-face`, {

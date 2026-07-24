@@ -116,6 +116,10 @@ kioskRouter.post('/register-face/:studentId', async (req, res) => {
     if (!faceEmbedding || !Array.isArray(faceEmbedding)) {
       return res.status(400).json({ success: false, error: 'Face embedding tidak valid.' });
     }
+    const dup = await studentService.checkDuplicateFace(studentId, faceEmbedding);
+    if (dup.isDuplicate) {
+      return res.status(409).json({ success: false, error: `Wajah ini sudah terdaftar atas nama ${dup.matchedStudent!.name} (${dup.matchedStudent!.nis}). Silakan hubungi admin jika ada kesalahan.` });
+    }
     await studentService.appendFaceEmbedding(studentId, faceEmbedding);
     res.json({ success: true, message: 'Wajah siswa berhasil didaftarkan.' });
   } catch (err: any) {

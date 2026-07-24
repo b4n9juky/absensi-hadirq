@@ -124,6 +124,10 @@ export const FaceRegistration = () => {
 
   const startScanning = () => {
     if (!scanRef.current || !videoRef.current) return;
+    let collected: number[][] = [];
+    let stableFrames = 0;
+    const REQUIRED_FRAMES = 3;
+
     const iv = setInterval(async () => {
       if (!scanRef.current || !videoRef.current || !videoRef.current.videoWidth) {
         clearInterval(iv);
@@ -131,7 +135,7 @@ export const FaceRegistration = () => {
       }
       const detections = await faceapi.detectAllFaces(
         videoRef.current,
-        new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.4 })
+        new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 })
       ).withFaceLandmarks().withFaceDescriptors();
 
       if (canvasRef.current && videoRef.current) {
@@ -143,11 +147,32 @@ export const FaceRegistration = () => {
         faceapi.draw.drawDetections(canvasRef.current, resized);
       }
 
-      if (detections.length > 0 && detections[0].descriptor) {
-        clearInterval(iv);
-        scanRef.current = false;
-        const descriptor = Array.from(detections[0].descriptor);
-        await uploadFace(descriptor);
+      if (detections.length > 0 && detections[0].descriptor && detections[0].landmarks) {
+        const desc = Array.from(detections[0].descriptor);
+        const isConsistent = collected.length === 0 || collected.every(prev => {
+          let sum = 0;
+          for (let i = 0; i < desc.length; i++) {
+            const d = desc[i] - prev[i];
+            sum += d * d;
+          }
+          return Math.sqrt(sum) < 0.3;
+        });
+
+        if (isConsistent) {
+          collected.push(desc);
+          stableFrames++;
+          if (stableFrames >= REQUIRED_FRAMES) {
+            clearInterval(iv);
+            scanRef.current = false;
+            const averaged = collected[0].map((_, i) =>
+              collected.reduce((s, arr) => s + arr[i], 0) / collected.length
+            );
+            await uploadFace(averaged);
+          }
+        } else {
+          collected = [desc];
+          stableFrames = 1;
+        }
       }
     }, 400);
   };

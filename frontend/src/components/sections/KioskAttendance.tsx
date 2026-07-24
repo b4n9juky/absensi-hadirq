@@ -284,15 +284,22 @@ export const KioskAttendance = () => {
 
       if (detections.length > 0) {
         let bestMatch = { id: -1, distance: 1.0, name: '' };
+        let secondBest = { id: -1, distance: 1.0, name: '' };
         const descriptor = detections[0].descriptor;
         for (const student of studentsDataRef.current) {
           const minDist = student.faceEmbedding.reduce((min, emb) => {
             const d = faceapi.euclideanDistance(descriptor, new Float32Array(emb));
             return d < min ? d : min;
           }, Infinity);
-          if (minDist < bestMatch.distance) bestMatch = { id: student.id, distance: minDist, name: student.studentName || student.nis };
+          if (minDist < bestMatch.distance) {
+            secondBest = bestMatch;
+            bestMatch = { id: student.id, distance: minDist, name: student.studentName || student.nis };
+          } else if (minDist < secondBest.distance) {
+            secondBest = { id: student.id, distance: minDist, name: student.studentName || student.nis };
+          }
         }
-        if (bestMatch.distance < 0.5 && isScanningRef.current) {
+        const margin = secondBest.distance - bestMatch.distance;
+        if (bestMatch.distance < 0.4 && margin > 0.05 && isScanningRef.current) {
           isScanningRef.current = false;
           processCheckin(bestMatch.id, bestMatch.name);
         }

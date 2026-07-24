@@ -53,7 +53,18 @@ export class FaceRegistrationService {
       throw new Error('Tidak dapat mendeteksi wajah pada foto. Pastikan wajah terlihat jelas dan pencahayaan cukup.');
     }
 
+    if (!detections.landmarks || detections.landmarks.positions.length < 50) {
+      fs.unlinkSync(photoPath);
+      throw new Error('Kualitas foto wajah kurang baik. Pastikan seluruh wajah terlihat, tidak tertutup masker/kacamata hitam, dan pencahayaan cukup.');
+    }
+
     const embedding = Array.from(detections.descriptor);
+
+    const dup = await studentService.checkDuplicateFace(studentId, embedding);
+    if (dup.isDuplicate) {
+      fs.unlinkSync(photoPath);
+      throw new Error(`Wajah ini sudah terdaftar atas nama ${dup.matchedStudent!.name} (${dup.matchedStudent!.nis}). Silakan hapus data wajah sebelumnya jika ingin mendaftarkan ulang.`);
+    }
 
     const relativePhotoPath = photoPath.replace(/\\/g, '/').replace(/^.*?\/uploads\//, 'uploads/');
     const savedPath = relativePhotoPath.startsWith('uploads/') ? relativePhotoPath : `uploads/faces/${path.basename(photoPath)}`;

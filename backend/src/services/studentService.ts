@@ -179,6 +179,27 @@ export class StudentService {
       .where(eq(students.id, id));
   }
 
+  async checkDuplicateFace(studentId: number, newEmbedding: number[], threshold = 0.4): Promise<{ isDuplicate: boolean; matchedStudent?: { id: number; name: string; nis: string } }> {
+    const allStudents = await this.getStudentEmbeddings();
+    for (const student of allStudents) {
+      if (student.id === studentId) continue;
+      if (!student.faceEmbedding || student.faceEmbedding.length === 0) continue;
+      const minDist = student.faceEmbedding.reduce((min, emb) => {
+        let sum = 0;
+        for (let i = 0; i < emb.length; i++) {
+          const diff = newEmbedding[i] - emb[i];
+          sum += diff * diff;
+        }
+        const d = Math.sqrt(sum);
+        return d < min ? d : min;
+      }, Infinity);
+      if (minDist < threshold) {
+        return { isDuplicate: true, matchedStudent: { id: student.id, name: student.studentName, nis: student.nis } };
+      }
+    }
+    return { isDuplicate: false };
+  }
+
   async deleteFace(id: number) {
     const existing = await studentRepo.findById(id);
     if (!existing) {

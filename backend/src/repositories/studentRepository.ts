@@ -45,35 +45,35 @@ export class StudentRepository {
     return result.insertId;
   }
 
-  async update(id: number, name: string, nis: string, classId: number, qrcode?: string) {
-    const values: Record<string, any> = { name, nis, classId, updatedAt: new Date() };
+  async update(id: number, name: string, nis: string, classId: number, qrcode?: string, clientTimestamp?: string) {
+    const values: Record<string, any> = { name, nis, classId, updatedAt: clientTimestamp ? new Date(clientTimestamp) : new Date() };
     if (qrcode !== undefined) values.qrcode = qrcode;
     await db.update(students)
       .set(values)
       .where(eq(students.id, id));
   }
 
-  async updatePhoto(id: number, photoPath: string) {
+  async updatePhoto(id: number, photoPath: string, clientTimestamp?: string) {
     await db.update(students)
-      .set({ photo: photoPath, updatedAt: new Date() })
+      .set({ photo: photoPath, updatedAt: clientTimestamp ? new Date(clientTimestamp) : new Date() })
       .where(eq(students.id, id));
   }
 
-  async updateQrCode(id: number, qrcode: string) {
+  async updateQrCode(id: number, qrcode: string, clientTimestamp?: string) {
     await db.update(students)
-      .set({ qrcode, updatedAt: new Date() })
+      .set({ qrcode, updatedAt: clientTimestamp ? new Date(clientTimestamp) : new Date() })
       .where(eq(students.id, id));
   }
 
-  async updateDeviceUuid(id: number, deviceUuid: string | null) {
+  async updateDeviceUuid(id: number, deviceUuid: string | null, clientTimestamp?: string) {
     await db.update(students)
-      .set({ deviceUuid, updatedAt: new Date() })
+      .set({ deviceUuid, updatedAt: clientTimestamp ? new Date(clientTimestamp) : new Date() })
       .where(eq(students.id, id));
   }
 
-  async deleteFace(id: number) {
+  async deleteFace(id: number, clientTimestamp?: string) {
     await db.update(students)
-      .set({ faceEmbedding: null, updatedAt: new Date() })
+      .set({ faceEmbedding: null, updatedAt: clientTimestamp ? new Date(clientTimestamp) : new Date() })
       .where(eq(students.id, id));
   }
 

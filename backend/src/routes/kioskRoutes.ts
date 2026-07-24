@@ -112,7 +112,7 @@ kioskRouter.post('/register-face/:studentId', async (req, res) => {
     if (isNaN(studentId)) {
       return res.status(400).json({ success: false, error: 'ID siswa tidak valid.' });
     }
-    const { faceEmbedding } = req.body;
+    const { faceEmbedding, clientTimestamp } = req.body;
     if (!faceEmbedding || !Array.isArray(faceEmbedding)) {
       return res.status(400).json({ success: false, error: 'Face embedding tidak valid.' });
     }
@@ -120,7 +120,7 @@ kioskRouter.post('/register-face/:studentId', async (req, res) => {
     if (dup.isDuplicate) {
       return res.status(409).json({ success: false, error: `Wajah ini sudah terdaftar atas nama ${dup.matchedStudent!.name} (${dup.matchedStudent!.nis}). Silakan hubungi admin jika ada kesalahan.` });
     }
-    await studentService.appendFaceEmbedding(studentId, faceEmbedding);
+    await studentService.appendFaceEmbedding(studentId, faceEmbedding, clientTimestamp);
     res.json({ success: true, message: 'Wajah siswa berhasil didaftarkan.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });

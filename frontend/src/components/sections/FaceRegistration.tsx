@@ -184,7 +184,7 @@ export const FaceRegistration = () => {
       const res = await fetch(`/api/kiosk/register-face/${activeStudent.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({ faceEmbedding: descriptor }),
+        body: JSON.stringify({ faceEmbedding: descriptor, clientTimestamp: new Date().toISOString() }),
       });
       const data = await res.json();
       if (res.ok && data.success) {

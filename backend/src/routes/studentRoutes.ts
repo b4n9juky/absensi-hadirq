@@ -44,8 +44,8 @@ studentsRouter.get('/', async (req, res) => {
 
 studentsRouter.post('/', validate(createStudentSchema), async (req, res) => {
   try {
-    const { name, nis, classId } = req.body;
-    const studentId = await studentService.createStudent({ name, nis, classId });
+    const { name, nis, classId, clientTimestamp } = req.body;
+    const studentId = await studentService.createStudent({ name, nis, classId }, clientTimestamp);
     res.status(201).json({ success: true, message: 'Siswa berhasil dibuat.', data: { id: studentId } });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -58,8 +58,8 @@ studentsRouter.put('/:id', validate(updateStudentSchema), async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ success: false, error: 'ID tidak valid.' });
     }
-    const { name, nis, classId } = req.body;
-    await studentService.updateStudent(id, { name, nis, classId });
+    const { name, nis, classId, clientTimestamp } = req.body;
+    await studentService.updateStudent(id, { name, nis, classId }, clientTimestamp);
     res.json({ success: true, message: 'Siswa berhasil diperbarui.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -168,7 +168,7 @@ studentsRouter.put('/:id/register-face', async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ success: false, error: 'ID tidak valid.' });
     }
-    const { faceEmbedding } = req.body;
+    const { faceEmbedding, clientTimestamp } = req.body;
     if (!faceEmbedding || !Array.isArray(faceEmbedding)) {
       return res.status(400).json({ success: false, error: 'Face embedding tidak valid.' });
     }
@@ -176,7 +176,7 @@ studentsRouter.put('/:id/register-face', async (req, res) => {
     if (dup.isDuplicate) {
       return res.status(409).json({ success: false, error: `Wajah ini sudah terdaftar atas nama ${dup.matchedStudent!.name} (${dup.matchedStudent!.nis}). Silakan hubungi admin jika ada kesalahan.` });
     }
-    await studentService.appendFaceEmbedding(id, faceEmbedding);
+    await studentService.appendFaceEmbedding(id, faceEmbedding, clientTimestamp);
     res.json({ success: true, message: 'Wajah siswa berhasil didaftarkan.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -189,7 +189,8 @@ studentsRouter.delete('/:id/delete-face', async (req, res) => {
     if (isNaN(id)) {
       return res.status(400).json({ success: false, error: 'ID tidak valid.' });
     }
-    await studentService.deleteFace(id);
+    const { clientTimestamp } = req.body;
+    await studentService.deleteFace(id, clientTimestamp);
     res.json({ success: true, message: 'Data biometrik wajah berhasil dihapus.' });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });

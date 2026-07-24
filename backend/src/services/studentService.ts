@@ -19,7 +19,7 @@ export class StudentService {
     return studentRepo.findAll();
   }
 
-  async createStudent(dto: CreateStudentDto) {
+  async createStudent(dto: CreateStudentDto, clientTimestamp?: string) {
     if (!dto.name || dto.name.trim() === '') {
       throw new Error('Nama wajib diisi.');
     }
@@ -45,14 +45,14 @@ export class StudentService {
     const studentId = await studentRepo.create(dto.name, dto.nis, dto.classId);
     try {
       const qrPath = await generateQrCode(dto.nis, studentId);
-      await studentRepo.updateQrCode(studentId, qrPath);
+      await studentRepo.updateQrCode(studentId, qrPath, clientTimestamp);
     } catch (err) {
       console.error(`[QR] Gagal generate QR untuk NIS ${dto.nis}:`, err);
     }
     return studentId;
   }
 
-  async updateStudent(id: number, dto: CreateStudentDto) {
+  async updateStudent(id: number, dto: CreateStudentDto, clientTimestamp?: string) {
     const existing = await studentRepo.findById(id);
     if (!existing) {
       throw new Error('Siswa tidak ditemukan.');
@@ -91,7 +91,7 @@ export class StudentService {
         console.error(`[QR] Gagal generate QR untuk NIS ${dto.nis}:`, err);
       }
     }
-    await studentRepo.update(id, dto.name, dto.nis, dto.classId, qrcode || undefined);
+    await studentRepo.update(id, dto.name, dto.nis, dto.classId, qrcode || undefined, clientTimestamp);
   }
 
   async resetDevice(id: number) {
@@ -147,7 +147,7 @@ export class StudentService {
     return { success: true };
   }
 
-  async appendFaceEmbedding(id: number, newEmbedding: number[]) {
+  async appendFaceEmbedding(id: number, newEmbedding: number[], clientTimestamp?: string) {
     const existing = await studentRepo.findById(id);
     if (!existing) {
       throw new Error('Siswa tidak ditemukan.');
@@ -175,7 +175,7 @@ export class StudentService {
     }
 
     await db.update(students)
-      .set({ faceEmbedding: JSON.stringify(embeddings), updatedAt: new Date() })
+      .set({ faceEmbedding: JSON.stringify(embeddings), updatedAt: clientTimestamp ? new Date(clientTimestamp) : new Date() })
       .where(eq(students.id, id));
   }
 
@@ -200,12 +200,12 @@ export class StudentService {
     return { isDuplicate: false };
   }
 
-  async deleteFace(id: number) {
+  async deleteFace(id: number, clientTimestamp?: string) {
     const existing = await studentRepo.findById(id);
     if (!existing) {
       throw new Error('Siswa tidak ditemukan.');
     }
-    await studentRepo.deleteFace(id);
+    await studentRepo.deleteFace(id, clientTimestamp);
   }
 
   async getStudentEmbeddings() {

@@ -183,10 +183,11 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
 
       setFaceStatus('Menyimpan ke database...');
       const descriptor = Array.from(detection.descriptor);
+      const clientTimestamp = new Date().toISOString();
       const res = await fetch(`/api/students/${showFaceRegister.id}/register-face`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({ faceEmbedding: descriptor })
+        body: JSON.stringify({ faceEmbedding: descriptor, clientTimestamp })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -384,7 +385,8 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/students', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ nis: studentNis, name: studentName, classId: parseInt(studentClassId) }) });
+      const clientTimestamp = new Date().toISOString();
+      const res = await fetch('/api/students', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ nis: studentNis, name: studentName, classId: parseInt(studentClassId), clientTimestamp }) });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Profil Siswa berhasil dibuat!'); setShowAddStudent(false); setStudentNis(''); setStudentName(''); setStudentClassId(''); fetchData(); }
       else throw new Error(data.error || 'Gagal menyimpan siswa.');
@@ -395,7 +397,8 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
     e.preventDefault();
     if (!showEditStudent) return;
     try {
-      const res = await fetch(`/api/students/${showEditStudent.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ nis: studentNis, name: studentName, classId: parseInt(studentClassId) }) });
+      const clientTimestamp = new Date().toISOString();
+      const res = await fetch(`/api/students/${showEditStudent.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ nis: studentNis, name: studentName, classId: parseInt(studentClassId), clientTimestamp }) });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Profil Siswa berhasil diperbarui!'); setShowEditStudent(null); fetchData(); }
       else throw new Error(data.error || 'Gagal memperbarui siswa.');
@@ -477,7 +480,8 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
   const handleDeleteBiometric = async (id: number) => {
     if (!confirm('Hapus data biometrik wajah siswa ini?')) return;
     try {
-      const res = await fetch(`/api/students/${id}/delete-face`, { method: 'DELETE', headers: authHeader });
+      const clientTimestamp = new Date().toISOString();
+      const res = await fetch(`/api/students/${id}/delete-face`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', ...authHeader }, body: JSON.stringify({ clientTimestamp }) });
       const data = await res.json();
       if (res.ok && data.success) { triggerToast('Data biometrik wajah berhasil dihapus.'); fetchData(); }
       else throw new Error(data.error || 'Gagal menghapus data biometrik.');

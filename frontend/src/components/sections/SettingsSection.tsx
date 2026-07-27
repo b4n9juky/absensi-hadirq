@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, MapPin, Crosshair, Ruler, Wifi, AlertCircle, CheckCircle, School, Calendar } from 'lucide-react';
+import { Save, MapPin, Crosshair, Ruler, Wifi, AlertCircle, CheckCircle, School, Calendar, Clock } from 'lucide-react';
 import { FormInput, FormSelect } from '../shared/FormField';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
@@ -17,6 +17,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
   const [apiBaseUrl, setApiBaseUrl] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [schoolDays, setSchoolDays] = useState('5');
+  const [schoolTimezone, setSchoolTimezone] = useState('Asia/Jakarta');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -40,6 +41,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
         setApiBaseUrl(data.data.api_base_url || '');
         setSchoolName(data.data.school_name || '');
         setSchoolDays(data.data.school_days || '5');
+        setSchoolTimezone(data.data.school_timezone || 'Asia/Jakarta');
       }
     } catch (err: any) {
       setError('Gagal memuat pengaturan.');
@@ -62,6 +64,7 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
     if (apiBaseUrl.trim()) payload.api_base_url = apiBaseUrl.trim();
     if (schoolName.trim()) payload.school_name = schoolName.trim();
     payload.school_days = schoolDays;
+    payload.school_timezone = schoolTimezone;
 
     try {
       const res = await fetch('/api/settings', {
@@ -241,6 +244,26 @@ export const SettingsSection: React.FC<Props> = ({ token }) => {
           />
           <p className="text-xs text-muted-foreground">
             Menentukan hari aktif sekolah untuk presensi. Perubahan akan otomatis menyesuaikan jadwal harian.
+          </p>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Clock className="w-4 h-4 text-teal-400" />
+            Zona Waktu
+          </h3>
+          <FormSelect
+            label="Zona Waktu Sekolah"
+            value={schoolTimezone}
+            onChange={(e) => setSchoolTimezone(e.target.value)}
+            options={[
+              { value: 'Asia/Jakarta', label: 'WIB (UTC+7) — Sumatera, Jawa, Kalbar' },
+              { value: 'Asia/Makassar', label: 'WITA (UTC+8) — Sulawesi, Bali, Kaltim, NTB, NTT' },
+              { value: 'Asia/Jayapura', label: 'WIT (UTC+9) — Maluku, Papua' },
+            ]}
+          />
+          <p className="text-xs text-muted-foreground">
+            Menentukan zona waktu untuk presensi, jadwal, dan tampilan jam di kiosk. Simpan & refresh halaman agar diterapkan.
           </p>
         </div>
 

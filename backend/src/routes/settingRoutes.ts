@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { settingService } from '../services/settingService.js';
-import { getSchoolTimezone } from '../lib/timezone.js';
+import { getSchoolTimezone, setSchoolTimezone } from '../lib/timezone.js';
 
 export const settingsRouter = Router();
 
@@ -14,9 +14,18 @@ settingsRouter.get('/', async (req, res) => {
   }
 });
 
-// GET school timezone
+// GET school timezone — DB first, then env var / default
 settingsRouter.get('/timezone', async (_req, res) => {
-  res.json({ success: true, data: { timezone: getSchoolTimezone() } });
+  try {
+    const dbTz = await settingService.getValue('school_timezone');
+    if (dbTz && dbTz.trim() !== '') {
+      setSchoolTimezone(dbTz);
+      return res.json({ success: true, data: { timezone: dbTz } });
+    }
+    res.json({ success: true, data: { timezone: getSchoolTimezone() } });
+  } catch {
+    res.json({ success: true, data: { timezone: getSchoolTimezone() } });
+  }
 });
 
 // PUT update settings (partial)

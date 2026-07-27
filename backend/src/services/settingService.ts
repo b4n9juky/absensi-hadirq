@@ -20,6 +20,7 @@ export class SettingService {
       'school_name',
       'school_logo',
       'school_days',
+      'school_timezone',
     ];
 
     for (const key of Object.keys(entries)) {
@@ -34,6 +35,13 @@ export class SettingService {
     }));
 
     await settingRepo.upsertMany(payload);
+
+    // Sync timezone to in-memory cache if updated
+    if (entries.school_timezone) {
+      const { setSchoolTimezone } = await import('../lib/timezone.js');
+      setSchoolTimezone(entries.school_timezone);
+    }
+
     return this.getAll();
   }
 

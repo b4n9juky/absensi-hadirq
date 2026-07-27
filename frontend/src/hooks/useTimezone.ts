@@ -3,18 +3,19 @@ import { useState, useEffect } from 'react';
 let cachedTimezone: string | null = null;
 let fetchPromise: Promise<string> | null = null;
 
-async function fetchTimezone(): Promise<string> {
-  if (cachedTimezone) return cachedTimezone;
+function fetchTimezone(): Promise<string> {
+  if (cachedTimezone) return Promise.resolve(cachedTimezone);
   if (!fetchPromise) {
     fetchPromise = fetch('/api/settings/timezone')
       .then(r => r.json())
-      .then(d => {
-        cachedTimezone = d.data?.timezone || 'Asia/Jakarta';
-        return cachedTimezone;
+      .then((d: { data?: { timezone?: string } }) => {
+        const tz = d.data?.timezone || 'Asia/Jakarta';
+        cachedTimezone = tz;
+        return tz;
       })
       .catch(() => {
         cachedTimezone = 'Asia/Jakarta';
-        return cachedTimezone;
+        return 'Asia/Jakarta';
       });
   }
   return fetchPromise;

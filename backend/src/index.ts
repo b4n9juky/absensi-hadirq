@@ -155,6 +155,19 @@ app.use('/api/users', authMiddleware, requireRole(['admin']), usersRouter);
 app.use('/api/classes', authMiddleware, classesRouter);
 app.use('/api', faceRegistrationRouter);
 app.use('/api/students', authMiddleware, requireRole(['admin']), studentsRouter);
+app.use('/api/settings/timezone', async (_req, res) => {
+  const { getSchoolTimezone, setSchoolTimezone } = await import('./lib/timezone.js');
+  const { settingService } = await import('./services/settingService.js');
+  try {
+    const dbTz = await settingService.getValue('school_timezone');
+    if (dbTz && dbTz.trim() !== '') {
+      setSchoolTimezone(dbTz);
+      res.json({ success: true, data: { timezone: dbTz } });
+      return;
+    }
+  } catch { /* fall through */ }
+  res.json({ success: true, data: { timezone: getSchoolTimezone() } });
+});
 app.use('/api/settings', authMiddleware, requireRole(['admin']), settingsRouter);
 app.use('/api/attendance', attendanceRouter);
 app.use('/api/kiosk', kioskRouter);

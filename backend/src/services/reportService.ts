@@ -1,5 +1,5 @@
 import { reportRepo } from '../repositories/reportRepository.js';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 
 export class ReportService {
   async getReport(filters: {
@@ -17,7 +17,7 @@ export class ReportService {
     let resolvedStartDate: string | undefined = filters.startDate;
     let resolvedEndDate: string | undefined = filters.endDate;
 
-    const currentServerTime = getJakartaDate();
+    const currentServerTime = getSchoolDate();
 
     if (filters.date) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -27,7 +27,7 @@ export class ReportService {
       resolvedStartDate = filters.date;
       resolvedEndDate = filters.date;
     } else if (filters.month) {
-      const year = filters.year ?? currentServerTime.getFullYear();
+      const year = filters.year ?? currentServerTime.getUTCFullYear();
       const month = filters.month;
 
       if (month < 1 || month > 12) {
@@ -67,7 +67,8 @@ export class ReportService {
       if (!dateVal) return null;
       if (dateVal instanceof Date) {
         if (isNaN(dateVal.getTime())) return null;
-        return dateVal.toISOString().slice(0, -1);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${dateVal.getUTCFullYear()}-${pad(dateVal.getUTCMonth() + 1)}-${pad(dateVal.getUTCDate())}T${pad(dateVal.getUTCHours())}:${pad(dateVal.getUTCMinutes())}:${pad(dateVal.getUTCSeconds())}`;
       }
       const str = String(dateVal);
       if (!str || str === '0000-00-00' || str === '0000-00-00 00:00:00') return null;
@@ -135,30 +136,30 @@ export class ReportService {
     academicYearId?: number;
     teacherId?: string;
   }) {
-    const currentServerTime = getJakartaDate();
+    const currentServerTime = getSchoolDate();
     let startDate: string;
     let endDate: string;
 
     if (filters.type === 'daily') {
-      startDate = filters.date || currentServerTime.toISOString().slice(0, 10);
+      startDate = filters.date || `${currentServerTime.getUTCFullYear()}-${String(currentServerTime.getUTCMonth() + 1).padStart(2, '0')}-${String(currentServerTime.getUTCDate()).padStart(2, '0')}`;
       endDate = startDate;
     } else if (filters.type === 'weekly') {
-      const baseDate = filters.date ? new Date(filters.date) : currentServerTime;
-      const day = baseDate.getDay();
+      const baseDate = filters.date ? new Date(filters.date + 'T00:00:00+07:00') : currentServerTime;
+      const day = baseDate.getUTCDay();
       const mon = new Date(baseDate);
-      mon.setDate(baseDate.getDate() - ((day + 6) % 7));
+      mon.setUTCDate(baseDate.getUTCDate() - ((day + 6) % 7));
       const sat = new Date(mon);
-      sat.setDate(mon.getDate() + 5);
-      startDate = mon.toISOString().slice(0, 10);
-      endDate = sat.toISOString().slice(0, 10);
+      sat.setUTCDate(mon.getUTCDate() + 5);
+      startDate = `${mon.getUTCFullYear()}-${String(mon.getUTCMonth() + 1).padStart(2, '0')}-${String(mon.getUTCDate()).padStart(2, '0')}`;
+      endDate = `${sat.getUTCFullYear()}-${String(sat.getUTCMonth() + 1).padStart(2, '0')}-${String(sat.getUTCDate()).padStart(2, '0')}`;
     } else if (filters.type === 'monthly') {
-      const year = filters.year ?? currentServerTime.getFullYear();
-      const month = filters.month ?? (currentServerTime.getMonth() + 1);
+      const year = filters.year ?? currentServerTime.getUTCFullYear();
+      const month = filters.month ?? (currentServerTime.getUTCMonth() + 1);
       const daysInMonth = new Date(year, month, 0).getDate();
       startDate = `${year}-${String(month).padStart(2, '0')}-01`;
       endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
     } else {
-      startDate = filters.startDate || currentServerTime.toISOString().slice(0, 10);
+      startDate = filters.startDate || `${currentServerTime.getUTCFullYear()}-${String(currentServerTime.getUTCMonth() + 1).padStart(2, '0')}-${String(currentServerTime.getUTCDate()).padStart(2, '0')}`;
       endDate = filters.endDate || startDate;
     }
 
@@ -166,7 +167,8 @@ export class ReportService {
       if (!t) return null;
       if (t instanceof Date) {
         if (isNaN(t.getTime())) return null;
-        return t.toTimeString().slice(0, 8);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())}`;
       }
       const s = String(t);
       if (s.includes('T')) return s.slice(11, 19);

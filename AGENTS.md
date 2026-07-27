@@ -55,6 +55,7 @@ Required variables:
 - `SCHOOL_RADIUS_METERS` — Geofence radius (default: 50)
 - `MAX_ACCURACY_METERS` — GPS accuracy threshold (default: 30)
 - `CORS_ORIGIN` — Comma-separated allowed origins
+- `APP_TIMEZONE` — School timezone: `Asia/Jakarta` (WIB), `Asia/Makassar` (WITA), `Asia/Jayapura` (WIT). Default: `Asia/Jakarta`.
 
 ### Frontend (`.env`)
 - `GEMINI_API_KEY` — Required for AI features (see `.env.example`)

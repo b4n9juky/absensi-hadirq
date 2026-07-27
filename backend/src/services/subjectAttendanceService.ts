@@ -1,7 +1,7 @@
 import { db } from '../db/index.js';
 import { teachingSchedules, students, classes, attendances, subjectAttendances, teachingSessionLogs, user } from '../db/schema.js';
 import { eq, and, sql, inArray } from 'drizzle-orm';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 
 export class SubjectAttendanceService {
   async getForm(scheduleId: number, date: string) {

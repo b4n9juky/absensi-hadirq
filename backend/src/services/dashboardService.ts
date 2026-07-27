@@ -1,5 +1,5 @@
 import { dashboardRepo } from '../repositories/dashboardRepository.js';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 import { settingService } from './settingService.js';
 
 export interface DashboardStatsDto {
@@ -23,7 +23,7 @@ export class DashboardService {
     let endDate: string;
     let daysCount = 1;
 
-    const currentServerTime = getJakartaDate();
+    const currentServerTime = getSchoolDate();
 
     if (filters.date) {
       // Validate date format YYYY-MM-DD
@@ -35,8 +35,8 @@ export class DashboardService {
       endDate = filters.date;
       daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     } else if (filters.month || filters.year) {
-      const year = filters.year ?? currentServerTime.getFullYear();
-      const month = filters.month ?? (currentServerTime.getMonth() + 1);
+      const year = filters.year ?? currentServerTime.getUTCFullYear();
+      const month = filters.month ?? (currentServerTime.getUTCMonth() + 1);
 
       if (month < 1 || month > 12) {
         throw new Error('Bulan harus berada di antara 1 dan 12.');
@@ -47,10 +47,10 @@ export class DashboardService {
       endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
       daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     } else {
-      // Default to today in local server time
-      const localYear = currentServerTime.getFullYear();
-      const localMonth = String(currentServerTime.getMonth() + 1).padStart(2, '0');
-      const localDay = String(currentServerTime.getDate()).padStart(2, '0');
+      // Default to today in WIB
+      const localYear = currentServerTime.getUTCFullYear();
+      const localMonth = String(currentServerTime.getUTCMonth() + 1).padStart(2, '0');
+      const localDay = String(currentServerTime.getUTCDate()).padStart(2, '0');
       startDate = `${localYear}-${localMonth}-${localDay}`;
       endDate = startDate;
       daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);

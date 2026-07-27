@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Users, CheckCircle, Clock, UserMinus, SlidersHorizontal, FileSpreadsheet, FileDown, User, MapPin, Eye, Trash2, Calendar, Camera, BookOpen, ClipboardCheck, ScanBarcode } from 'lucide-react';
 import { ModalShell } from '../shared/ModalShell';
 import { DataTable } from '../shared/DataTable';
+import { useTimezone } from '../../hooks/useTimezone';
 
 interface Props {
   token: string;
@@ -17,6 +18,7 @@ const months = [
 ];
 
 export const DashboardSection: React.FC<Props> = ({ token, user }) => {
+  const schoolTimezone = useTimezone();
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterClass, setFilterClass] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
@@ -298,7 +300,7 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
 
   const formatTimeString = (timeStr: string) => {
     if (!timeStr) return '-';
-    try { return new Date(timeStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+    try { return new Date(timeStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: schoolTimezone }); }
     catch { return timeStr; }
   };
 
@@ -320,8 +322,8 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
     };
     const header = 'Tanggal,NIS,Nama,Kelas,Jam Datang,Jam Pulang,Status';
     const rows = reports.map((r: any) => {
-      const datang = r.checkinTime ? new Date(r.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-';
-      const pulang = r.checkoutTime ? new Date(r.checkoutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-';
+      const datang = r.checkinTime ? new Date(r.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: schoolTimezone }) : '-';
+      const pulang = r.checkoutTime ? new Date(r.checkoutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: schoolTimezone }) : '-';
       return `${r.attendanceDate},${r.student?.nis || ''},${r.student?.name || ''},${r.class?.name || ''},${datang},${pulang},${statusLabels[r.status] || r.status}`;
     }).join('\n');
     downloadCsv(`${header}\n${rows}`, `rekap-absensi-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -442,10 +444,10 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
                     {myAttendanceStatus.record && (
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {myAttendanceStatus.record.checkinTime && (
-                          <span>Masuk: {new Date(myAttendanceStatus.record.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>Masuk: {new Date(myAttendanceStatus.record.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: schoolTimezone })}</span>
                         )}
                         {myAttendanceStatus.record.checkoutTime && (
-                          <span className="ml-3">Pulang: {new Date(myAttendanceStatus.record.checkoutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="ml-3">Pulang: {new Date(myAttendanceStatus.record.checkoutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: schoolTimezone })}</span>
                         )}
                         <span className={`ml-3 inline-flex px-2 py-0.5 rounded-full text-2xs font-bold border ${
                           myAttendanceStatus.record.status === 'PRESENT' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :

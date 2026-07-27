@@ -1,9 +1,9 @@
 import { reportService } from '../services/reportService.js';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 
 async function main() {
   console.log('=== REPORT DIAGNOSTIC START ===');
-  console.log('Current server timezone time:', getJakartaDate().toLocaleString());
+  console.log('Current server timezone time:', getSchoolDate().toLocaleString());
 
   const datesToTest = ['2026-06-15', '2026-06-16', undefined];
   

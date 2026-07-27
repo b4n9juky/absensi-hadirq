@@ -1,30 +1,9 @@
 import { db } from '../db/index.js';
 import { students, attendances, academicYears, semesters, schedules } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 import { settingService } from './settingService.js';
 import { getDistance } from 'geolib';
-
-function toDatabaseLocalTime(date: Date): Date {
-  const localDate = new Date(date);
-  localDate.toISOString = function () {
-    const pad = (num: number) => String(num).padStart(2, '0');
-    return `${this.getFullYear()}-${pad(this.getMonth() + 1)}-${pad(this.getDate())}T${pad(this.getHours())}:${pad(this.getMinutes())}:${pad(this.getSeconds())}.${String(this.getMilliseconds()).padStart(3, '0')}`;
-  };
-  return localDate;
-}
-
-function getLocalEpoch(date: Date): number {
-  return Date.UTC(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-    date.getSeconds(),
-    date.getMilliseconds()
-  );
-}
 
 export class KioskService {
   async processKioskAttendance(
@@ -67,8 +46,8 @@ export class KioskService {
       }
     }
 
-    const serverTime = getJakartaDate();
-    const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long' });
+    const serverTime = getSchoolDate();
+    const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Jakarta' });
     const scheduleRecord = await db.select().from(schedules).where(eq(schedules.dayName, dayName)).limit(1);
 
     if (scheduleRecord.length === 0) {
@@ -111,8 +90,8 @@ export class KioskService {
         return { success: false, message: 'Data absen tidak valid. Silakan hubungi Guru/Admin.' };
       }
 
-      const checkinEpoch = getLocalEpoch(new Date(checkinTimeVal));
-      const serverEpoch = getLocalEpoch(serverTime);
+      const checkinEpoch = new Date(checkinTimeVal).getTime();
+      const serverEpoch = serverTime.getTime();
       const diffMinutes = Math.abs(serverEpoch - checkinEpoch) / (1000 * 60);
 
       if (diffMinutes < 5) {
@@ -125,10 +104,10 @@ export class KioskService {
 
       await db.update(attendances)
         .set({
-          checkoutTime: toDatabaseLocalTime(serverTime),
+          checkoutTime: serverTime,
           checkoutLatitude: latitude ?? null,
           checkoutLongitude: longitude ?? null,
-          updatedAt: toDatabaseLocalTime(serverTime),
+          updatedAt: serverTime,
         })
         .where(eq(attendances.id, record.id));
 
@@ -152,7 +131,7 @@ export class KioskService {
       attendanceDate,
       status: targetStatus,
       isVerified: true,
-      checkinTime: toDatabaseLocalTime(serverTime),
+      checkinTime: serverTime,
       checkinLatitude: latitude ?? null,
       checkinLongitude: longitude ?? null,
       checkinAccuracy: accuracy ?? null,
@@ -164,11 +143,11 @@ export class KioskService {
   }
 
   private formatDate(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
   }
 
   private formatTime(date: Date): string {
-    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
   }
 }
 

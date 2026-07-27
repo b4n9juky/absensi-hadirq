@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import * as faceapi from '@vladmandic/face-api';
 import { Camera, CheckCircle2, UserCircle, Maximize2, Minimize2, Clock, Users, RefreshCw } from 'lucide-react';
 import { useAttendanceSound } from '../../hooks/useAttendanceSound';
+import { useTimezone } from '../../hooks/useTimezone';
 import { getVideoDevices, getDefaultDeviceId, getCameraConstraints } from '../../utils/camera';
 
 interface StudentEmbedding {
@@ -23,11 +24,11 @@ interface RecentArrival {
   checkinTime: string;
 }
 
-const RecentArrivalsPanel = memo(({ arrivals }: { arrivals: RecentArrival[] }) => {
+const RecentArrivalsPanel = memo(({ arrivals, timezone }: { arrivals: RecentArrival[]; timezone: string }) => {
   const formatTime = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
-      return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: timezone });
     } catch {
       return '--:--:--';
     }
@@ -154,13 +155,20 @@ export const KioskAttendance = () => {
   const studentsDataRef = useRef<StudentEmbedding[]>([]);
   const modelsLoadedRef = useRef(false);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const { playAttendanceSound } = useAttendanceSound();
+  const schoolTimezone = useTimezone();
 
   useEffect(() => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    const tick = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(tick);
   }, []);
 
   useEffect(() => { studentsDataRef.current = studentsData; }, [studentsData]);
@@ -429,6 +437,12 @@ export const KioskAttendance = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800">
+            <Clock className="w-4 h-4 text-primary" />
+            <span className="text-sm font-mono text-white tabular-nums">
+              {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: schoolTimezone })}
+            </span>
+          </div>
           <p className="text-sm text-zinc-400" role="status">{statusMsg}</p>
           {cameraDevices.length > 1 && (
             <div className="relative">
@@ -499,7 +513,7 @@ export const KioskAttendance = () => {
         </div>
 
         {/* Right Side - Arrival List (memoized) */}
-        <RecentArrivalsPanel arrivals={recentArrivals} />
+        <RecentArrivalsPanel arrivals={recentArrivals} timezone={schoolTimezone} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Clock, CalendarDays, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { useTimezone } from '../../hooks/useTimezone';
 
 interface ChildRecord {
   id: number;
@@ -51,6 +52,7 @@ const statusLabel: Record<string, string> = {
 };
 
 export const ParentSection: React.FC<Props> = ({ token, user }) => {
+  const schoolTimezone = useTimezone();
   const authHeader = { Authorization: `Bearer ${token}` };
   const [children, setChildren] = useState<ChildRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +110,7 @@ export const ParentSection: React.FC<Props> = ({ token, user }) => {
 
   const formatTime = (t?: string | null) => {
     if (!t) return '—';
-    return new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: schoolTimezone });
   };
 
   const formatDate = (d: string) => {

@@ -2,7 +2,7 @@ import { db } from '../db/index.js';
 import { teachingSchedules, students, classes, attendances, user, subjectAttendances, teacherAgendas, agendaAttendances, teachingSessionLogs, academicYears, semesters } from '../db/schema.js';
 import { eq, and, gte, lte, sql, inArray, ne } from 'drizzle-orm';
 import { attendanceService } from './attendanceService.js';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 
 export class TeacherService {
   async getTeacherData(teacherId: string) {
@@ -12,9 +12,9 @@ export class TeacherService {
 
   async getCurrentSchedule(teacherId: string) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const now = getJakartaDate();
-    const dayName = days[now.getDay()];
-    const currentTime = now.toTimeString().slice(0, 8);
+    const now = getSchoolDate();
+    const dayName = days[now.getUTCDay()];
+    const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}`;
 
     const rows = await db.select({
       id: teachingSchedules.id,
@@ -40,9 +40,9 @@ export class TeacherService {
 
   async getUpcomingSchedule(teacherId: string) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const now = getJakartaDate();
-    const dayName = days[now.getDay()];
-    const currentTime = now.toTimeString().slice(0, 8);
+    const now = getSchoolDate();
+    const dayName = days[now.getUTCDay()];
+    const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}`;
 
     const rows = await db.select({
       id: teachingSchedules.id,
@@ -86,8 +86,8 @@ export class TeacherService {
   }
 
   async getClassStudentsWithAttendance(classId: number) {
-    const jakartaDate = getJakartaDate();
-    const today = `${jakartaDate.getFullYear()}-${String(jakartaDate.getMonth() + 1).padStart(2, '0')}-${String(jakartaDate.getDate()).padStart(2, '0')}`;
+    const jakartaDate = getSchoolDate();
+    const today = `${jakartaDate.getUTCFullYear()}-${String(jakartaDate.getUTCMonth() + 1).padStart(2, '0')}-${String(jakartaDate.getUTCDate()).padStart(2, '0')}`;
 
     const rows = await db.select({
       studentId: students.id,
@@ -120,8 +120,8 @@ export class TeacherService {
   }
 
   async markAttendanceBulk(teacherId: string, teacherName: string, studentNisList: string[]) {
-    const jakartaDate = getJakartaDate();
-    const today = `${jakartaDate.getFullYear()}-${String(jakartaDate.getMonth() + 1).padStart(2, '0')}-${String(jakartaDate.getDate()).padStart(2, '0')}`;
+    const jakartaDate = getSchoolDate();
+    const today = `${jakartaDate.getUTCFullYear()}-${String(jakartaDate.getUTCMonth() + 1).padStart(2, '0')}-${String(jakartaDate.getUTCDate()).padStart(2, '0')}`;
 
     if (!studentNisList || studentNisList.length === 0) {
       return { success: true, message: 'Tidak ada siswa untuk diverifikasi.' };
@@ -164,6 +164,7 @@ export class TeacherService {
 
     const activeYear = await db.select().from(academicYears).where(eq(academicYears.isActive, true)).limit(1);
     const activeSemester = await db.select().from(semesters).where(eq(semesters.isActive, true)).limit(1);
+    const now = getSchoolDate();
 
     if (activeYear.length === 0 || activeSemester.length === 0) {
       throw new Error('Tahun ajaran atau semester aktif belum diatur.');
@@ -200,7 +201,7 @@ export class TeacherService {
             .set({
               status: entry.status as any,
               isVerified: true,
-              updatedAt: new Date(),
+              updatedAt: now,
             })
             .where(eq(attendances.id, existing[0].id));
         } else {
@@ -212,7 +213,7 @@ export class TeacherService {
             attendanceDate: date,
             status: entry.status as any,
             isVerified: true,
-            checkinTime: new Date(),
+            checkinTime: now,
           });
         }
         upserted++;

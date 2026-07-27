@@ -4,7 +4,7 @@ import { studentService } from '../services/studentService.js';
 import { db } from '../db/index.js';
 import { students, classes, attendances } from '../db/schema.js';
 import { eq, isNull, and, desc } from 'drizzle-orm';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 import { settingService } from '../services/settingService.js';
 
 export const kioskRouter = Router();
@@ -162,8 +162,8 @@ kioskRouter.get('/recent-arrivals', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Unauthorized: Kunci kiosk tidak valid.' });
     }
 
-    const serverTime = getJakartaDate();
-    const today = `${serverTime.getFullYear()}-${String(serverTime.getMonth() + 1).padStart(2, '0')}-${String(serverTime.getDate()).padStart(2, '0')}`;
+    const serverTime = getSchoolDate();
+    const today = `${serverTime.getUTCFullYear()}-${String(serverTime.getUTCMonth() + 1).padStart(2, '0')}-${String(serverTime.getUTCDate()).padStart(2, '0')}`;
 
     const recentArrivals = await db.select({
       id: attendances.id,

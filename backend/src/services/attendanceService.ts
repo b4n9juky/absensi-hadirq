@@ -5,7 +5,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
-import { getJakartaDate } from '../lib/timezone.js';
+import { getSchoolDate } from '../lib/timezone.js';
 
 export interface AttendancePayload {
   student_id: string;
@@ -22,15 +22,6 @@ export interface QrAttendancePayload {
   student_nis: string;
   teacherUserId: string;
   teacherName: string;
-}
-
-function toDatabaseLocalTime(date: Date): Date {
-  const localDate = new Date(date);
-  localDate.toISOString = function () {
-    const pad = (num: number) => String(num).padStart(2, '0');
-    return `${this.getFullYear()}-${pad(this.getMonth() + 1)}-${pad(this.getDate())}T${pad(this.getHours())}:${pad(this.getMinutes())}:${pad(this.getSeconds())}.${String(this.getMilliseconds()).padStart(3, '0')}`;
-  };
-  return localDate;
 }
 
 export class AttendanceService {
@@ -55,8 +46,8 @@ export class AttendanceService {
       return { success: false, message: 'Tahun ajaran atau semester aktif belum diatur di server.' };
     }
 
-    const serverTime = getJakartaDate();
-    const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long' });
+    const serverTime = getSchoolDate();
+    const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Jakarta' });
     const scheduleRecord = await db.select().from(schedules).where(eq(schedules.dayName, dayName)).limit(1);
 
     if (scheduleRecord.length === 0) {
@@ -91,7 +82,7 @@ export class AttendanceService {
           .set({
             status: targetStatus,
             isVerified: targetIsVerified,
-            updatedAt: toDatabaseLocalTime(serverTime),
+            updatedAt: serverTime,
           })
           .where(eq(attendances.id, record.id));
 
@@ -119,7 +110,7 @@ export class AttendanceService {
         await db.update(attendances)
           .set({
             isVerified: true,
-            updatedAt: toDatabaseLocalTime(serverTime),
+            updatedAt: serverTime,
           })
           .where(eq(attendances.id, record.id));
         return { success: true, message: `Absen datang siswa ${student_nis} berhasil diverifikasi di kelas.` };
@@ -127,12 +118,12 @@ export class AttendanceService {
 
       await db.update(attendances)
         .set({
-          checkoutTime: toDatabaseLocalTime(serverTime),
-          updatedAt: toDatabaseLocalTime(serverTime),
+          checkoutTime: serverTime,
+          updatedAt: serverTime,
         })
         .where(eq(attendances.id, record.id));
 
-      return { success: true, message: `Absen Pulang berhasil untuk ${student_nis} via QR.` };
+        return { success: true, message: `Absen Pulang berhasil untuk ${student_nis} via QR.` };
     }
 
     // Check-in via QR (does not exist yet)
@@ -144,7 +135,7 @@ export class AttendanceService {
       attendanceDate,
       status: targetStatus,
       isVerified: targetIsVerified,
-      checkinTime: toDatabaseLocalTime(serverTime),
+      checkinTime: serverTime,
     });
 
     let statusMsg = 'Hadir';
@@ -179,11 +170,11 @@ export class AttendanceService {
   }
 
   private formatDate(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
   }
 
   private formatTime(date: Date): string {
-    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
   }
 
   private cleanupFile(filePath: string) {

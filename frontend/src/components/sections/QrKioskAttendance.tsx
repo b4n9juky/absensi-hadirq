@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { ScanBarcode, CheckCircle2, UserCircle, Maximize2, Minimize2, Clock, RefreshCw } from 'lucide-react';
 import { useAttendanceSound } from '../../hooks/useAttendanceSound';
+import { useTimezone } from '../../hooks/useTimezone';
 import { getVideoDevices, getDefaultDeviceId } from '../../utils/camera';
 
 interface RecentArrival {
@@ -20,6 +21,7 @@ export const QrKioskAttendance = () => {
   const isProcessingRef = useRef(false);
 
   const { playAttendanceSound } = useAttendanceSound();
+  const schoolTimezone = useTimezone();
 
   const [kioskKey, setKioskKey] = useState<string | null>(localStorage.getItem('kiosk_secret_key'));
   const [inputKey, setInputKey] = useState('');
@@ -29,6 +31,7 @@ export const QrKioskAttendance = () => {
   const [recentArrivals, setRecentArrivals] = useState<RecentArrival[]>([]);
 
   const [qrActive, setQrActive] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [matchResult, setMatchResult] = useState<{ name: string; isSuccess: boolean; message: string; photo?: string } | null>(null);
   const [statusMsg, setStatusMsg] = useState('Memuat sistem QR kiosk...');
   const [qrCameraDevices, setQrCameraDevices] = useState<MediaDeviceInfo[]>([]);
@@ -39,6 +42,11 @@ export const QrKioskAttendance = () => {
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    const tick = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(tick);
   }, []);
 
   const handleToggleFullscreen = useCallback(() => {
@@ -250,6 +258,12 @@ export const QrKioskAttendance = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800">
+            <Clock className="w-4 h-4 text-primary" />
+            <span className="text-sm font-mono text-white tabular-nums">
+              {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: schoolTimezone })}
+            </span>
+          </div>
           <p className="text-sm text-zinc-400" role="status">{statusMsg}</p>
           {qrCameraDevices.length > 1 && (
             <div className="relative">
@@ -396,7 +410,7 @@ export const QrKioskAttendance = () => {
                       {arrival.status === 'PRESENT' ? 'Hadir' : arrival.status === 'LATE' ? 'Terlambat' : arrival.status}
                     </span>
                     <span className="text-xs text-zinc-500 mt-1 font-mono">
-                      {(() => { try { return new Date(arrival.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch { return '--:--:--'; } })()}
+                      {(() => { try { return new Date(arrival.checkinTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: schoolTimezone }); } catch { return '--:--:--'; } })()}
                     </span>
                   </div>
                 </div>

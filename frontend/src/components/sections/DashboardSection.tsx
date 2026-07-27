@@ -267,12 +267,22 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
     return () => clearInterval(timer);
   }, [!!serverClock]);
 
+  const tzLabel: Record<string, string> = {
+    'Asia/Jakarta': 'WIB',
+    'Asia/Makassar': 'WITA',
+    'Asia/Jayapura': 'WIT',
+  };
+
   const getClockString = () => {
     if (!serverClock) return '--:--:--';
-    const h = String(serverClock.getHours()).padStart(2, '0');
-    const m = String(serverClock.getMinutes()).padStart(2, '0');
-    const s = String(serverClock.getSeconds()).padStart(2, '0');
-    return `${h}:${m}:${s}`;
+    try {
+      return serverClock.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: schoolTimezone });
+    } catch {
+      const h = String(serverClock.getHours()).padStart(2, '0');
+      const m = String(serverClock.getMinutes()).padStart(2, '0');
+      const s = String(serverClock.getSeconds()).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
   };
 
   const getClockDateString = () => {
@@ -281,7 +291,8 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: schoolTimezone,
     });
   };
 
@@ -391,7 +402,7 @@ export const DashboardSection: React.FC<Props> = ({ token, user }) => {
           <div className="flex items-center gap-2 text-primary font-mono text-3xl font-bold tracking-wider">
             <Clock className="w-5 h-5 text-primary/70" />
             <span>{getClockString()}</span>
-            <span className="text-xs font-sans font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase tracking-widest ml-1">WIB</span>
+            <span className="text-xs font-sans font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase tracking-widest ml-1">{tzLabel[schoolTimezone] || schoolTimezone.split('/').pop()}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Calendar className="w-3.5 h-3.5 text-muted-foreground/80" />

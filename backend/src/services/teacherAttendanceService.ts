@@ -2,7 +2,7 @@ import { teacherAttendanceRepo } from '../repositories/teacherAttendanceReposito
 import { schedules } from '../db/schema.js';
 import { db } from '../db/index.js';
 import { eq } from 'drizzle-orm';
-import { getSchoolDate } from '../lib/timezone.js';
+import { getSchoolDate, formatDateWIB, formatTimeWIB, getWIBDay } from '../lib/timezone.js';
 
 const DEFAULT_CHECKIN_START = '06:30:00';
 const DEFAULT_LATE_AFTER = '07:00:00';
@@ -13,8 +13,8 @@ const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 export class TeacherAttendanceService {
   async checkin(teacherId: string) {
     const now = getSchoolDate();
-    const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
-    const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}`;
+    const today = formatDateWIB(now);
+    const currentTime = formatTimeWIB(now);
 
     const existing = await teacherAttendanceRepo.findByTeacherAndDate(teacherId, today);
     if (existing) {
@@ -23,7 +23,7 @@ export class TeacherAttendanceService {
       }
     }
 
-    const dayName = dayNames[now.getUTCDay()];
+    const dayName = dayNames[getWIBDay(now)];
     const daySchedule = await db.select()
       .from(schedules)
       .where(eq(schedules.dayName, dayName))
@@ -54,7 +54,7 @@ export class TeacherAttendanceService {
 
   async checkout(teacherId: string) {
     const now = getSchoolDate();
-    const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+    const today = formatDateWIB(now);
 
     const existing = await teacherAttendanceRepo.findByTeacherAndDate(teacherId, today);
     if (!existing) {
@@ -70,7 +70,7 @@ export class TeacherAttendanceService {
 
   async getMyStatus(teacherId: string) {
     const now = getSchoolDate();
-    const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+    const today = formatDateWIB(now);
 
     const record = await teacherAttendanceRepo.findByTeacherAndDate(teacherId, today);
     if (!record) {
@@ -111,7 +111,7 @@ export class TeacherAttendanceService {
       startDate = `${filters.year}-${String(filters.month).padStart(2, '0')}-01`;
       endDate = `${filters.year}-${String(filters.month).padStart(2, '0')}-${daysInMonth}`;
     } else {
-      startDate = filters.startDate || `${currentServerTime.getUTCFullYear()}-${String(currentServerTime.getUTCMonth() + 1).padStart(2, '0')}-${String(currentServerTime.getUTCDate()).padStart(2, '0')}`;
+      startDate = filters.startDate || formatDateWIB(currentServerTime);
       endDate = filters.endDate || startDate;
     }
 
@@ -126,10 +126,7 @@ export class TeacherAttendanceService {
 
     const formatTime = (t: any): string | null => {
       if (!t) return null;
-      if (t instanceof Date) {
-        const pad = (n: number) => String(n).padStart(2, '0');
-        return `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())}`;
-      }
+      if (t instanceof Date) return formatTimeWIB(t);
       const s = String(t);
       if (s.includes('T')) return s.slice(11, 19);
       return s;

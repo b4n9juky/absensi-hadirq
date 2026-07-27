@@ -1,7 +1,7 @@
 import { db } from '../db/index.js';
 import { students, attendances, academicYears, semesters, schedules } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { getSchoolDate } from '../lib/timezone.js';
+import { getSchoolDate, formatDateWIB, formatTimeWIB, getWIBDayName } from '../lib/timezone.js';
 import { settingService } from './settingService.js';
 import { getDistance } from 'geolib';
 
@@ -47,7 +47,7 @@ export class KioskService {
     }
 
     const serverTime = getSchoolDate();
-    const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Jakarta' });
+    const dayName = getWIBDayName(serverTime);
     const scheduleRecord = await db.select().from(schedules).where(eq(schedules.dayName, dayName)).limit(1);
 
     if (scheduleRecord.length === 0) {
@@ -59,8 +59,8 @@ export class KioskService {
     if (!schedule.isActive) {
       return { success: false, message: 'Hari ini bukan hari sekolah. Presensi tidak tersedia.' };
     }
-    const attendanceDate = this.formatDate(serverTime);
-    const currentTimeStr = this.formatTime(serverTime);
+    const attendanceDate = formatDateWIB(serverTime);
+    const currentTimeStr = formatTimeWIB(serverTime);
 
     const existingAttendance = await db.select()
       .from(attendances)
@@ -142,13 +142,6 @@ export class KioskService {
     return { success: true, message: `Absen Datang ${statusMsg} berhasil!` };
   }
 
-  private formatDate(date: Date): string {
-    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-  }
-
-  private formatTime(date: Date): string {
-    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
-  }
 }
 
 export const kioskService = new KioskService();

@@ -5,7 +5,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
-import { getSchoolDate } from '../lib/timezone.js';
+import { getSchoolDate, formatDateWIB, formatTimeWIB, getWIBDayName } from '../lib/timezone.js';
 
 export interface AttendancePayload {
   student_id: string;
@@ -47,7 +47,7 @@ export class AttendanceService {
     }
 
     const serverTime = getSchoolDate();
-    const dayName = serverTime.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Jakarta' });
+    const dayName = getWIBDayName(serverTime);
     const scheduleRecord = await db.select().from(schedules).where(eq(schedules.dayName, dayName)).limit(1);
 
     if (scheduleRecord.length === 0) {
@@ -59,8 +59,8 @@ export class AttendanceService {
     if (!schedule.isActive) {
       return { success: false, message: 'Hari ini bukan hari sekolah. Presensi tidak tersedia.' };
     }
-    const attendanceDate = this.formatDate(serverTime);
-    const currentTimeStr = this.formatTime(serverTime);
+    const attendanceDate = formatDateWIB(serverTime);
+    const currentTimeStr = formatTimeWIB(serverTime);
 
     const existingAttendance = await db.select()
       .from(attendances)
@@ -167,14 +167,6 @@ export class AttendanceService {
     await db.delete(attendances).where(eq(attendances.id, id));
 
     return { success: true, message: 'Data absensi berhasil dihapus.' };
-  }
-
-  private formatDate(date: Date): string {
-    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-  }
-
-  private formatTime(date: Date): string {
-    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
   }
 
   private cleanupFile(filePath: string) {

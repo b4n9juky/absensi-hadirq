@@ -1,5 +1,5 @@
 import { reportRepo } from '../repositories/reportRepository.js';
-import { getSchoolDate } from '../lib/timezone.js';
+import { getSchoolDate, formatDateWIB, formatTimeWIB } from '../lib/timezone.js';
 
 export class ReportService {
   async getReport(filters: {
@@ -27,7 +27,8 @@ export class ReportService {
       resolvedStartDate = filters.date;
       resolvedEndDate = filters.date;
     } else if (filters.month) {
-      const year = filters.year ?? currentServerTime.getUTCFullYear();
+      const defaultDate = formatDateWIB(currentServerTime);
+      const year = filters.year ?? parseInt(defaultDate.slice(0, 4));
       const month = filters.month;
 
       if (month < 1 || month > 12) {
@@ -67,8 +68,7 @@ export class ReportService {
       if (!dateVal) return null;
       if (dateVal instanceof Date) {
         if (isNaN(dateVal.getTime())) return null;
-        const pad = (n: number) => String(n).padStart(2, '0');
-        return `${dateVal.getUTCFullYear()}-${pad(dateVal.getUTCMonth() + 1)}-${pad(dateVal.getUTCDate())}T${pad(dateVal.getUTCHours())}:${pad(dateVal.getUTCMinutes())}:${pad(dateVal.getUTCSeconds())}`;
+        return `${formatDateWIB(dateVal)}T${formatTimeWIB(dateVal)}`;
       }
       const str = String(dateVal);
       if (!str || str === '0000-00-00' || str === '0000-00-00 00:00:00') return null;
@@ -141,7 +141,7 @@ export class ReportService {
     let endDate: string;
 
     if (filters.type === 'daily') {
-      startDate = filters.date || `${currentServerTime.getUTCFullYear()}-${String(currentServerTime.getUTCMonth() + 1).padStart(2, '0')}-${String(currentServerTime.getUTCDate()).padStart(2, '0')}`;
+      startDate = filters.date || formatDateWIB(currentServerTime);
       endDate = startDate;
     } else if (filters.type === 'weekly') {
       const baseDate = filters.date ? new Date(filters.date + 'T00:00:00+07:00') : currentServerTime;
@@ -150,16 +150,17 @@ export class ReportService {
       mon.setUTCDate(baseDate.getUTCDate() - ((day + 6) % 7));
       const sat = new Date(mon);
       sat.setUTCDate(mon.getUTCDate() + 5);
-      startDate = `${mon.getUTCFullYear()}-${String(mon.getUTCMonth() + 1).padStart(2, '0')}-${String(mon.getUTCDate()).padStart(2, '0')}`;
-      endDate = `${sat.getUTCFullYear()}-${String(sat.getUTCMonth() + 1).padStart(2, '0')}-${String(sat.getUTCDate()).padStart(2, '0')}`;
+      startDate = formatDateWIB(mon);
+      endDate = formatDateWIB(sat);
     } else if (filters.type === 'monthly') {
-      const year = filters.year ?? currentServerTime.getUTCFullYear();
-      const month = filters.month ?? (currentServerTime.getUTCMonth() + 1);
+      const defaultDate = formatDateWIB(currentServerTime);
+      const year = filters.year ?? parseInt(defaultDate.slice(0, 4));
+      const month = filters.month ?? parseInt(defaultDate.slice(5, 7));
       const daysInMonth = new Date(year, month, 0).getDate();
       startDate = `${year}-${String(month).padStart(2, '0')}-01`;
       endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
     } else {
-      startDate = filters.startDate || `${currentServerTime.getUTCFullYear()}-${String(currentServerTime.getUTCMonth() + 1).padStart(2, '0')}-${String(currentServerTime.getUTCDate()).padStart(2, '0')}`;
+      startDate = filters.startDate || formatDateWIB(currentServerTime);
       endDate = filters.endDate || startDate;
     }
 
@@ -167,8 +168,7 @@ export class ReportService {
       if (!t) return null;
       if (t instanceof Date) {
         if (isNaN(t.getTime())) return null;
-        const pad = (n: number) => String(n).padStart(2, '0');
-        return `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())}`;
+        return formatTimeWIB(t);
       }
       const s = String(t);
       if (s.includes('T')) return s.slice(11, 19);

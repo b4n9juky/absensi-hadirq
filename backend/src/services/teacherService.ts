@@ -2,7 +2,7 @@ import { db } from '../db/index.js';
 import { teachingSchedules, students, classes, attendances, user, subjectAttendances, teacherAgendas, agendaAttendances, teachingSessionLogs, academicYears, semesters } from '../db/schema.js';
 import { eq, and, gte, lte, sql, inArray, ne } from 'drizzle-orm';
 import { attendanceService } from './attendanceService.js';
-import { getSchoolDate } from '../lib/timezone.js';
+import { getSchoolDate, formatDateWIB, formatTimeWIB, getWIBDay } from '../lib/timezone.js';
 
 export class TeacherService {
   async getTeacherData(teacherId: string) {
@@ -13,8 +13,8 @@ export class TeacherService {
   async getCurrentSchedule(teacherId: string) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const now = getSchoolDate();
-    const dayName = days[now.getUTCDay()];
-    const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}`;
+    const dayName = days[getWIBDay(now)];
+    const currentTime = formatTimeWIB(now);
 
     const rows = await db.select({
       id: teachingSchedules.id,
@@ -41,8 +41,8 @@ export class TeacherService {
   async getUpcomingSchedule(teacherId: string) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const now = getSchoolDate();
-    const dayName = days[now.getUTCDay()];
-    const currentTime = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}`;
+    const dayName = days[getWIBDay(now)];
+    const currentTime = formatTimeWIB(now);
 
     const rows = await db.select({
       id: teachingSchedules.id,
@@ -87,7 +87,7 @@ export class TeacherService {
 
   async getClassStudentsWithAttendance(classId: number) {
     const jakartaDate = getSchoolDate();
-    const today = `${jakartaDate.getUTCFullYear()}-${String(jakartaDate.getUTCMonth() + 1).padStart(2, '0')}-${String(jakartaDate.getUTCDate()).padStart(2, '0')}`;
+    const today = formatDateWIB(jakartaDate);
 
     const rows = await db.select({
       studentId: students.id,
@@ -121,7 +121,7 @@ export class TeacherService {
 
   async markAttendanceBulk(teacherId: string, teacherName: string, studentNisList: string[]) {
     const jakartaDate = getSchoolDate();
-    const today = `${jakartaDate.getUTCFullYear()}-${String(jakartaDate.getUTCMonth() + 1).padStart(2, '0')}-${String(jakartaDate.getUTCDate()).padStart(2, '0')}`;
+    const today = formatDateWIB(jakartaDate);
 
     if (!studentNisList || studentNisList.length === 0) {
       return { success: true, message: 'Tidak ada siswa untuk diverifikasi.' };

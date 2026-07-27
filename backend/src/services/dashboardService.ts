@@ -1,5 +1,5 @@
 import { dashboardRepo } from '../repositories/dashboardRepository.js';
-import { getSchoolDate } from '../lib/timezone.js';
+import { getSchoolDate, formatDateWIB } from '../lib/timezone.js';
 import { settingService } from './settingService.js';
 
 export interface DashboardStatsDto {
@@ -35,8 +35,9 @@ export class DashboardService {
       endDate = filters.date;
       daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     } else if (filters.month || filters.year) {
-      const year = filters.year ?? currentServerTime.getUTCFullYear();
-      const month = filters.month ?? (currentServerTime.getUTCMonth() + 1);
+      const defaultDate = formatDateWIB(currentServerTime);
+      const year = filters.year ?? parseInt(defaultDate.slice(0, 4));
+      const month = filters.month ?? parseInt(defaultDate.slice(5, 7));
 
       if (month < 1 || month > 12) {
         throw new Error('Bulan harus berada di antara 1 dan 12.');
@@ -47,11 +48,8 @@ export class DashboardService {
       endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
       daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     } else {
-      // Default to today in WIB
-      const localYear = currentServerTime.getUTCFullYear();
-      const localMonth = String(currentServerTime.getUTCMonth() + 1).padStart(2, '0');
-      const localDay = String(currentServerTime.getUTCDate()).padStart(2, '0');
-      startDate = `${localYear}-${localMonth}-${localDay}`;
+      // Default to today in school timezone
+      startDate = formatDateWIB(currentServerTime);
       endDate = startDate;
       daysCount = await dashboardRepo.getActiveSchoolDayCount(startDate, endDate);
     }

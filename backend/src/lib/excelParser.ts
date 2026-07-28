@@ -199,6 +199,7 @@ export interface ExcelParentRow {
   name: string;
   email: string;
   password: string;
+  phone?: string;
 }
 
 export interface ParentParseResult {
@@ -225,10 +226,11 @@ export function parseExcelParentFile(filePath: string): ParentParseResult {
   const nameKey = keys.find(k => k.toLowerCase().trim() === 'name' || k.toLowerCase().trim() === 'nama' || k.toLowerCase().trim() === 'nama orang tua');
   const emailKey = keys.find(k => k.toLowerCase().trim() === 'email');
   const passwordKey = keys.find(k => k.toLowerCase().trim() === 'password' || k.toLowerCase().trim() === 'kata sandi');
+  const phoneKey = keys.find(k => k.toLowerCase().trim() === 'no. wa' || k.toLowerCase().trim() === 'nowa' || k.toLowerCase().trim() === 'phone' || k.toLowerCase().trim() === 'telepon' || k.toLowerCase().trim() === 'nomor wa');
 
-  if (!nisKey || !nameKey || !emailKey || !passwordKey) {
+  if (!nisKey || !nameKey || !emailKey) {
     throw new Error(
-      'Format kolom tidak sesuai. File harus memiliki kolom: NIS, Nama/Nama Orang Tua, Email, Password.'
+      'Format kolom tidak sesuai. File harus memiliki kolom: NIS, Nama/Nama Orang Tua, Email.'
     );
   }
 
@@ -240,7 +242,8 @@ export function parseExcelParentFile(filePath: string): ParentParseResult {
     const nis = String(item[nisKey] || '').trim();
     const name = String(item[nameKey] || '').trim();
     const email = String(item[emailKey] || '').trim();
-    const password = String(item[passwordKey] || '').trim();
+    const password = passwordKey ? String(item[passwordKey] || '').trim() : '';
+    const phone = phoneKey ? String(item[phoneKey] || '').trim() : '';
     const rowNum = i + 2;
 
     if (!nis) {
@@ -259,16 +262,8 @@ export function parseExcelParentFile(filePath: string): ParentParseResult {
       errors.push({ row: rowNum, nis, email, error: 'Format email tidak valid.' });
       continue;
     }
-    if (!password) {
-      errors.push({ row: rowNum, nis, email, error: 'Password tidak boleh kosong.' });
-      continue;
-    }
-    if (password.length < 6) {
-      errors.push({ row: rowNum, nis, email, error: 'Password minimal 6 karakter.' });
-      continue;
-    }
 
-    rows.push({ nis, name, email, password });
+    rows.push({ nis, name, email, password, phone: phone || undefined });
   }
 
   return { rows, errors };

@@ -17,9 +17,9 @@ export class UserRepository {
     return results[0] || null;
   }
 
-  async update(id: string, name: string, email: string, role: string) {
+  async update(id: string, name: string, email: string, role: string, phone?: string) {
     await db.update(user)
-      .set({ name, email, role, updatedAt: new Date() })
+      .set({ name, email, role, phone: phone ?? null, updatedAt: new Date() })
       .where(eq(user.id, id));
   }
 
@@ -38,6 +38,7 @@ export class UserRepository {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
     })
     .from(user)
     .where(

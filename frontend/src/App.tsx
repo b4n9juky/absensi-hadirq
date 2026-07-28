@@ -16,6 +16,7 @@ import { RecapSection } from './components/sections/RecapSection';
 import { JournalPrintSection } from './components/sections/JournalPrintSection';
 import { StudentCardPrintSection } from './components/sections/StudentCardPrintSection';
 import { ParentSection } from './components/sections/ParentSection';
+import { WhatsAppSection } from './components/sections/WhatsAppSection';
 import { FaceRegistration } from './components/sections/FaceRegistration';
 import { KioskAttendance } from './components/sections/KioskAttendance';
 import { QrKioskAttendance } from './components/sections/QrKioskAttendance';
@@ -104,6 +105,7 @@ function App() {
           <Route path="rekap" element={<RecapSection token={token!} />} />
           <Route path="cetak-jurnal" element={<JournalPrintSection token={token!} user={user!} />} />
           <Route path="cetak-kartu-siswa" element={<StudentCardPrintSection token={token!} />} />
+          <Route path="whatsapp" element={user?.role === 'admin' ? <WhatsAppSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
         </Route>
         <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
       </Routes>

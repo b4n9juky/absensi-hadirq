@@ -3,7 +3,7 @@ import { studentRepo } from '../repositories/studentRepository.js';
 import { userRepo } from '../repositories/userRepository.js';
 import { auth } from '../lib/auth.js';
 import { db } from '../db/index.js';
-import { attendances, academicYears, semesters, students as studentsTable, classes } from '../db/schema.js';
+import { attendances, academicYears, semesters, students as studentsTable, classes, user } from '../db/schema.js';
 import { eq, and, gte, lte, isNull } from 'drizzle-orm';
 import { parseExcelParentFile } from '../lib/excelParser.js';
 import fs from 'fs';
@@ -117,6 +117,9 @@ export class ParentService {
         const existingUser = await userRepo.findByEmail(row.email);
         if (existingUser) {
           await parentRepo.setParent(student.id, existingUser.id);
+          if (row.phone) {
+            await db.update(user).set({ phone: row.phone }).where(eq(user.id, existingUser.id));
+          }
           results.push({ row: rowNum, nis: row.nis, email: row.email, status: 'ditautkan' });
           imported.push(student.id);
           continue;
@@ -133,6 +136,9 @@ export class ParentService {
         const userId = signupResult.user.id;
 
         await userRepo.updateRole(userId, 'parent');
+        if (row.phone) {
+          await db.update(user).set({ phone: row.phone }).where(eq(user.id, userId));
+        }
 
         await parentRepo.setParent(student.id, userId);
 

@@ -20,6 +20,7 @@ export interface UpdateUserDto {
   email: string;
   role: string;
   password?: string;
+  phone?: string;
 }
 
 export class UserService {
@@ -92,7 +93,7 @@ export class UserService {
       }
     }
 
-    await userRepo.update(id, dto.name, dto.email, dto.role);
+    await userRepo.update(id, dto.name, dto.email, dto.role, dto.phone);
 
     // Update password if provided
     if (dto.password) {

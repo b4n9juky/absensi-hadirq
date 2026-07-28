@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm';
 import { getSchoolDate, formatDateWIB, formatTimeWIB, getWIBDayName } from '../lib/timezone.js';
 import { settingService } from './settingService.js';
 import { getDistance } from 'geolib';
+import { notificationService } from './notificationService.js';
 
 export class KioskService {
   async processKioskAttendance(
@@ -111,6 +112,9 @@ export class KioskService {
         })
         .where(eq(attendances.id, record.id));
 
+      notificationService.sendCheckOutNotification(student, serverTime)
+        .catch(() => {});
+
       return { success: true, message: `Absen Pulang berhasil! Hati-hati di jalan.` };
     }
 
@@ -136,6 +140,9 @@ export class KioskService {
       checkinLongitude: longitude ?? null,
       checkinAccuracy: accuracy ?? null,
     });
+
+    notificationService.sendCheckInNotification(student, attendanceDate, serverTime, targetStatus)
+      .catch(() => {});
 
     let statusMsg = 'Hadir';
     if (targetStatus === 'LATE') statusMsg = 'Terlambat';

@@ -31,6 +31,7 @@ export const user = mysqlTable('user', {
   emailVerified: boolean('email_verified').notNull(),
   image: varchar('image', { length: 255 }),
   role: varchar('role', { length: 50 }).default('siswa').notNull(),
+  phone: varchar('phone', { length: 20 }),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull()
 });
@@ -217,4 +218,25 @@ export const verification = mysqlTable('verification', {
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at'),
   updatedAt: timestamp('updated_at')
+});
+
+export const waSessions = mysqlTable('wa_sessions', {
+  id: int('id').autoincrement().primaryKey(),
+  sessionData: text('session_data').notNull(),
+  status: varchar('status', { length: 20 }).default('disconnected'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+});
+
+export const notifications = mysqlTable('notifications', {
+  id: int('id').autoincrement().primaryKey(),
+  studentId: int('student_id').references(() => students.id).notNull(),
+  type: mysqlEnum('type', ['CHECKIN', 'CHECKOUT']).notNull(),
+  channel: varchar('channel', { length: 20 }).default('whatsapp'),
+  recipient: varchar('recipient', { length: 20 }).notNull(),
+  message: text('message').notNull(),
+  status: mysqlEnum('status', ['PENDING', 'SENT', 'FAILED']).default('PENDING'),
+  error: text('error'),
+  sentAt: timestamp('sent_at'),
+  createdAt: timestamp('created_at').defaultNow(),
 });

@@ -16,6 +16,7 @@ interface StudentRecord {
   photo?: string | null;
   parentId?: string | null;
   parentName?: string | null;
+  parentPhone?: string | null;
 }
 interface ClassRecord { id: number; name: string; }
 
@@ -47,7 +48,7 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
 
   // Parent link state
   const [showLinkParentModal, setShowLinkParentModal] = useState<StudentRecord | null>(null);
-  const [parentUsers, setParentUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [parentUsers, setParentUsers] = useState<{ id: string; name: string; email: string; phone?: string }[]>([]);
   const [selectedParentId, setSelectedParentId] = useState('');
 
   // Import Excel state
@@ -60,7 +61,7 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
   // Import Parent Excel state
   const [showImportParentModal, setShowImportParentModal] = useState(false);
   const [importParentFile, setImportParentFile] = useState<File | null>(null);
-  const [importParentPreview, setImportParentPreview] = useState<{ nis: string; name: string; email: string; password: string }[]>([]);
+  const [importParentPreview, setImportParentPreview] = useState<{ nis: string; name: string; email: string; password: string; phone?: string }[]>([]);
   const [importParentResult, setImportParentResult] = useState<{ imported: number; failed: number; results: any[] } | null>(null);
   const [importParentLoading, setImportParentLoading] = useState(false);
 
@@ -241,11 +242,13 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
         const nameKey = keys.find(k => k.toLowerCase().trim() === 'name' || k.toLowerCase().trim() === 'nama' || k.toLowerCase().trim() === 'nama orang tua') || '';
         const emailKey = keys.find(k => k.toLowerCase().trim() === 'email') || '';
         const passwordKey = keys.find(k => k.toLowerCase().trim() === 'password' || k.toLowerCase().trim() === 'kata sandi') || '';
+        const phoneKey = keys.find(k => k.toLowerCase().trim() === 'no. wa' || k.toLowerCase().trim() === 'nowa' || k.toLowerCase().trim() === 'phone' || k.toLowerCase().trim() === 'telepon' || k.toLowerCase().trim() === 'nomor wa') || '';
         setImportParentPreview(json.slice(0, 5).map((r: any) => ({
           nis: String(r[nisKey] || '').trim(),
           name: String(r[nameKey] || '').trim(),
           email: String(r[emailKey] || '').trim(),
           password: String(r[passwordKey] || '').trim(),
+          phone: phoneKey ? String(r[phoneKey] || '').trim() : undefined,
         })));
       } catch { setImportParentPreview([{ nis: '(gagal baca file)', name: '', email: '', password: '' }]); }
     };
@@ -575,6 +578,13 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
       )
     },
     {
+      key: 'parentPhone',
+      header: 'No. WA',
+      render: (row: StudentRecord) => (
+        <span className="text-xs text-muted-foreground">{row.parentPhone || '—'}</span>
+      )
+    },
+    {
       key: 'actions',
       header: 'Aksi',
       align: 'right' as const,
@@ -861,6 +871,7 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
                     <div className="text-xs">
                       <span className="font-bold text-foreground">{p.name}</span>
                       <span className="text-muted-foreground ml-2">({p.email})</span>
+                      {p.phone && <span className="text-muted-foreground/50 ml-1">— {p.phone}</span>}
                     </div>
                   </label>
                 ))}
@@ -941,13 +952,14 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
                   <div className="bg-background rounded-xl overflow-hidden">
                     <table className="w-full text-left text-xs">
                       <thead><tr className="bg-secondary text-muted-foreground uppercase font-semibold">
-                        <th className="px-3 py-2">NIS</th><th className="px-3 py-2">Nama</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Password</th>
+                        <th className="px-3 py-2">NIS</th><th className="px-3 py-2">Nama</th><th className="px-3 py-2">No. WA</th><th className="px-3 py-2">Email</th><th className="px-3 py-2">Password</th>
                       </tr></thead>
                       <tbody className="divide-y divide-border">
                         {importParentPreview.map((row, i) => (
                           <tr key={i} className="text-foreground">
                             <td className="px-3 py-2">{row.nis || '-'}</td>
                             <td className="px-3 py-2">{row.name || '-'}</td>
+                            <td className="px-3 py-2">{row.phone || '-'}</td>
                             <td className="px-3 py-2">{row.email || '-'}</td>
                             <td className="px-3 py-2">{row.password ? '••••••' : '-'}</td>
                           </tr>
@@ -955,7 +967,7 @@ export const StudentsSection: React.FC<Props> = ({ token }) => {
                       </tbody>
                     </table>
                   </div>
-                  <p className="text-muted-foreground text-xs mt-1">Kolom wajib: NIS, Nama/Nama Orang Tua, Email, Password</p>
+                  <p className="text-muted-foreground text-xs mt-1">Kolom wajib: NIS, Nama/Nama Orang Tua, Email, Password. No. WA opsional.</p>
                 </div>
               )}
             </div>

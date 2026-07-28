@@ -23,6 +23,7 @@ export class ParentRepository {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
     })
     .from(students)
     .innerJoin(user, eq(students.parentId, user.id))
@@ -41,6 +42,7 @@ export class ParentRepository {
       parentId: students.parentId,
       parentName: user.name,
       parentEmail: user.email,
+      parentPhone: user.phone,
     })
     .from(students)
     .leftJoin(classes, eq(students.classId, classes.id))
@@ -65,6 +67,7 @@ export class ParentRepository {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
     })
     .from(user)
     .where(eq(user.role, 'parent'));

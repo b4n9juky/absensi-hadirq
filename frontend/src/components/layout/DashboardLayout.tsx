@@ -18,6 +18,7 @@ const sectionMap: Record<string, string> = {
   'agenda-absensi': 'agenda-attendance',
   pengaturan: 'settings',
   'orang-tua': 'parent',
+  whatsapp: 'whatsapp',
 };
 
 const pathToSection: Record<string, string> = {
@@ -34,6 +35,7 @@ const pathToSection: Record<string, string> = {
   'agenda-attendance': 'agenda-absensi',
   settings: 'pengaturan',
   parent: 'orang-tua',
+  whatsapp: 'whatsapp',
 };
 
 interface Props {

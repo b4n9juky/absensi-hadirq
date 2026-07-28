@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon, FileText, UserCheck, Printer, CreditCard } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon, FileText, UserCheck, Printer, CreditCard, MessageCircle } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 
 const allNavItems = [
@@ -8,6 +8,7 @@ const allNavItems = [
   { path: '/dashboard/absensi-guru', key: 'teacher-attendance', icon: UserCheck, label: 'Absensi Guru', roles: ['admin'] },
   { path: '/dashboard/kelas', key: 'classes', icon: BookOpen, label: 'Kelas', roles: ['admin'] },
   { path: '/dashboard/siswa', key: 'students', icon: GraduationCap, label: 'Siswa', roles: ['admin'] },
+  { path: '/dashboard/whatsapp', key: 'whatsapp', icon: MessageCircle, label: 'WhatsApp Bot', roles: ['admin'] },
   { path: '/dashboard/akademik', key: 'academic', icon: Calendar, label: 'Akademik', roles: ['admin'] },
   { path: '/dashboard/jadwal-mengajar', key: 'teaching-schedule', icon: Clock, label: 'Jadwal Mengajar', roles: ['admin', 'guru'] },
   { path: '/dashboard/rekap', key: 'recap', icon: FileText, label: 'Rekap Jurnal', roles: ['admin', 'guru'] },

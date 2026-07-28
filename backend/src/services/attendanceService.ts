@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
 import { getSchoolDate, formatDateWIB, formatTimeWIB, getWIBDayName } from '../lib/timezone.js';
+import { notificationService } from './notificationService.js';
 
 export interface AttendancePayload {
   student_id: string;
@@ -123,6 +124,9 @@ export class AttendanceService {
         })
         .where(eq(attendances.id, record.id));
 
+        notificationService.sendCheckOutNotification(student, serverTime)
+          .catch(() => {});
+
         return { success: true, message: `Absen Pulang berhasil untuk ${student_nis} via QR.` };
     }
 
@@ -137,6 +141,9 @@ export class AttendanceService {
       isVerified: targetIsVerified,
       checkinTime: serverTime,
     });
+
+    notificationService.sendCheckInNotification(student, attendanceDate, serverTime, targetStatus)
+      .catch(() => {});
 
     let statusMsg = 'Hadir';
     if (targetStatus === 'SICK') statusMsg = 'Sakit';

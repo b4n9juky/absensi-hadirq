@@ -8,6 +8,7 @@ export const createUserSchema = z.object({
     'Password harus mengandung huruf kecil, huruf besar, dan angka'
   ),
   role: z.enum(['admin', 'guru', 'parent'], { message: 'Role tidak valid' }),
+  phone: z.string().regex(/^(\+62|62|0)\d{8,15}$/, 'Format nomor WA tidak valid. Gunakan format: 08xx, 62xx, atau +62xx').optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -15,6 +16,7 @@ export const updateUserSchema = z.object({
   email: z.string().email('Format email tidak valid'),
   role: z.enum(['admin', 'guru', 'parent'], { message: 'Role tidak valid' }),
   password: z.string().min(6, 'Password minimal 6 karakter').optional(),
+  phone: z.string().regex(/^(\+62|62|0)\d{8,15}$/, 'Format nomor WA tidak valid. Gunakan format: 08xx, 62xx, atau +62xx').optional(),
 });
 
 export const createStudentSchema = z.object({

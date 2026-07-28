@@ -128,7 +128,6 @@ export const StudentCardPrintSection: React.FC<Props> = ({ token }) => {
 
         // Body
         const bodyY = y + 13;
-        const bodyH = CARD_H - 10 - 13;
 
         // Photo area
         const photoW = 18;
@@ -144,7 +143,6 @@ export const StudentCardPrintSection: React.FC<Props> = ({ token }) => {
 
         // Info area
         const infoX = x + photoW + 4;
-        const maxTextW = x + CARD_W - 23 - 1.5 - infoX;
         doc.setTextColor(55, 65, 81);
         doc.setFontSize(5);
         doc.setFont('helvetica', 'bold');

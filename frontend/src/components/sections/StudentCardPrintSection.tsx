@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Printer, GraduationCap, Loader } from 'lucide-react';
+import { FileDown, GraduationCap, Loader } from 'lucide-react';
 
 interface Props {
   token: string;
@@ -15,8 +15,20 @@ interface StudentRecord {
 
 interface ClassRecord { id: number; name: string; }
 
+async function toBase64(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 export const StudentCardPrintSection: React.FC<Props> = ({ token }) => {
   const [filterClass, setFilterClass] = useState('');
+  const [generating, setGenerating] = useState(false);
   const authHeader = { Authorization: `Bearer ${token}` };
 
   const { data: settings } = useQuery({
@@ -53,82 +65,135 @@ export const StudentCardPrintSection: React.FC<Props> = ({ token }) => {
   const schoolName = settings?.school_name || 'SEKOLAH';
   const schoolAddress = settings?.school_address || '';
 
-  const handlePrint = () => {
+  const handleGeneratePdf = async () => {
     if (!students || students.length === 0) return;
-    const origin = window.location.origin;
-    const toAbs = (url: string) => url.startsWith('http') ? url : origin + url;
-    const cardsHtml = students.map((student) => `
-      <div class="student-card">
-        <div class="card-header">
-          <div class="card-title">STUDENT'S CARD</div>
-          <div class="card-school">${escapeHtml(schoolName)}</div>
-          ${schoolAddress ? `<div class="card-address">${escapeHtml(schoolAddress)}</div>` : ''}
-        </div>
-        <div class="card-body">
-          <div class="card-left">
-            ${student.photo
-              ? `<img src="${toAbs(student.photo)}" alt="${escapeHtml(student.studentName)}" class="card-photo" />`
-              : `<div class="card-photo-placeholder"></div>`}
-            <div class="card-info">
-              <div class="card-info-row"><span class="card-label">Name</span><span class="card-colon">:</span><span class="card-value">${escapeHtml(student.studentName)}</span></div>
-              <div class="card-info-row"><span class="card-label">Kelas</span><span class="card-colon">:</span><span class="card-value">${escapeHtml(student.className)}</span></div>
-              <div class="card-info-row"><span class="card-label">NIS</span><span class="card-colon">:</span><span class="card-value">${escapeHtml(student.nis)}</span></div>
-            </div>
-          </div>
-          <div class="card-right">
-            ${student.qrcode ? `<img src="${toAbs(student.qrcode)}" alt="QR" class="card-qrcode" />` : `<div class="card-qrcode-placeholder"></div>`}
-          </div>
-        </div>
-        <div class="card-footer">HadirQ - Sistem Absensi Sekolah</div>
-      </div>
-    `).join('');
+    setGenerating(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) { alert('Izinkan pop-up untuk mencetak.'); return; }
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Cetak Kartu Siswa</title>
-        <style>
-          @page { size: A4 portrait; margin: 8mm; }
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .print-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8mm; }
-          .student-card { border: 1.5px solid #d1d5db; border-radius: 8px; background: white; page-break-inside: avoid; break-inside: avoid; overflow: hidden; }
-          .card-header { background: #1e293b; color: white; text-align: center; padding: 6px 10px; }
-          .card-title { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
-          .card-school { font-size: 9px; font-weight: 600; margin-top: 1px; }
-          .card-address { font-size: 7px; opacity: 0.8; }
-          .card-body { display: flex; padding: 8px; gap: 8px; }
-          .card-left { flex: 1; display: flex; gap: 8px; align-items: center; }
-          .card-photo { width: 60px; height: 72px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; flex-shrink: 0; }
-          .card-photo-placeholder { width: 60px; height: 72px; border-radius: 4px; border: 1px dashed #d1d5db; flex-shrink: 0; background: #f9fafb; }
-          .card-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-          .card-info-row { display: flex; align-items: center; gap: 2px; font-size: 8px; }
-          .card-label { font-weight: 700; color: #374151; min-width: 26px; font-size: 7px; }
-          .card-colon { color: #9ca3af; }
-          .card-value { font-weight: 600; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-          .card-right { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 75px; }
-          .card-qrcode { width: 70px; height: 70px; object-fit: contain; }
-          .card-qrcode-placeholder { width: 70px; height: 70px; border: 1px dashed #d1d5db; border-radius: 4px; background: #f9fafb; }
-          .card-footer { background: #f1f5f9; text-align: center; font-size: 6px; color: #64748b; padding: 3px; border-top: 1px solid #e5e7eb; }
-        </style>
-      </head>
-      <body>
-        <div class="print-grid">${cardsHtml}</div>
-        <script>
-          window.onload = function() { window.print(); window.close(); };
-        <\/script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+      const PAGE_W = 210;
+      const PAGE_H = 297;
+      const MARGIN = 10;
+      const GAP = 6;
+      const CARD_W = (PAGE_W - 2 * MARGIN - GAP) / 2;
+      const CARD_H = 58;
+      const COLS = 2;
+      const ROWS_PER_PAGE = Math.floor((PAGE_H - 2 * MARGIN + GAP) / (CARD_H + GAP));
+
+      const allB64: Record<string, string> = {};
+      const needsLoad: { key: string; url: string }[] = [];
+      for (const s of students) {
+        if (s.photo) needsLoad.push({ key: `photo-${s.id}`, url: s.photo });
+        if (s.qrcode) needsLoad.push({ key: `qr-${s.id}`, url: s.qrcode });
+      }
+      await Promise.all(needsLoad.map(async ({ key, url }) => {
+        try { allB64[key] = await toBase64(url); } catch { /* ignore */ }
+      }));
+
+      const doc = new jsPDF('p', 'mm', 'a4');
+
+      for (let i = 0; i < students.length; i++) {
+        const pageIndex = Math.floor(i / (COLS * ROWS_PER_PAGE));
+        const posOnPage = i % (COLS * ROWS_PER_PAGE);
+        const col = posOnPage % COLS;
+        const row = Math.floor(posOnPage / COLS);
+
+        if (pageIndex > 0 && posOnPage === 0) {
+          doc.addPage();
+        }
+
+        const x = MARGIN + col * (CARD_W + GAP);
+        const y = MARGIN + row * (CARD_H + GAP);
+
+        const student = students[i];
+
+        // Card shadow/border
+        doc.setDrawColor(180);
+        doc.setLineWidth(0.3);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(x, y, CARD_W, CARD_H, 1.5, 1.5, 'FD');
+
+        // Header bar
+        doc.setFillColor(30, 41, 59);
+        doc.roundedRect(x, y, CARD_W, 10, 1.5, 1.5, 'F');
+        doc.rect(x, y + 5, CARD_W, 5, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.text('STUDENT\'S CARD', x + CARD_W / 2, y + 4, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.text(schoolName, x + CARD_W / 2, y + 8, { align: 'center' });
+
+        // Body
+        const bodyY = y + 13;
+        const bodyH = CARD_H - 10 - 13;
+
+        // Photo area
+        const photoW = 18;
+        const photoH = 22;
+        const photoKey = `photo-${student.id}`;
+        const hasPhoto = allB64[photoKey];
+        if (hasPhoto) {
+          try { doc.addImage(allB64[photoKey], 'JPEG', x + 2, bodyY, photoW, photoH); } catch { /* ignore */ }
+        }
+        doc.setDrawColor(200);
+        doc.setLineWidth(0.2);
+        doc.rect(x + 2, bodyY, photoW, photoH);
+
+        // Info area
+        const infoX = x + photoW + 4;
+        const maxTextW = x + CARD_W - 23 - 1.5 - infoX;
+        doc.setTextColor(55, 65, 81);
+        doc.setFontSize(5);
+        doc.setFont('helvetica', 'bold');
+
+        const infoRows = [
+          { label: 'Name', value: student.studentName },
+          { label: 'Kelas', value: student.className },
+          { label: 'NIS', value: student.nis },
+        ];
+
+        let iy = bodyY + 1;
+        for (const row of infoRows) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(4.5);
+          doc.text(row.label + ' :', infoX, iy);
+          doc.setFont('helvetica', 'normal');
+          const valX = infoX + doc.getTextWidth(row.label + ' : ') + 0.5;
+          doc.text(row.value, valX, iy);
+          iy += 5;
+        }
+
+        // QR code area
+        const qrKey = `qr-${student.id}`;
+        const qrSize = 18;
+        if (allB64[qrKey]) {
+          try { doc.addImage(allB64[qrKey], 'PNG', x + CARD_W - qrSize - 2, bodyY, qrSize, qrSize); } catch { /* ignore */ }
+        }
+        doc.setDrawColor(200);
+        doc.setLineWidth(0.2);
+        doc.rect(x + CARD_W - qrSize - 2, bodyY, qrSize, qrSize);
+
+        // Footer
+        doc.setFillColor(241, 245, 249);
+        doc.rect(x, y + CARD_H - 4, CARD_W, 4, 'F');
+        doc.setDrawColor(220);
+        doc.setLineWidth(0.2);
+        doc.line(x, y + CARD_H - 4, x + CARD_W, y + CARD_H - 4);
+        doc.setTextColor(100, 116, 139);
+        doc.setFontSize(3.5);
+        doc.setFont('helvetica', 'normal');
+        doc.text('HadirQ - Sistem Absensi Sekolah', x + CARD_W / 2, y + CARD_H - 1.2, { align: 'center' });
+      }
+
+      doc.save('kartu-siswa.pdf');
+    } catch (err: any) {
+      alert('Gagal membuat PDF: ' + err.message);
+    }
+    setGenerating(false);
   };
-
-  function escapeHtml(str: string): string {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
 
   return (
     <div className="space-y-6">
@@ -151,10 +216,10 @@ export const StudentCardPrintSection: React.FC<Props> = ({ token }) => {
             {students && <span>{students.length} siswa</span>}
           </div>
           <div className="flex justify-end">
-            <button onClick={handlePrint} disabled={!students || students.length === 0}
+            <button onClick={handleGeneratePdf} disabled={!students || students.length === 0 || generating}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 text-xs font-bold transition-all disabled:opacity-50">
-              <Printer className="w-4 h-4" />
-              <span>Cetak Kartu</span>
+              {generating ? <Loader className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+              <span>{generating ? 'Membuat PDF...' : 'Download PDF Kartu'}</span>
             </button>
           </div>
         </div>
@@ -173,10 +238,17 @@ export const StudentCardPrintSection: React.FC<Props> = ({ token }) => {
         </div>
       )}
 
-      {students && students.length > 0 && (
+      {generating && (
+        <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground text-sm">
+          <Loader className="w-6 h-6 mx-auto mb-3 animate-spin" />
+          Memproses foto dan membuat PDF...
+        </div>
+      )}
+
+      {students && students.length > 0 && !generating && (
         <section className="bg-card border border-border rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-            <Printer className="w-4 h-4 text-primary" />
+            <GraduationCap className="w-4 h-4 text-primary" />
             <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Preview ({students.length} siswa)
             </h3>

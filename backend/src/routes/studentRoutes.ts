@@ -35,7 +35,8 @@ export const studentsRouter = Router();
 
 studentsRouter.get('/', async (req, res) => {
   try {
-    const data = await studentService.getStudents();
+    const classId = req.query.classId ? parseInt(req.query.classId as string) : undefined;
+    const data = await studentService.getStudents(classId);
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

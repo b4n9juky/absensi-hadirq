@@ -15,7 +15,10 @@ export interface CreateStudentDto {
 }
 
 export class StudentService {
-  async getStudents() {
+  async getStudents(classId?: number) {
+    if (classId) {
+      return studentRepo.findByClassId(classId);
+    }
     return studentRepo.findAll();
   }
 

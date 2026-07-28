@@ -14,6 +14,7 @@ import { SubjectsSection } from './components/sections/SubjectsSection';
 import { AgendaAttendanceSection } from './components/sections/AgendaAttendanceSection';
 import { RecapSection } from './components/sections/RecapSection';
 import { JournalPrintSection } from './components/sections/JournalPrintSection';
+import { StudentCardPrintSection } from './components/sections/StudentCardPrintSection';
 import { ParentSection } from './components/sections/ParentSection';
 import { FaceRegistration } from './components/sections/FaceRegistration';
 import { KioskAttendance } from './components/sections/KioskAttendance';
@@ -102,6 +103,7 @@ function App() {
           <Route path="agenda-absensi" element={user?.role === 'guru' ? <AgendaAttendanceSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
           <Route path="rekap" element={<RecapSection token={token!} />} />
           <Route path="cetak-jurnal" element={<JournalPrintSection token={token!} user={user!} />} />
+          <Route path="cetak-kartu-siswa" element={<StudentCardPrintSection token={token!} />} />
         </Route>
         <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
       </Routes>

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon, FileText, UserCheck, Printer } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon, FileText, UserCheck, Printer, CreditCard } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 
 const allNavItems = [
@@ -12,6 +12,7 @@ const allNavItems = [
   { path: '/dashboard/jadwal-mengajar', key: 'teaching-schedule', icon: Clock, label: 'Jadwal Mengajar', roles: ['admin', 'guru'] },
   { path: '/dashboard/rekap', key: 'recap', icon: FileText, label: 'Rekap Jurnal', roles: ['admin', 'guru'] },
   { path: '/dashboard/cetak-jurnal', key: 'print-journal', icon: Printer, label: 'Cetak Buku Jurnal', roles: ['admin', 'guru'] },
+  { path: '/dashboard/cetak-kartu-siswa', key: 'print-student-card', icon: CreditCard, label: 'Cetak Kartu Siswa', roles: ['admin'] },
   { path: '/dashboard/mata-pelajaran', key: 'subjects', icon: Book, label: 'Mata Pelajaran', roles: ['admin'] },
   { path: '/dashboard/agenda-absensi', key: 'agenda-attendance', icon: ClipboardCheck, label: 'Agenda Absensi', roles: ['guru'] },
   { path: '/dashboard/pengaturan', key: 'settings', icon: Settings, label: 'Pengaturan', roles: ['admin'] },

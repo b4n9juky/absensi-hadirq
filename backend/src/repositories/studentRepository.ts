@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import { students, user, classes } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export class StudentRepository {
   async findAll() {
@@ -23,6 +23,29 @@ export class StudentRepository {
     .from(students)
     .innerJoin(classes, eq(students.classId, classes.id))
     .leftJoin(user, eq(students.parentId, user.id));
+  }
+
+  async findByClassId(classId: number) {
+    return db.select({
+      id: students.id,
+      name: students.name,
+      nis: students.nis,
+      classId: students.classId,
+      deviceUuid: students.deviceUuid,
+      qrcode: students.qrcode,
+      faceEmbedding: students.faceEmbedding,
+      photo: students.photo,
+      parentId: students.parentId,
+      parentName: user.name,
+      createdAt: students.createdAt,
+      updatedAt: students.updatedAt,
+      studentName: students.name,
+      className: classes.name
+    })
+    .from(students)
+    .innerJoin(classes, eq(students.classId, classes.id))
+    .leftJoin(user, eq(students.parentId, user.id))
+    .where(eq(students.classId, classId));
   }
 
   async findById(id: number) {

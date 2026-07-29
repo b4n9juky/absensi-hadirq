@@ -28,7 +28,7 @@ if (proxyUrl) {
   } catch { /* ignore */ }
 }
 
-const AUTH_DIR = path.join(process.cwd(), 'baileys_auth_info');
+const AUTH_DIR = path.join(__dirname, '..', '..', 'baileys_auth_info');
 
 class WaService {
   private sock: ReturnType<typeof makeWASocket> | null = null;

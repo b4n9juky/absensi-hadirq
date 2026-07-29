@@ -37,7 +37,7 @@ ENV PYTHON=/usr/bin/python3
 
 # Install backend dependencies
 COPY backend/package*.json ./backend/
-RUN cd backend && npm ci
+RUN cd backend && npm config set nodejs-dist-url https://registry.npmmirror.com/-/binary/node && npm ci
 
 # Copy backend source and compile
 COPY backend/ ./backend/

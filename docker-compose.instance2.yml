@@ -1,12 +1,20 @@
 # ================================================
-# Instance ke-2? Lihat docker-compose.instance2.yml
-# Cara: docker compose -f docker-compose.instance2.yml --env-file .env.instance2 up -d
+# docker-compose.instance2.yml
+# Instance ke-2 Hadirq — jalan di VPS yang sama
+# 
+# Cara pakai:
+#   docker compose -f docker-compose.instance2.yml --env-file .env.instance2 up -d
+#
+# Prasyarat:
+#   - Instance 1 sudah running (docker compose up -d)
+#   - Semua container di network hadirq-network yang sama
+#   - nginx.conf sudah ditambahi server block untuk domain baru
 # ================================================
 
 services:
-  db:
+  db-s2:
     image: mysql:8.0
-    container_name: hadirq-db
+    container_name: hadirq-db-s2
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-hadirq123}
@@ -14,7 +22,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-hadirq}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-hadirq123}
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data_s2:/var/lib/mysql
     networks:
       - hadirq-network
     healthcheck:
@@ -23,19 +31,19 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+  backend-s2:
     build:
       context: .
       dockerfile: backend/Dockerfile
     image: ghcr.io/${GITHUB_REPO_OWNER:-b4n9juky}/absensi-hadirq-backend:latest
-    container_name: hadirq-backend
+    container_name: hadirq-backend-s2
     restart: unless-stopped
     depends_on:
-      db:
+      db-s2:
         condition: service_healthy
     environment:
       - NODE_ENV=production
-      - PORT=3001
+      - PORT=3002
       - DATABASE_URL=${DATABASE_URL:?error}
       - CORS_ORIGIN=${CORS_ORIGIN:?error}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?error}
@@ -48,50 +56,24 @@ services:
       - KIOSK_SECRET_KEY=${KIOSK_SECRET_KEY:-absensi123456}
       - WA_PROXY_URL=${WA_PROXY_URL:-}
     volumes:
-      - uploads_data:/app/backend/uploads
-      - baileys_auth_data:/app/backend/baileys_auth_info
+      - uploads_data_s2:/app/backend/uploads
+      - baileys_auth_data_s2:/app/backend/baileys_auth_info
     networks:
-      - hadirq-network
+      hadirq-network:
+        aliases:
+          - backend-s2
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3001/api/config/debug"]
+      test: ["CMD", "curl", "-sf", "http://localhost:3002/api/config/debug"]
       interval: 30s
       timeout: 10s
       start_period: 15s
       retries: 3
 
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: hadirq-nginx
-    restart: unless-stopped
-    depends_on:
-      - backend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - certs_data:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    networks:
-      - hadirq-network
-
-  certbot:
-    image: certbot/certbot
-    container_name: hadirq-certbot
-    restart: unless-stopped
-    volumes:
-      - certs_data:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
 volumes:
-  db_data:
-  uploads_data:
-  baileys_auth_data:
-  certs_data:
-  certbot_www:
+  db_data_s2:
+  uploads_data_s2:
+  baileys_auth_data_s2:
 
 networks:
   hadirq-network:
-    driver: bridge
+    external: true

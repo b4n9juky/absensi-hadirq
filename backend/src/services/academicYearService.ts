@@ -15,7 +15,7 @@ export class AcademicYearService {
     return academicYearRepo.findAll();
   }
 
-  async createYear(dto: CreateAcademicYearDto) {
+  async createYear(dto: CreateAcademicYearDto, schoolId: number = 0) {
     if (!dto.name || dto.name.trim() === '') {
       throw new Error('Nama tahun ajaran tidak boleh kosong.');
     }
@@ -25,11 +25,11 @@ export class AcademicYearService {
     if (isActive) {
       return db.transaction(async (tx) => {
         await academicYearRepo.deactivateAll();
-        return academicYearRepo.create(dto.name, true);
+        return academicYearRepo.create(dto.name, true, schoolId);
       });
     }
 
-    return academicYearRepo.create(dto.name, false);
+    return academicYearRepo.create(dto.name, false, schoolId);
   }
 
   async updateYear(id: number, dto: UpdateAcademicYearDto) {

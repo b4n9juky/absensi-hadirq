@@ -33,11 +33,11 @@ export class SemesterService {
     if (isActive) {
       return db.transaction(async (tx) => {
         await semesterRepo.deactivateAllInYear(dto.academicYearId);
-        return semesterRepo.create(dto.academicYearId, dto.name, true);
+        return semesterRepo.create(dto.academicYearId, dto.name, true, 0);
       });
     }
 
-    return semesterRepo.create(dto.academicYearId, dto.name, false);
+    return semesterRepo.create(dto.academicYearId, dto.name, false, 0);
   }
 
   async updateSemester(id: number, dto: UpdateSemesterDto) {

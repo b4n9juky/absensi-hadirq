@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Lock, Mail, ShieldAlert, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ShieldAlert, GraduationCap, Globe, Building } from 'lucide-react';
+import { api } from '../lib/api';
 
 interface LoginScreenProps {
   onLoginSuccess: (token: string, user: any) => void;
@@ -11,6 +12,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const schoolSlug = api.getSchoolSlug();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +102,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </div>
           )}
 
+          {schoolSlug && (
+            <div className="mb-6 p-3 rounded-xl bg-primary/5 border border-primary/10 text-sm flex items-center gap-3">
+              <Building className="w-4 h-4 text-primary shrink-0" />
+              <div>
+                <span className="text-foreground font-medium">{schoolSlug}.hadirq.app</span>
+                <p className="text-2xs text-muted-foreground mt-0.5">Masuk ke dashboard sekolah</p>
+              </div>
+            </div>
+          )}
+
+          {!schoolSlug && (
+            <div className="mb-6 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10 text-sm flex items-center gap-3">
+              <Globe className="w-4 h-4 text-amber-400 shrink-0" />
+              <div>
+                <span className="text-foreground font-medium">Portal Super Admin</span>
+                <p className="text-2xs text-muted-foreground mt-0.5">Login sebagai administrator global</p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
@@ -159,6 +181,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <p className="text-center mt-8 text-xs text-muted-foreground/60">
             HadirQ &mdash; Sistem Absensi Sekolah
           </p>
+          {!schoolSlug && (
+            <p className="text-center mt-3">
+              <a href="/#/daftar" className="text-xs text-primary hover:underline">
+                Daftarkan Sekolah Baru
+              </a>
+            </p>
+          )}
         </div>
       </div>
     </div>

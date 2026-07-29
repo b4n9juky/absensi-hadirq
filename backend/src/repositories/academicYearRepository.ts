@@ -12,10 +12,11 @@ export class AcademicYearRepository {
     return results[0] || null;
   }
 
-  async create(name: string, isActive: boolean) {
+  async create(name: string, isActive: boolean, schoolId: number) {
     const [result] = await db.insert(academicYears).values({
       name,
       isActive,
+      schoolId,
     });
     return result.insertId;
   }

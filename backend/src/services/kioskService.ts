@@ -112,7 +112,7 @@ export class KioskService {
         })
         .where(eq(attendances.id, record.id));
 
-      notificationService.sendCheckOutNotification(student, serverTime)
+      notificationService.sendCheckOutNotification(student, serverTime, student.schoolId)
         .catch(() => {});
 
       return { success: true, message: `Absen Pulang berhasil! Hati-hati di jalan.` };
@@ -141,7 +141,7 @@ export class KioskService {
       checkinAccuracy: accuracy ?? null,
     });
 
-    notificationService.sendCheckInNotification(student, attendanceDate, serverTime, targetStatus)
+    notificationService.sendCheckInNotification(student, attendanceDate, serverTime, targetStatus, student.schoolId)
       .catch(() => {});
 
     let statusMsg = 'Hadir';

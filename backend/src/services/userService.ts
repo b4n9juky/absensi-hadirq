@@ -25,11 +25,11 @@ export interface UpdateUserDto {
 }
 
 export class UserService {
-  async getUsers() {
-    return userRepo.findAll();
+  async getUsers(schoolId?: number) {
+    return userRepo.findAll(schoolId);
   }
 
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto, schoolId?: number) {
     if (!dto.name || dto.name.trim() === '') {
       throw new Error('Nama tidak boleh kosong.');
     }
@@ -60,17 +60,24 @@ export class UserService {
       }
     });
 
+    const userId = signUpResult.user.id;
+
     // Update role if not 'siswa' (default is 'siswa' in auth configuration)
     if (dto.role !== 'siswa') {
-      await db.update(user).set({ role: dto.role }).where(eq(user.id, signUpResult.user.id));
+      await db.update(user).set({ role: dto.role }).where(eq(user.id, userId));
     }
 
     // Set phone if provided
     if (dto.phone) {
-      await db.update(user).set({ phone: dto.phone }).where(eq(user.id, signUpResult.user.id));
+      await db.update(user).set({ phone: dto.phone }).where(eq(user.id, userId));
     }
 
-    return signUpResult.user.id;
+    // Set schoolId if provided (multi-tenant)
+    if (schoolId) {
+      await db.update(user).set({ schoolId }).where(eq(user.id, userId));
+    }
+
+    return userId;
   }
 
   async updateUser(id: string, dto: UpdateUserDto) {
@@ -116,7 +123,7 @@ export class UserService {
     await userRepo.delete(id);
   }
 
-  async importUsers(filePath: string) {
+  async importUsers(filePath: string, schoolId?: number) {
     const { rows, errors: parseErrors } = parseExcelUserFile(filePath);
 
     const results: { row: number; email: string; status: string; error?: string }[] = [];
@@ -145,10 +152,13 @@ export class UserService {
           },
         });
 
-        if (row.role !== 'siswa') {
-          const created = await userRepo.findByEmail(row.email);
-          if (created) {
+        const created = await userRepo.findByEmail(row.email);
+        if (created) {
+          if (row.role !== 'siswa') {
             await db.update(user).set({ role: row.role }).where(eq(user.id, created.id));
+          }
+          if (schoolId) {
+            await db.update(user).set({ schoolId }).where(eq(user.id, created.id));
           }
         }
 

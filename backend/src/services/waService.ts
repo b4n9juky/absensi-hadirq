@@ -1,9 +1,3 @@
-import {
-  makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-} from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import QRCode from 'qrcode';
 import path from 'path';
@@ -28,23 +22,30 @@ if (proxyUrl) {
   } catch { /* ignore */ }
 }
 
-const AUTH_DIR = path.join(__dirname, '..', '..', 'baileys_auth_info');
+const getAuthDir = (schoolId: number) =>
+  path.join(__dirname, '..', '..', 'baileys_auth_info', `school_${schoolId}`);
 
-class WaService {
-  private sock: ReturnType<typeof makeWASocket> | null = null;
-  private qrCodeData: string | null = null;
-  private pairingCode: string | null = null;
-  private _isConnected = false;
-  private _isInitializing = false;
-  private _error: string | null = null;
+class WaConnection {
+  public sock: any = null;
+  public qrCodeData: string | null = null;
+  public pairingCode: string | null = null;
+  public isConnected = false;
+  public isInitializing = false;
+  public error: string | null = null;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private baileys: any = null;
+  private schoolId: number;
+
+  constructor(schoolId: number) {
+    this.schoolId = schoolId;
+  }
 
   private reset() {
     this.sock = null;
-    this._isConnected = false;
+    this.isConnected = false;
     this.qrCodeData = null;
     this.pairingCode = null;
-    this._isInitializing = false;
+    this.isInitializing = false;
     this.clearReconnect();
   }
 
@@ -56,17 +57,17 @@ class WaService {
   }
 
   private markConnected() {
-    this._isConnected = true;
+    this.isConnected = true;
     this.qrCodeData = null;
     this.pairingCode = null;
-    this._isInitializing = false;
-    this._error = null;
+    this.isInitializing = false;
+    this.error = null;
     this.clearReconnect();
   }
 
   private async saveSession() {
     try {
-      const existing = await db.select().from(waSessions).limit(1);
+      const existing = await db.select().from(waSessions).where(eq(waSessions.schoolId, this.schoolId)).limit(1);
       if (existing.length > 0) {
         await db.update(waSessions)
           .set({ status: 'connected', updatedAt: new Date() })
@@ -75,6 +76,7 @@ class WaService {
         await db.insert(waSessions).values({
           sessionData: JSON.stringify({}),
           status: 'connected',
+          schoolId: this.schoolId,
         });
       }
     } catch { /* ignore */ }
@@ -82,27 +84,36 @@ class WaService {
 
   private async clearSession() {
     try {
-      await db.delete(waSessions);
+      await db.delete(waSessions).where(eq(waSessions.schoolId, this.schoolId));
     } catch { /* ignore */ }
   }
 
+  private async getBaileys() {
+    if (!this.baileys) {
+      this.baileys = await import('@whiskeysockets/baileys');
+    }
+    return this.baileys;
+  }
+
   async initialize(pairingPhoneNumber?: string) {
-    if (this._isConnected) return;
-    if (this._isInitializing) {
+    if (this.isConnected) return;
+    if (this.isInitializing) {
       throw new Error('WhatsApp sedang dalam proses koneksi. Tunggu sebentar.');
     }
     this.reset();
-    this._error = null;
-    this._isInitializing = true;
+    this.error = null;
+    this.isInitializing = true;
 
-    if (!fs.existsSync(AUTH_DIR)) {
-      fs.mkdirSync(AUTH_DIR, { recursive: true });
+    const authDir = getAuthDir(this.schoolId);
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
     }
 
-    const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
-    const { version } = await fetchLatestBaileysVersion();
+    const baileys = await this.getBaileys();
+    const { state, saveCreds } = await baileys.useMultiFileAuthState(authDir);
+    const { version } = await baileys.fetchLatestBaileysVersion();
 
-    this.sock = makeWASocket({
+    this.sock = baileys.makeWASocket({
       version,
       auth: state,
       printQRInTerminal: false,
@@ -119,13 +130,13 @@ class WaService {
       try {
         this.pairingCode = await this.sock.requestPairingCode(cleanPhone);
       } catch (err: any) {
-        this._error = err.message || 'Gagal mendapatkan pairing code';
-        this._isInitializing = false;
+        this.error = err.message || 'Gagal mendapatkan pairing code';
+        this.isInitializing = false;
         return;
       }
     }
 
-    this.sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+    this.sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }: any) => {
       if (qr) {
         try {
           this.qrCodeData = await QRCode.toDataURL(qr);
@@ -142,23 +153,23 @@ class WaService {
       if (connection === 'close') {
         const boomErr = lastDisconnect?.error as Boom;
         const statusCode = boomErr?.output?.statusCode;
-        console.log('[WA] Connection closed. reason:', statusCode, 'data:', JSON.stringify(boomErr?.data));
-        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+        console.log(`[WA:${this.schoolId}] Connection closed. reason:`, statusCode);
+        const shouldReconnect = statusCode !== baileys.DisconnectReason.loggedOut;
 
-        this._isConnected = false;
-        this._isInitializing = false;
+        this.isConnected = false;
+        this.isInitializing = false;
 
         if (shouldReconnect) {
           this.reconnectTimeout = setTimeout(() => {
             this.initialize().catch(() => {});
           }, 5000);
         } else {
-          this._error = 'Sesi WhatsApp tidak valid. Silakan scan ulang.';
+          this.error = 'Sesi WhatsApp tidak valid. Silakan scan ulang.';
           this.reset();
           await this.clearSession();
           try {
-            if (fs.existsSync(AUTH_DIR)) {
-              fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+            if (fs.existsSync(authDir)) {
+              fs.rmSync(authDir, { recursive: true, force: true });
             }
           } catch { /* ignore */ }
         }
@@ -168,24 +179,18 @@ class WaService {
     this.sock.ev.on('creds.update', saveCreds);
   }
 
-  getQR(): string | null {
-    return this.qrCodeData;
-  }
-
-  getPairingCode(): string | null {
-    return this.pairingCode;
-  }
-
   getStatus() {
     return {
-      connected: this._isConnected,
-      initializing: this._isInitializing,
+      connected: this.isConnected,
+      initializing: this.isInitializing,
       hasQR: !!this.qrCodeData,
       hasPairingCode: !!this.pairingCode,
-      error: this._error,
-      sessionSaved: true,
+      error: this.error,
     };
   }
+
+  getQR(): string | null { return this.qrCodeData; }
+  getPairingCode(): string | null { return this.pairingCode; }
 
   async disconnect() {
     this.clearReconnect();
@@ -198,21 +203,21 @@ class WaService {
       }
     } catch { /* ignore */ }
     this.reset();
+    const authDir = getAuthDir(this.schoolId);
     try {
-      if (fs.existsSync(AUTH_DIR)) {
-        fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+      if (fs.existsSync(authDir)) {
+        fs.rmSync(authDir, { recursive: true, force: true });
       }
     } catch { /* ignore */ }
   }
 
   async sendMessage(phone: string, message: string) {
-    if (!this.sock || !this._isConnected) {
+    if (!this.sock || !this.isConnected) {
       throw new Error('WhatsApp tidak terhubung');
     }
     const formattedPhone = phone.startsWith('0')
       ? '62' + phone.substring(1)
       : phone.replace(/^\+/, '');
-
     const jid = `${formattedPhone}@s.whatsapp.net`;
     await this.sock.sendMessage(jid, { text: message });
   }
@@ -227,4 +232,24 @@ class WaService {
   }
 }
 
-export const waService = new WaService();
+class WaServiceManager {
+  private connections: Map<number, WaConnection> = new Map();
+
+  forSchool(schoolId: number): WaConnection {
+    let conn = this.connections.get(schoolId);
+    if (!conn) {
+      conn = new WaConnection(schoolId);
+      this.connections.set(schoolId, conn);
+    }
+    return conn;
+  }
+
+  async disconnectAll() {
+    for (const conn of this.connections.values()) {
+      await conn.disconnect();
+    }
+    this.connections.clear();
+  }
+}
+
+export const waService = new WaServiceManager();

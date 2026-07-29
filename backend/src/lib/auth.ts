@@ -20,7 +20,7 @@ export const auth = betterAuth({
       role: {
         type: 'string',
         defaultValue: 'siswa'
-      }
+      },
     }
   },
   plugins: [

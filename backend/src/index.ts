@@ -12,6 +12,9 @@ import { auth } from './lib/auth.js';
 import { authMiddleware, requireRole } from './middlewares/authMiddleware.js';
 import { userService } from './services/userService.js';
 
+import { tenantResolver } from './middlewares/tenantResolver.js';
+import { schoolRouter } from './routes/schoolRoutes.js';
+import { adminSchoolRouter } from './routes/adminSchoolRoutes.js';
 import { academicYearsRouter } from './routes/academicYearRoutes.js';
 import { semestersRouter } from './routes/semesterRoutes.js';
 import { schedulesRouter } from './routes/scheduleRoutes.js';
@@ -73,6 +76,9 @@ const authRateLimiter = rateLimit({
   message: { success: false, error: 'Terlalu banyak percobaan masuk. Silakan coba lagi setelah 15 menit.' },
 });
 app.use('/api/auth/', authRateLimiter);
+
+// Tenant resolver — runs before all route handlers including Better Auth
+app.use('/api', tenantResolver);
 
 // Better Auth
 app.all('/api/auth/*', (req, res) => {
@@ -140,7 +146,8 @@ app.post('/api/users/import', authMiddleware, requireRole(['admin']), uploadExce
     if (!file) {
       return res.status(400).json({ success: false, error: 'File Excel tidak terkirim.' });
     }
-    const result = await userService.importUsers(file.path);
+    const schoolId = req.context?.schoolId ?? undefined;
+    const result = await userService.importUsers(file.path, schoolId);
     res.json({ success: true, data: result });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
@@ -149,6 +156,12 @@ app.post('/api/users/import', authMiddleware, requireRole(['admin']), uploadExce
 
 app.use('/api/academic-years', authMiddleware, requireRole(['admin']), academicYearsRouter);
 app.use('/api/semesters', authMiddleware, requireRole(['admin']), semestersRouter);
+
+// Public routes (no auth)
+app.use('/api', schoolRouter);
+// Super admin routes
+app.use('/api/admin', adminSchoolRouter);
+
 app.use('/api/schedules', authMiddleware, requireRole(['admin']), schedulesRouter);
 app.use('/api/dashboard', authMiddleware, requireRole(['admin', 'guru']), dashboardRouter);
 app.use('/api/reports', authMiddleware, requireRole(['admin', 'guru']), reportsRouter);

@@ -15,6 +15,7 @@ export class TeacherAttendanceRepository {
   }
 
   async create(data: {
+    schoolId: number;
     teacherId: string;
     attendanceDate: string;
     checkinTime: Date;

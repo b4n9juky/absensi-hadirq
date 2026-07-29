@@ -20,7 +20,7 @@ export class ClassService {
       throw new Error('Nama kelas sudah ada.');
     }
 
-    return classRepo.create(dto.name);
+    return classRepo.create(dto.name, 0);
   }
 
   async updateClass(id: number, dto: CreateClassDto) {

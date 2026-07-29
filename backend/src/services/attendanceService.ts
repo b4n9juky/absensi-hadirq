@@ -124,7 +124,7 @@ export class AttendanceService {
         })
         .where(eq(attendances.id, record.id));
 
-        notificationService.sendCheckOutNotification(student, serverTime)
+        notificationService.sendCheckOutNotification(student, serverTime, student.schoolId)
           .catch(() => {});
 
         return { success: true, message: `Absen Pulang berhasil untuk ${student_nis} via QR.` };
@@ -142,7 +142,7 @@ export class AttendanceService {
       checkinTime: serverTime,
     });
 
-    notificationService.sendCheckInNotification(student, attendanceDate, serverTime, targetStatus)
+    notificationService.sendCheckInNotification(student, attendanceDate, serverTime, targetStatus, student.schoolId)
       .catch(() => {});
 
     let statusMsg = 'Hadir';

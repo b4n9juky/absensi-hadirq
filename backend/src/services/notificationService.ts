@@ -40,11 +40,9 @@ class NotificationService {
     attendanceDate: string,
     checkinTime: Date,
     status: string,
+    schoolId?: number,
   ) {
-    if (!student.parentId) {
-      console.log(`[WA] Skip check-in: ${student.name} has no parent linked`);
-      return;
-    }
+    if (!student.parentId) return;
 
     const parent = await db
       .select({ phone: user.phone })
@@ -52,10 +50,7 @@ class NotificationService {
       .where(eq(user.id, student.parentId))
       .limit(1);
 
-    if (!parent.length || !parent[0].phone) {
-      console.log(`[WA] Skip check-in: ${student.name}'s parent has no phone number`);
-      return;
-    }
+    if (!parent.length || !parent[0].phone) return;
 
     const phone = parent[0].phone;
     const timeStr = this.formatTime(checkinTime);
@@ -66,30 +61,21 @@ class NotificationService {
       ? `Assalamu'alaikum Wr. Wb.\n\nAnanda *${student.name}* telah tiba di sekolah pada *${timeStr}* (Terlambat).\nTerima kasih.`
       : `Assalamu'alaikum Wr. Wb.\n\nAnanda *${student.name}* telah tiba di sekolah pada *${timeStr}*.\nTerima kasih.`;
 
-    console.log(`[WA] Sending check-in to ${phone} for ${student.name}...`);
-    const result = await waService.sendMessageSafe(phone, message);
-
-    console.log(`[WA] Check-in ${student.name}: ${result.success ? 'SENT' : 'FAILED'} ${result.error || ''}`);
-
-    await db.insert(notifications).values({
-      studentId: student.id,
-      type: 'CHECKIN',
-      recipient: phone,
-      message,
-      status: result.success ? 'SENT' : 'FAILED',
-      error: result.error,
-      sentAt: result.success ? getSchoolDate() : null,
-    });
+    if (schoolId) {
+      const conn = waService.forSchool(schoolId);
+      const result = await conn.sendMessageSafe(phone, message);
+      await this.logNotification(student.id, phone, 'CHECKIN', message, result, schoolId);
+    } else {
+      await this.logNotification(student.id, phone, 'CHECKIN', message, null, 0);
+    }
   }
 
   async sendCheckOutNotification(
     student: StudentInfo,
     checkoutTime: Date,
+    schoolId?: number,
   ) {
-    if (!student.parentId) {
-      console.log(`[WA] Skip check-out: ${student.name} has no parent linked`);
-      return;
-    }
+    if (!student.parentId) return;
 
     const parent = await db
       .select({ phone: user.phone })
@@ -97,29 +83,39 @@ class NotificationService {
       .where(eq(user.id, student.parentId))
       .limit(1);
 
-    if (!parent.length || !parent[0].phone) {
-      console.log(`[WA] Skip check-out: ${student.name}'s parent has no phone number`);
-      return;
-    }
+    if (!parent.length || !parent[0].phone) return;
 
     const phone = parent[0].phone;
     const timeStr = this.formatTime(checkoutTime);
 
     const message = `Assalamu'alaikum Wr. Wb.\n\nAnanda *${student.name}* telah pulang pada pukul *${timeStr}*.\nTerima kasih.`;
 
-    console.log(`[WA] Sending check-out to ${phone} for ${student.name}...`);
-    const result = await waService.sendMessageSafe(phone, message);
+    if (schoolId) {
+      const conn = waService.forSchool(schoolId);
+      const result = await conn.sendMessageSafe(phone, message);
+      await this.logNotification(student.id, phone, 'CHECKOUT', message, result, schoolId);
+    } else {
+      await this.logNotification(student.id, phone, 'CHECKOUT', message, null, 0);
+    }
+  }
 
-    console.log(`[WA] Check-out ${student.name}: ${result.success ? 'SENT' : 'FAILED'} ${result.error || ''}`);
-
+  private async logNotification(
+    studentId: number,
+    recipient: string,
+    type: 'CHECKIN' | 'CHECKOUT',
+    message: string,
+    result: { success: boolean; error?: string } | null,
+    schoolId: number,
+  ) {
     await db.insert(notifications).values({
-      studentId: student.id,
-      type: 'CHECKOUT',
-      recipient: phone,
+      studentId,
+      type,
+      recipient,
       message,
-      status: result.success ? 'SENT' : 'FAILED',
-      error: result.error,
-      sentAt: result.success ? getSchoolDate() : null,
+      status: result?.success ? 'SENT' : 'FAILED',
+      error: result?.error,
+      sentAt: result?.success ? getSchoolDate() : null,
+      schoolId,
     });
   }
 
@@ -129,12 +125,13 @@ class NotificationService {
     status?: string;
     page?: number;
     limit?: number;
-  }) {
+  }, schoolId?: number) {
     const page = filters.page || 1;
     const limit = Math.min(filters.limit || 50, 200);
     const offset = (page - 1) * limit;
 
     const conditions: any[] = [];
+    if (schoolId) conditions.push(eq(notifications.schoolId, schoolId));
     if (filters.dateFrom) conditions.push(gte(notifications.createdAt, new Date(filters.dateFrom)));
     if (filters.dateTo) {
       const end = new Date(filters.dateTo);
@@ -171,8 +168,9 @@ class NotificationService {
     return { data, total, page, limit };
   }
 
-  async getNotificationStats(filters: { dateFrom?: string; dateTo?: string }) {
+  async getNotificationStats(filters: { dateFrom?: string; dateTo?: string }, schoolId?: number) {
     const conditions: any[] = [];
+    if (schoolId) conditions.push(eq(notifications.schoolId, schoolId));
     if (filters.dateFrom) conditions.push(gte(notifications.createdAt, new Date(filters.dateFrom)));
     if (filters.dateTo) {
       const end = new Date(filters.dateTo);

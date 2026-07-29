@@ -9,7 +9,8 @@ export const usersRouter = Router();
 
 usersRouter.get('/', async (req, res) => {
   try {
-    const data = await userService.getUsers();
+    const schoolId = req.context?.schoolId || undefined;
+    const data = await userService.getUsers(schoolId);
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -19,7 +20,8 @@ usersRouter.get('/', async (req, res) => {
 usersRouter.post('/', validate(createUserSchema), async (req, res) => {
   try {
     const { name, email, password, role, phone } = req.body;
-    const userId = await userService.createUser({ name, email, password, role, phone });
+    const schoolId = req.context?.schoolId ?? undefined;
+    const userId = await userService.createUser({ name, email, password, role, phone }, schoolId);
     res.status(201).json({ success: true, message: 'User berhasil dibuat.', data: { id: userId } });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });

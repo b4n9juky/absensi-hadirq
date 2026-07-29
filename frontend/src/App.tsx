@@ -21,6 +21,9 @@ import { FaceRegistration } from './components/sections/FaceRegistration';
 import { KioskAttendance } from './components/sections/KioskAttendance';
 import { QrKioskAttendance } from './components/sections/QrKioskAttendance';
 import { TeacherAttendanceSection } from './components/sections/TeacherAttendanceSection';
+import { SchoolRegistrationSection } from './components/sections/SchoolRegistrationSection';
+import { AdminSchoolsSection } from './components/sections/AdminSchoolsSection';
+import { SuperAdminLayout } from './components/layout/SuperAdminLayout';
 
 function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -70,11 +73,14 @@ function App() {
         <Route path="/kiosk-absensi" element={<KioskAttendance />} />
         <Route path="/kiosk-qr" element={<QrKioskAttendance />} />
         <Route path="/registrasi-wajah" element={<FaceRegistration />} />
+        <Route path="/daftar" element={<SchoolRegistrationSection />} />
         <Route
           path="/login"
           element={
             !token || !user ? (
               <LoginScreen onLoginSuccess={handleLoginSuccess} />
+            ) : user?.role === 'super_admin' ? (
+              <Navigate to="/admin/sekolah" replace />
             ) : (
               <Navigate to="/dashboard/ringkasan" replace />
             )
@@ -83,10 +89,10 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            token && user ? (
+            token && user && user?.role !== 'super_admin' ? (
               <DashboardLayout user={user} onLogout={handleLogout} />
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate to={token && user ? '/admin/sekolah' : '/login'} replace />
             )
           }
         >
@@ -107,7 +113,20 @@ function App() {
           <Route path="cetak-kartu-siswa" element={<StudentCardPrintSection token={token!} />} />
           <Route path="whatsapp" element={user?.role === 'admin' ? <WhatsAppSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
         </Route>
-        <Route path="*" element={<Navigate to={token && user ? '/dashboard/ringkasan' : '/login'} replace />} />
+        <Route
+          path="/admin"
+          element={
+            token && user && user?.role === 'super_admin' ? (
+              <SuperAdminLayout user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to={token ? '/dashboard/ringkasan' : '/login'} replace />
+            )
+          }
+        >
+          <Route index element={<Navigate to="sekolah" replace />} />
+          <Route path="sekolah" element={<AdminSchoolsSection />} />
+        </Route>
+        <Route path="*" element={<Navigate to={token && user ? (user?.role === 'super_admin' ? '/admin/sekolah' : '/dashboard/ringkasan') : '/login'} replace />} />
       </Routes>
     </HashRouter>
   );

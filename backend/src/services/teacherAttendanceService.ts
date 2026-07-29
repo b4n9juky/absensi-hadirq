@@ -43,6 +43,7 @@ export class TeacherAttendanceService {
     }
 
     await teacherAttendanceRepo.create({
+      schoolId: 0,
       teacherId,
       attendanceDate: today,
       checkinTime: now,

@@ -45,7 +45,7 @@ export class StudentService {
       throw new Error('NIS siswa sudah terdaftar.');
     }
 
-    const studentId = await studentRepo.create(dto.name, dto.nis, dto.classId);
+    const studentId = await studentRepo.create(dto.name, dto.nis, dto.classId, 0);
     try {
       const qrPath = await generateQrCode(dto.nis, studentId);
       await studentRepo.updateQrCode(studentId, qrPath, clientTimestamp);
@@ -280,7 +280,7 @@ export class StudentService {
         }
 
         console.log(`[Import] Row ${rowNum}: Creating student name="${row.name}", nis="${row.nis}", classId=${classRecord[0].id}`);
-        const studentId = await studentRepo.create(row.name, row.nis, classRecord[0].id);
+        const studentId = await studentRepo.create(row.name, row.nis, classRecord[0].id, 0);
         console.log(`[Import] Row ${rowNum}: Created student with id=${studentId}`);
         try {
           const qrPath = await generateQrCode(row.nis, studentId);

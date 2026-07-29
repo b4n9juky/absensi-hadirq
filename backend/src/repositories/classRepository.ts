@@ -17,8 +17,8 @@ export class ClassRepository {
     return results[0] || null;
   }
 
-  async create(name: string) {
-    const [result] = await db.insert(classes).values({ name });
+  async create(name: string, schoolId: number) {
+    const [result] = await db.insert(classes).values({ name, schoolId });
     return result.insertId;
   }
 

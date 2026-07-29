@@ -3,7 +3,10 @@ import { user, session, account, teachingSchedules, teacherAgendas } from '../db
 import { eq, like } from 'drizzle-orm';
 
 export class UserRepository {
-  async findAll() {
+  async findAll(schoolId?: number) {
+    if (schoolId) {
+      return db.select().from(user).where(eq(user.schoolId, schoolId));
+    }
     return db.select().from(user);
   }
 

@@ -60,11 +60,12 @@ export class StudentRepository {
     return results[0] || null;
   }
 
-  async create(name: string, nis: string, classId: number, qrcode?: string) {
+  async create(name: string, nis: string, classId: number, schoolId: number, qrcode?: string) {
     const [result] = await db.insert(students).values({
       name,
       nis,
       classId,
+      schoolId,
       qrcode
     });
     return result.insertId;

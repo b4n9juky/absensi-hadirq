@@ -24,9 +24,10 @@ configRouter.get('/', authMiddleware, async (req, res) => {
       if (classRec.length > 0) className = classRec[0].name;
     }
 
-    const geofence = await settingService.getGeofenceConfig();
-    const schoolName = await settingService.getValue('school_name');
-    const schoolLogo = await settingService.getValue('school_logo');
+    const schoolId = req.context!.schoolId;
+    const geofence = await settingService.getGeofenceConfig(schoolId || undefined);
+    const schoolName = await settingService.getValue('school_name', schoolId || undefined);
+    const schoolLogo = await settingService.getValue('school_logo', schoolId || undefined);
 
     const activeScheduleDays = await db.select({ dayName: schedules.dayName })
       .from(schedules)
@@ -35,7 +36,7 @@ configRouter.get('/', authMiddleware, async (req, res) => {
     res.json({
       success: true,
       data: {
-        api_base_url: geofence.api_base_url || `${req.protocol}://${req.get('host')}`,
+        api_base_url: `${req.protocol}://${req.get('host')}`,
         student_name: studentRecord.length > 0 ? studentRecord[0].name : userName,
         student_nis: studentRecord.length > 0 ? studentRecord[0].nis : '',
         student_photo: studentRecord.length > 0 ? (studentRecord[0].photo || '') : '',
@@ -127,7 +128,8 @@ configRouter.get('/debug', async (_req, res) => {
     try {
       const classesExist = await db.select({ id: classes.id }).from(classes).limit(1);
       if (classesExist.length > 0) {
-        const [ins] = await db.insert(students).values({ name: 'TEST_DELETE_ME', nis: '999999', classId: classesExist[0].id });
+        const schoolId = _req.context?.schoolId || 1;
+        const [ins] = await db.insert(students).values({ name: 'TEST_DELETE_ME', nis: '999999', classId: classesExist[0].id, schoolId });
         results.studentInsert = `OK (insertId: ${ins.insertId})`;
         await db.delete(students).where(eq(students.nis, '999999'));
       } else {

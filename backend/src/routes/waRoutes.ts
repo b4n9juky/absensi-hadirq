@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { waService } from '../services/waService.js';
 import { notificationService } from '../services/notificationService.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 export const waRouter = Router();
 
-waRouter.post('/init', async (req, res) => {
+waRouter.post('/init', authMiddleware, async (req, res) => {
   try {
-    const status = waService.getStatus();
+    const schoolId = req.context!.schoolId;
+    if (!schoolId) return res.status(400).json({ success: false, error: 'Sekolah tidak teridentifikasi.' });
+    const conn = waService.forSchool(schoolId);
+    const status = conn.getStatus();
     if (status.connected) {
       return res.json({ success: true, message: 'WhatsApp sudah terhubung.', data: { connected: true } });
     }
@@ -14,8 +18,8 @@ waRouter.post('/init', async (req, res) => {
       return res.json({ success: true, message: 'WhatsApp sedang memulai koneksi.', data: { connected: false, initializing: true } });
     }
     const phone = req.body?.phone as string | undefined;
-    waService.initialize(phone).catch((err: any) => {
-      console.error('[WA] Init error:', err.message);
+    conn.initialize(phone).catch((err: any) => {
+      console.error(`[WA:${schoolId}] Init error:`, err.message);
     });
     const msg = phone
       ? 'Meminta pairing code WhatsApp...'
@@ -26,19 +30,24 @@ waRouter.post('/init', async (req, res) => {
   }
 });
 
-waRouter.get('/status', async (_req, res) => {
+waRouter.get('/status', authMiddleware, async (req, res) => {
   try {
-    const status = waService.getStatus();
-    const qr = status.hasQR ? waService.getQR() : null;
-    const pairingCode = status.hasPairingCode ? waService.getPairingCode() : null;
+    const schoolId = req.context!.schoolId;
+    if (!schoolId) return res.status(400).json({ success: false, error: 'Sekolah tidak teridentifikasi.' });
+    const conn = waService.forSchool(schoolId);
+    const status = conn.getStatus();
+    const qr = status.hasQR ? conn.getQR() : null;
+    const pairingCode = status.hasPairingCode ? conn.getPairingCode() : null;
     res.json({ success: true, data: { ...status, qr, pairingCode } });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-waRouter.get('/notifications', async (req, res) => {
+waRouter.get('/notifications', authMiddleware, async (req, res) => {
   try {
+    const schoolId = req.context!.schoolId;
+    if (!schoolId) return res.status(400).json({ success: false, error: 'Sekolah tidak teridentifikasi.' });
     const { dateFrom, dateTo, status, page, limit } = req.query;
     const [notificationsData, stats] = await Promise.all([
       notificationService.getNotifications({
@@ -47,11 +56,11 @@ waRouter.get('/notifications', async (req, res) => {
         status: status as string,
         page: page ? parseInt(page as string) : 1,
         limit: limit ? parseInt(limit as string) : 50,
-      }),
+      }, schoolId),
       notificationService.getNotificationStats({
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
-      }),
+      }, schoolId),
     ]);
     res.json({ success: true, data: { ...notificationsData, stats } });
   } catch (err: any) {
@@ -59,9 +68,12 @@ waRouter.get('/notifications', async (req, res) => {
   }
 });
 
-waRouter.post('/disconnect', async (_req, res) => {
+waRouter.post('/disconnect', authMiddleware, async (req, res) => {
   try {
-    await waService.disconnect();
+    const schoolId = req.context!.schoolId;
+    if (!schoolId) return res.status(400).json({ success: false, error: 'Sekolah tidak teridentifikasi.' });
+    const conn = waService.forSchool(schoolId);
+    await conn.disconnect();
     res.json({ success: true, message: 'Koneksi WhatsApp diputuskan.' });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

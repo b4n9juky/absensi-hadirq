@@ -1,39 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/auth.js';
+import { db } from '../db/index.js';
+import { user as userTable } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
 
 const logPath = path.join(__dirname, '../../auth_debug.log');
-
-// Extend Express Request type definition for req.context
-declare global {
-  namespace Express {
-    interface Request {
-      context?: {
-        user: {
-          id: string;
-          name: string;
-          email: string;
-          emailVerified: boolean;
-          image?: string | null;
-          role: string;
-          createdAt: Date;
-          updatedAt: Date;
-        };
-        session: {
-          id: string;
-          expiresAt: Date;
-          token: string;
-          createdAt: Date;
-          updatedAt: Date;
-          ipAddress?: string | null;
-          userAgent?: string | null;
-          userId: string;
-        };
-      };
-    }
-  }
-}
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -50,9 +23,30 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       return res.status(401).json({ success: false, error: 'Unauthorized: Sesi tidak ditemukan.' });
     }
 
+    const session = sessionData.session;
+    let user = sessionData.user as any;
+
+    // Ensure role and schoolId are present — fetch from DB if Better Auth omitted them
+    if (!user.role || user.schoolId === undefined) {
+      const [dbUser] = await db.select({
+        role: userTable.role,
+        schoolId: userTable.schoolId,
+      }).from(userTable).where(eq(userTable.id, user.id)).limit(1);
+      if (dbUser) {
+        user = { ...user, role: dbUser.role, schoolId: dbUser.schoolId };
+      }
+    }
+
+    // Cross-tenant check: if the request is scoped to a school, the user must belong to that school
+    if (req.context?.schoolId && user.schoolId && req.context.schoolId !== user.schoolId) {
+      return res.status(403).json({ success: false, error: 'Forbidden: Akun Anda tidak terdaftar di sekolah ini.' });
+    }
+
     req.context = {
-      user: sessionData.user as any,
-      session: sessionData.session
+      ...req.context,
+      user,
+      session,
+      schoolId: req.context?.schoolId || user.schoolId || null,
     };
 
     next();

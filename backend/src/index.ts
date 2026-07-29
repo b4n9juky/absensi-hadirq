@@ -36,6 +36,7 @@ import { agendaAttendanceRouter } from './routes/agendaAttendanceRoutes.js';
 import { faceRegistrationRouter } from './routes/faceRegistrationRoutes.js';
 import { teacherAttendanceRouter } from './routes/teacherAttendanceRoutes.js';
 import { waRouter } from './routes/waRoutes.js';
+import { adminBackupRouter } from './routes/adminBackupRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -161,6 +162,7 @@ app.use('/api/semesters', authMiddleware, requireRole(['admin']), semestersRoute
 app.use('/api', schoolRouter);
 // Super admin routes
 app.use('/api/admin', adminSchoolRouter);
+app.use('/api/admin', adminBackupRouter);
 
 app.use('/api/schedules', authMiddleware, requireRole(['admin']), schedulesRouter);
 app.use('/api/dashboard', authMiddleware, requireRole(['admin', 'guru']), dashboardRouter);

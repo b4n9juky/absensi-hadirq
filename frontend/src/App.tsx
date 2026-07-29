@@ -23,6 +23,7 @@ import { QrKioskAttendance } from './components/sections/QrKioskAttendance';
 import { TeacherAttendanceSection } from './components/sections/TeacherAttendanceSection';
 import { SchoolRegistrationSection } from './components/sections/SchoolRegistrationSection';
 import { AdminSchoolsSection } from './components/sections/AdminSchoolsSection';
+import { AdminBackupSection } from './components/sections/AdminBackupSection';
 import { SuperAdminLayout } from './components/layout/SuperAdminLayout';
 
 function App() {
@@ -125,6 +126,7 @@ function App() {
         >
           <Route index element={<Navigate to="sekolah" replace />} />
           <Route path="sekolah" element={<AdminSchoolsSection />} />
+          <Route path="backup" element={<AdminBackupSection />} />
         </Route>
         <Route path="*" element={<Navigate to={token && user ? (user?.role === 'super_admin' ? '/admin/sekolah' : '/dashboard/ringkasan') : '/login'} replace />} />
       </Routes>

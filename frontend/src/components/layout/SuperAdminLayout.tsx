@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Building, Settings, LogOut, Shield, LayoutDashboard } from 'lucide-react';
+import { Building, Settings, LogOut, Shield, LayoutDashboard, Database } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 import { ErrorBanner } from '../shared/ErrorBanner';
 
@@ -11,6 +11,7 @@ interface Props {
 
 const navItems = [
   { path: '/admin/sekolah', key: 'schools', icon: Building, label: 'Sekolah' },
+  { path: '/admin/backup', key: 'backup', icon: Database, label: 'Backup & Restore' },
   { path: '/admin/pengaturan', key: 'settings', icon: Settings, label: 'Pengaturan Global' },
 ];
 

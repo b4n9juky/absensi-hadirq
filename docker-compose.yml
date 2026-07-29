@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
     container_name: hadirq-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-hadirq123}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-absensi}
       MYSQL_USER: ${MYSQL_USER:-hadirq}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-hadirq123}
@@ -24,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    image: ghcr.io/${GITHUB_REPO_OWNER:-b4n9juky}/absensi-hadirq-backend:latest
     container_name: hadirq-backend
     restart: unless-stopped
     depends_on:
@@ -32,23 +31,27 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_URL=${DATABASE_URL}
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+      - DATABASE_URL=${DATABASE_URL:?error}
+      - CORS_ORIGIN=${CORS_ORIGIN:?error}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?error}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:?error}
+      - APP_TIMEZONE=${APP_TIMEZONE:-Asia/Jakarta}
       - SCHOOL_LATITUDE=${SCHOOL_LATITUDE:-0.144011}
       - SCHOOL_LONGITUDE=${SCHOOL_LONGITUDE:-117.473191}
       - SCHOOL_RADIUS_METERS=${SCHOOL_RADIUS_METERS:-50}
       - MAX_ACCURACY_METERS=${MAX_ACCURACY_METERS:-30}
       - KIOSK_SECRET_KEY=${KIOSK_SECRET_KEY:-absensi123456}
+      - WA_PROXY_URL=${WA_PROXY_URL:-}
     volumes:
       - uploads_data:/app/backend/uploads
+      - baileys_auth_data:/app/backend/baileys_auth_info
     networks:
       - hadirq-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/config/debug"]
+      test: ["CMD", "curl", "-sf", "http://localhost:3001/api/config/debug"]
       interval: 30s
       timeout: 10s
+      start_period: 15s
       retries: 3
 
   nginx:
@@ -80,6 +83,7 @@ services:
 volumes:
   db_data:
   uploads_data:
+  baileys_auth_data:
   certs_data:
   certbot_www:
 

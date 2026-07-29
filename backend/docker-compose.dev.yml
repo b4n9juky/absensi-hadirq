@@ -1,0 +1,52 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: hadirq-db-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: absensi
+      MYSQL_USER: hadirq
+      MYSQL_PASSWORD: hadirq123
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data_dev:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u hadirq -phadirq123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: hadirq-backend-dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=mysql://hadirq:hadirq123@db:3306/absensi
+      - CORS_ORIGIN=http://localhost:5173
+      - BETTER_AUTH_SECRET=dev-secret-key-change-in-production
+      - BETTER_AUTH_URL=http://localhost:3001
+      - SCHOOL_LATITUDE=-6.2088
+      - SCHOOL_LONGITUDE=106.8456
+    volumes:
+      - ./src:/app/src
+      - ./drizzle:/app/drizzle
+    networks:
+      - hadirq-dev
+
+volumes:
+  db_data_dev:
+
+networks:
+  hadirq-dev:
+    driver: bridge

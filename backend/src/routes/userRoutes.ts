@@ -18,8 +18,8 @@ usersRouter.get('/', async (req, res) => {
 
 usersRouter.post('/', validate(createUserSchema), async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    const userId = await userService.createUser({ name, email, password, role });
+    const { name, email, password, role, phone } = req.body;
+    const userId = await userService.createUser({ name, email, password, role, phone });
     res.status(201).json({ success: true, message: 'User berhasil dibuat.', data: { id: userId } });
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });

@@ -6,7 +6,7 @@ import { ModalShell } from '../shared/ModalShell';
 import { FormInput, FormSelect } from '../shared/FormField';
 
 interface UserRecord {
-  id: string; name: string; email: string; role: string;
+  id: string; name: string; email: string; role: string; phone?: string;
 }
 
 interface Props {
@@ -28,6 +28,11 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       render: (row: UserRecord) => <span className="text-muted-foreground">{row.email}</span>
     },
     {
+      key: 'phone',
+      header: 'No. WhatsApp',
+      render: (row: UserRecord) => <span className="text-muted-foreground">{row.phone || '—'}</span>
+    },
+    {
       key: 'role',
       header: 'Peran (Role)',
       align: 'center' as const,
@@ -39,7 +44,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       align: 'right' as const,
       render: (row: UserRecord) => (
         <div className="space-x-2 inline-flex">
-          <button onClick={() => { setUserName(row.name); setUserEmail(row.email); setUserRole(row.role); setUserNewPassword(''); setShowEditUser(row); }}
+          <button onClick={() => { setUserName(row.name); setUserEmail(row.email); setUserRole(row.role); setUserPhone(row.phone || ''); setUserNewPassword(''); setShowEditUser(row); }}
             className="p-2 rounded-lg bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground transition-colors inline-flex" aria-label="Edit pengguna">
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -68,6 +73,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [userNewPassword, setUserNewPassword] = useState('');
+  const [userPhone, setUserPhone] = useState('');
   const [userRole, setUserRole] = useState('guru');
 
   // Import Excel state
@@ -94,13 +100,13 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({ name: userName, email: userEmail, password: userPassword, role: userRole })
+        body: JSON.stringify({ name: userName, email: userEmail, password: userPassword, role: userRole, phone: userPhone || undefined })
       });
       const data = await res.json();
       if (res.ok && data.success) {
         triggerToast('Akun Pengguna berhasil dibuat!');
         setShowAddUser(false);
-        setUserName(''); setUserEmail(''); setUserPassword('');
+        setUserName(''); setUserEmail(''); setUserPassword(''); setUserPhone('');
         fetchUsers();
       } else throw new Error(data.error || 'Gagal menyimpan user.');
     } catch (err: any) { setErrorMsg(err.message); }
@@ -110,7 +116,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
     e.preventDefault();
     if (!showEditUser) return;
     try {
-      const body: any = { name: userName, email: userEmail, role: userRole };
+      const body: any = { name: userName, email: userEmail, role: userRole, phone: userPhone || undefined };
       if (userNewPassword) body.password = userNewPassword;
       const res = await fetch(`/api/users/${showEditUser.id}`, {
         method: 'PUT',
@@ -121,7 +127,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
       if (res.ok && data.success) {
         triggerToast('Akun Pengguna berhasil diperbarui!');
         setShowEditUser(null);
-        setUserName(''); setUserEmail(''); setUserNewPassword('');
+        setUserName(''); setUserEmail(''); setUserNewPassword(''); setUserPhone('');
         fetchUsers();
       } else throw new Error(data.error || 'Gagal memperbarui user.');
     } catch (err: any) { setErrorMsg(err.message); }
@@ -224,6 +230,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
               <FormInput label="Nama Lengkap" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Nama Pengguna" required />
               <FormInput label="Alamat Email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} placeholder="name@school.com" required />
               <FormInput label="Kata Sandi" type="password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} placeholder="Minimal 6 karakter" required />
+              <FormInput label="No. WhatsApp" value={userPhone} onChange={(e) => setUserPhone(e.target.value)} placeholder="Contoh: 0812xxxx" />
               <FormSelect label="Peran (Role)" value={userRole} onChange={(e) => setUserRole(e.target.value)}
                 options={[{ value: 'guru', label: 'Guru' }, { value: 'admin', label: 'Administrator' }]} />
             </div>
@@ -240,6 +247,7 @@ export const UsersSection: React.FC<Props> = ({ token }) => {
               <FormInput label="Nama Lengkap" value={userName} onChange={(e) => setUserName(e.target.value)} required />
               <FormInput label="Alamat Email" type="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} required />
               <FormInput label="Kata Sandi Baru" type="password" value={userNewPassword} onChange={(e) => setUserNewPassword(e.target.value)} placeholder="Kosongkan jika tidak diubah" />
+              <FormInput label="No. WhatsApp" value={userPhone} onChange={(e) => setUserPhone(e.target.value)} placeholder="Contoh: 0812xxxx" />
               <FormSelect label="Peran (Role)" value={userRole} onChange={(e) => setUserRole(e.target.value)}
                 options={[{ value: 'guru', label: 'Guru' }, { value: 'admin', label: 'Administrator' }]} />
             </div>

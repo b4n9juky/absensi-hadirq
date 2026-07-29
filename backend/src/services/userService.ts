@@ -13,6 +13,7 @@ export interface CreateUserDto {
   email: string;
   password?: string;
   role: string;
+  phone?: string;
 }
 
 export interface UpdateUserDto {
@@ -62,6 +63,11 @@ export class UserService {
     // Update role if not 'siswa' (default is 'siswa' in auth configuration)
     if (dto.role !== 'siswa') {
       await db.update(user).set({ role: dto.role }).where(eq(user.id, signUpResult.user.id));
+    }
+
+    // Set phone if provided
+    if (dto.phone) {
+      await db.update(user).set({ phone: dto.phone }).where(eq(user.id, signUpResult.user.id));
     }
 
     return signUpResult.user.id;

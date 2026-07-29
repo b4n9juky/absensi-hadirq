@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon, FileText, UserCheck, Printer, CreditCard, MessageCircle } from 'lucide-react';
+import { LogOut, Users, LayoutDashboard, BookOpen, GraduationCap, Calendar, Settings, Clock, Book, ClipboardCheck, GraduationCap as SchoolIcon, FileText, UserCheck, Printer, CreditCard, MessageCircle, Database } from 'lucide-react';
 import { ThemeToggle } from '../shared/ThemeToggle';
 
 const allNavItems = [
@@ -16,6 +16,7 @@ const allNavItems = [
   { path: '/dashboard/cetak-kartu-siswa', key: 'print-student-card', icon: CreditCard, label: 'Cetak Kartu Siswa', roles: ['admin'] },
   { path: '/dashboard/mata-pelajaran', key: 'subjects', icon: Book, label: 'Mata Pelajaran', roles: ['admin'] },
   { path: '/dashboard/agenda-absensi', key: 'agenda-attendance', icon: ClipboardCheck, label: 'Agenda Absensi', roles: ['guru'] },
+  { path: '/dashboard/backup', key: 'backup', icon: Database, label: 'Backup Data', roles: ['admin'] },
   { path: '/dashboard/pengaturan', key: 'settings', icon: Settings, label: 'Pengaturan', roles: ['admin'] },
   { path: '/dashboard/orang-tua', key: 'parent', icon: Users, label: 'Dashboard', roles: ['parent'] },
 ];

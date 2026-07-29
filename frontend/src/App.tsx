@@ -24,6 +24,7 @@ import { TeacherAttendanceSection } from './components/sections/TeacherAttendanc
 import { SchoolRegistrationSection } from './components/sections/SchoolRegistrationSection';
 import { AdminSchoolsSection } from './components/sections/AdminSchoolsSection';
 import { AdminBackupSection } from './components/sections/AdminBackupSection';
+import { SchoolBackupSection } from './components/sections/SchoolBackupSection';
 import { SuperAdminLayout } from './components/layout/SuperAdminLayout';
 
 function App() {
@@ -105,6 +106,7 @@ function App() {
           <Route path="siswa" element={<StudentsSection token={token!} />} />
           <Route path="akademik" element={<AcademicSection token={token!} />} />
           <Route path="pengaturan" element={<SettingsSection token={token!} />} />
+          <Route path="backup" element={<SchoolBackupSection token={token!} />} />
           <Route path="absensi-guru" element={user?.role === 'admin' ? <TeacherAttendanceSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />
           <Route path="jadwal-mengajar" element={user?.role === 'guru' ? <TeacherScheduleSection token={token!} /> : <TeachingScheduleSection token={token!} />} />
           <Route path="mata-pelajaran" element={user?.role === 'admin' ? <SubjectsSection token={token!} /> : <Navigate to="/dashboard/ringkasan" replace />} />

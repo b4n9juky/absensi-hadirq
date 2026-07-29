@@ -37,6 +37,7 @@ import { faceRegistrationRouter } from './routes/faceRegistrationRoutes.js';
 import { teacherAttendanceRouter } from './routes/teacherAttendanceRoutes.js';
 import { waRouter } from './routes/waRoutes.js';
 import { adminBackupRouter } from './routes/adminBackupRoutes.js';
+import { schoolBackupRouter } from './routes/schoolBackupRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -160,6 +161,8 @@ app.use('/api/semesters', authMiddleware, requireRole(['admin']), semestersRoute
 
 // Public routes (no auth)
 app.use('/api', schoolRouter);
+// School-level backup (admin role — per-sekolah)
+app.use('/api', schoolBackupRouter);
 // Super admin routes
 app.use('/api/admin', adminSchoolRouter);
 app.use('/api/admin', adminBackupRouter);

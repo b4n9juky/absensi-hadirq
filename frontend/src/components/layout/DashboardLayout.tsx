@@ -17,6 +17,7 @@ const sectionMap: Record<string, string> = {
   'mata-pelajaran': 'subjects',
   'agenda-absensi': 'agenda-attendance',
   pengaturan: 'settings',
+  backup: 'backup',
   'orang-tua': 'parent',
   whatsapp: 'whatsapp',
 };
@@ -34,6 +35,7 @@ const pathToSection: Record<string, string> = {
   subjects: 'mata-pelajaran',
   'agenda-attendance': 'agenda-absensi',
   settings: 'pengaturan',
+  backup: 'backup',
   parent: 'orang-tua',
   whatsapp: 'whatsapp',
 };
